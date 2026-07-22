@@ -1,0 +1,9 @@
+# Subtree attributes for the Ensemble COS body.
+# Why: the deploy/launch/hook bash scripts must reach adopters with LF line
+# endings even when cloned on Windows under core.autocrlf=true (a CRLF shebang
+# breaks the script on Linux/macOS). Per-directory git attributes apply to this
+# subtree and travel with it into the public projection (cos/** publishes
+# wholesale, dotfiles included), so this fix ships with the tree and needs no
+# publication-profile change; it also closes the latent hooks/*.sh exposure in
+# the source repo.
+*.sh text eol=lf

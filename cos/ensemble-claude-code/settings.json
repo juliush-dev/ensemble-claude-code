@@ -1,0 +1,98 @@
+{
+  "_provenance": "pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)",
+  "_provenance_playwright": "The mcp__playwright__* ask rule and the two mcp__playwright__browser_run_code* / mcp__playwright__browser_run_code_unsafe deny rules enter via curation record curation/claude-code/records/playwright.md (tending third-party-curation, beat 2026-07-09-1). The RCE-class code-execution tool (issue #1495) is observed at pinned 0.0.77 as browser_run_code_unsafe; the first-deploy deny used the wrong exact name (browser_run_code) and did not match, so the tool loaded ask-gated only. Corrected belt-and-suspenders: the glob browser_run_code* covers observed and legacy names (nothing else shares the prefix), and the exact browser_run_code_unsafe guarantees a match for the pinned version (mid-name glob behavior is undocumented). Name-based denies re-verify against the enumerated tool inventory on every version move.",
+  "_provenance_claude_ai_connectors": "The claude.ai account-connector rules (the mcp__claude_ai_* ask floor, the 21 exact-string Gmail/Drive ask entries, and the six mcp__claude_ai_* deny tripwires) enter via TWO curation records: curation/claude-code/records/gmail.md and curation/claude-code/records/google-drive.md (tending third-party-curation, beat 2026-07-09-3, admitted with tailoring by the Examiner at Fable 2026-07-09, deny-removal user-approved 2026-07-09 after classifier escalation). Design: the single blanket deny mcp__claude_ai_* is REPLACED by a layered rule set. Everything account-connector is ASK — the catch-all mcp__claude_ai_* ask floor gates current-and-future connector tools; the 21 exact-string entries (13 Gmail + 8 Drive, enumeration of 2026-07-09) are startup-typo-check tripwires (glob rules are exempt from the startup check, exact strings are not — a mismatch surfaces a warning). The six deny entries are TRIPWIRES, not boundaries: mcp__claude_ai_Google_Calendar__* and mcp__claude_ai_Supabase__* deny two un-curated connector classes wholesale; Gmail send*/delete* and Drive share*/delete* deny name-prefixed destructive/exfil classes that were NOT observed in the enumeration — if a future toolset move introduces them, the deny bites and the drift shows. No send/share/delete tool exists in the admitted enumeration; these denies pre-empt their arrival. No allow rules by decision (everything stays ask). Name-based rules re-verify against the live inventory at every deploy and every re-enumeration (the ledger-15 precedent; and download_file_content, not download_file, is the ledger-15 vindication this pass). Operator confinement is doctrinal, not structural — the deny/ask layer is the structural carrier.",
+  "model": "fable",
+  "autoMemoryEnabled": false,
+  "permissions": {
+    "defaultMode": "auto",
+    "ask": [
+      "Bash(git push)",
+      "Bash(git push *)",
+      "PowerShell(git push)",
+      "PowerShell(git push *)",
+      "mcp__playwright__*",
+      "mcp__claude_ai_*",
+      "mcp__claude_ai_Gmail__apply_sensitive_message_label",
+      "mcp__claude_ai_Gmail__apply_sensitive_thread_label",
+      "mcp__claude_ai_Gmail__create_draft",
+      "mcp__claude_ai_Gmail__create_label",
+      "mcp__claude_ai_Gmail__get_message",
+      "mcp__claude_ai_Gmail__get_thread",
+      "mcp__claude_ai_Gmail__label_message",
+      "mcp__claude_ai_Gmail__label_thread",
+      "mcp__claude_ai_Gmail__list_drafts",
+      "mcp__claude_ai_Gmail__list_labels",
+      "mcp__claude_ai_Gmail__search_threads",
+      "mcp__claude_ai_Gmail__unlabel_message",
+      "mcp__claude_ai_Gmail__unlabel_thread",
+      "mcp__claude_ai_Google_Drive__copy_file",
+      "mcp__claude_ai_Google_Drive__create_file",
+      "mcp__claude_ai_Google_Drive__download_file_content",
+      "mcp__claude_ai_Google_Drive__get_file_metadata",
+      "mcp__claude_ai_Google_Drive__get_file_permissions",
+      "mcp__claude_ai_Google_Drive__list_recent_files",
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "mcp__claude_ai_Google_Drive__search_files"
+    ],
+    "deny": [
+      "Edit(/projects/**/memory/**)",
+      "Edit(/agent-memory/**)",
+      "Edit(.claude/agent-memory/**)",
+      "Edit(.claude/agent-memory-local/**)",
+      "mcp__claude_ai_Google_Calendar__*",
+      "mcp__claude_ai_Supabase__*",
+      "mcp__claude_ai_Gmail__send*",
+      "mcp__claude_ai_Gmail__delete*",
+      "mcp__claude_ai_Google_Drive__share*",
+      "mcp__claude_ai_Google_Drive__delete*",
+      "mcp__playwright__browser_run_code*",
+      "mcp__playwright__browser_run_code_unsafe"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-push-gate.sh\""
+          }
+        ]
+      },
+      {
+        "_provenance_main_session_path_guard": "pursuit guard-mediation-refinement (contracts/2026-07-19-guard-mediation-refinement/), the user's word 2026-07-19 'Let's go with the trio' (R3). Wires the shared path guard onto the main session's Edit|Write in main-session mode: it asks ONLY on a proven foreign-root write (another lane's worktree, a stray external path), auto-passing everything own-root so the Concertmaster's own-root notebook closure writes (Aim, Registry, Lanes, contract/charter surfaces) and its legitimate non-notebook writes in arbitrary projects stay frictionless. Binds the actual topology writer so topology-face mediation self-fires. Same guard file as the Archivist card, different mode argument.",
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-archivist-paths.sh\" main-session"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-end-litter-flag.sh\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "_provenance_compaction_marker": "pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/), the user's word 2026-07-19 'Wire the hook and reword the bullet to key on its marker.' Closes the observability gap in the context-compaction recall trigger (30-retrieval.md): the session cannot tell from inside that a compaction happened, so the trigger was unobservable. SessionStart matcher 'compact' fires after any compaction (manual /compact or auto-compact) and injects its stdout into the model's context -- this hook writes a single ASCII marker line the reworded retrieval bullet keys on. Verified against the official hooks docs 2026-07-19: PostCompact CANNOT inject context (side-effects only), so SessionStart/compact is the injecting mechanism. Inline echo (not a hooks/ script) is the simplest form for a static one-line marker; ASCII-only for the PS 5.1 deploy pipeline.",
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[compaction-marker] This session's context was just compacted into a summary. Retrieval rule: reground the load-bearing facts the current work rests on against their surfaces before relying on them.\""
+          }
+        ]
+      }
+    ]
+  }
+}
