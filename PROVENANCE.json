@@ -1,16 +1,25 @@
 {
   "counts": {
-    "exclude": 231,
+    "exclude": 233,
     "publish": 53,
     "transform": 0
   },
-  "generated_at": "2026-07-22T10:44:15.697668+00:00",
+  "executables": [
+    "cos/ensemble-claude-code/deploy-to-host.sh",
+    "cos/ensemble-claude-code/hooks/guard-archivist-paths.sh",
+    "cos/ensemble-claude-code/hooks/guard-examiner-bash.sh",
+    "cos/ensemble-claude-code/hooks/guard-push-gate.sh",
+    "cos/ensemble-claude-code/hooks/session-end-litter-flag.sh",
+    "cos/ensemble-claude-code/launch/start-ensemble.sh",
+    "cos/ensemble-claude-code/launch/wire-mcp.sh"
+  ],
+  "generated_at": "2026-07-22T21:07:29.036163+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
   "profile_content_sha256": "8a90536fa1dc152d876d55d002cfe457a747fc75d93021c2abfe58a9d85213e1",
   "profile_name": "worldview-edition",
   "profile_version": "2",
-  "source_commit": "82668c97ed471429c5f15a7319d719b21fc38bca",
+  "source_commit": "61fd208ff5f4e7646c9a8bf27d3872017b61ef5d",
   "tool_versions": {
     "git": "git version 2.55.0.windows.2",
     "python": "3.11.15"
