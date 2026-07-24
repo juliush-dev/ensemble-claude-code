@@ -100,15 +100,17 @@ Linux / macOS (bash):
 "${XDG_CONFIG_HOME:-$HOME/.config}/ensemble-claude-code/launch/start-ensemble.sh"
 ```
 
-The launcher sets `CLAUDE_CONFIG_DIR` for that launch only, runs `claude --setting-sources user` so only the home's own settings govern the session, and leaves the calling shell's environment untouched. Any extra arguments pass straight through to `claude`.
+The launcher sets `CLAUDE_CONFIG_DIR` for that launch only, runs `claude --setting-sources user` so only the home's own settings govern the session, and leaves the calling shell's environment untouched. It also defaults the session to fullscreen (alt-screen) TUI rendering, setting `CLAUDE_CODE_NO_FLICKER=1` and `CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT=1` (the latter a documented Windows Terminal repaint fix) only when they are unset — so exporting either as `=0` before launch opts out, and the PowerShell launcher restores their prior values afterward. This is a research-preview harness feature, not a stable CLI flag. Any extra arguments pass straight through to `claude`.
 
-For a one-word entry point, add a launcher to the shell profile.
+For a short entry point, add a launcher to the shell profile.
 
-Windows (`$PROFILE`):
+Windows (`$PROFILE`) — dot-source the deployed `cos` dispatcher:
 
 ```powershell
-function ensemble { & "$env:LOCALAPPDATA\ensemble-claude-code\launch\start-ensemble.ps1" @args }
+. "$env:LOCALAPPDATA\ensemble-claude-code\launch\cos.ps1"
 ```
+
+Then `cos launch` starts a session and `cos help` lists the rest (`update`, `probe`, `wire-mcp`). The deploy already places `cos.ps1` under the home's `launch/`, so nothing extra is installed. Two of its subcommands — `cos update` (refresh the deployed home) and `cos probe` — run scripts from your own clone rather than the deployed home; set the `OSCC_WORKBENCH` environment variable to your clone's root so they can be found. The deployed-side subcommands (`cos launch`, `cos wire-mcp`) need no such anchor.
 
 Linux / macOS (`~/.bashrc` or `~/.zshrc`):
 
@@ -116,7 +118,7 @@ Linux / macOS (`~/.bashrc` or `~/.zshrc`):
 alias ensemble='"$HOME/.config/ensemble-claude-code/launch/start-ensemble.sh"'
 ```
 
-Now `claude` starts the main COS and `ensemble` starts this one.
+Now `claude` starts the main COS; `cos launch` (Windows) and `ensemble` (Linux / macOS) start this one.
 
 ### 3. Log in (once)
 

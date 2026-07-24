@@ -86,8 +86,10 @@ Copy-Item (Join-Path $src 'launch\*.ps1') (Join-Path $target 'launch')
 Copy-Item (Join-Path $src 'settings.json') $target
 Copy-Item (Join-Path $src '.mcp.json') $target
 
-# Integrity: the 38 files deployed byte-identical hash-compare against source.
-# (18 core + the 8 curated obsidian skill files: three SKILL.md plus five
+# Integrity: the 39 files deployed byte-identical hash-compare against source.
+# (19 core - the 18 v1 core plus launch\cos.ps1, the cos dispatcher admitted
+# through the designated-work door via pursuit shell-ergonomics (delegation-only
+# wrappers), 2026-07-24; + the 8 curated obsidian skill files: three SKILL.md plus five
 # references, admitted through curation/claude-code/records/obsidian.md; + the
 # 11 promoted formal-library files, admitted through the designated-work door
 # via pursuit formal-skills-promotion: six SKILL.md (cross-shell-command,
@@ -101,7 +103,7 @@ $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
     'hooks\session-end-litter-flag.sh', 'hooks\guard-examiner-bash.sh', 'hooks\guard-archivist-paths.sh',
     'hooks\guard-push-gate.sh',
-    'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1',
+    'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
     'settings.json', '.mcp.json',
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
@@ -138,7 +140,7 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 Write-Host ""
-Write-Host "All 38 byte-identical files hash-verified; 6 always-on files deployed with the provenance line stripped."
+Write-Host "All 39 byte-identical files hash-verified; 6 always-on files deployed with the provenance line stripped."
 Write-Host ""
 Write-Host "Deployed inventory (the staged set only):"
 $staged = @('CLAUDE.md', 'settings.json', '.mcp.json')
@@ -162,7 +164,7 @@ Write-Host "Anything else inside the target (credentials, sessions, caches, file
 Write-Host ""
 Write-Host "Start sessions from any directory with:"
 Write-Host '  & "$env:LOCALAPPDATA\ensemble-claude-code\launch\start-ensemble.ps1"'
-Write-Host "(or add the one-word profile function named in that script's header)."
+Write-Host "(or install the one-word cos dispatcher - see launch\cos.ps1's header - then: cos launch)."
 Write-Host ""
 Write-Host "Next step (one-time): launch it and run /login once. After that, P8 smoke can begin."
 Write-Host ""

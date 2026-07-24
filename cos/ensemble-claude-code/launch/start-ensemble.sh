@@ -17,6 +17,9 @@
 #   alias ensemble='"$HOME/.config/ensemble-claude-code/launch/start-ensemble.sh"'
 # (adjust the path if you deployed to a custom CLAUDE_ENSEMBLE_HOME or a
 # non-default XDG_CONFIG_HOME.)
+# (On Windows/PowerShell the maintained one-word pattern is instead the `cos`
+# dispatcher, launch/cos.ps1; a bash `cos` sibling is deferred until a second
+# lived long-invocation on WSL/remote - see the pursuit's on-trigger residues.)
 
 set -euo pipefail
 
@@ -26,6 +29,19 @@ if [ ! -f "$home/CLAUDE.md" ]; then
   echo "Ensemble home not found or incomplete at $home - run deploy-to-host.sh first." >&2
   exit 1
 fi
+
+# Fullscreen TUI rendering (a research-preview harness feature; no CLI flag) as an
+# ensemble-launch default: CLAUDE_CODE_NO_FLICKER=1 turns on the fullscreen/alt-
+# screen rendering, and CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT=1 fixes a documented
+# Windows Terminal stale-fragment bug in that mode (WSL sessions typically render
+# inside Windows Terminal, so it applies here too). Both are set-if-unset (:= keeps
+# a deliberate override such as =0 to opt out for a session), then exported so the
+# exec'd claude child inherits them; this script runs in its own process, so the
+# calling shell is untouched with no restore needed.
+# provenance: TUI-fullscreen wish, Aim.md (captured 2026-07-24).
+: "${CLAUDE_CODE_NO_FLICKER:=1}"
+: "${CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT:=1}"
+export CLAUDE_CODE_NO_FLICKER CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT
 
 # --setting-sources user: only the home's own settings govern the session (no
 # project or local settings files) - the whole-shape consistency lever.

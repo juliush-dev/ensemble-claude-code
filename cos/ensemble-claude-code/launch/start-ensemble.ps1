@@ -7,8 +7,13 @@
 # own environment afterward. Extra arguments pass through to claude, e.g.:
 #   & "$env:LOCALAPPDATA\ensemble-claude-code\launch\start-ensemble.ps1" -p "hello"
 #
-# Optional one-word entry: add this line to your PowerShell profile ($PROFILE):
-#   function ensemble { & "$env:LOCALAPPDATA\ensemble-claude-code\launch\start-ensemble.ps1" @args }
+# One-word entry is now the `cos` dispatcher (launch\cos.ps1) - the single
+# maintained profile pattern for this home. Add this line to your PowerShell
+# profile ($PROFILE), which dot-sources the deployed dispatcher:
+#   . "$env:LOCALAPPDATA\ensemble-claude-code\launch\cos.ps1"
+# then start a session from any directory with:  cos launch [args]
+# (The former standalone `function ensemble { ... }` one-liner is retired in
+# favor of the dispatcher, so the launch invocation lives in exactly one place.)
 
 $ensembleHome = Join-Path $env:LOCALAPPDATA 'ensemble-claude-code'
 if (-not (Test-Path (Join-Path $ensembleHome 'CLAUDE.md'))) {
@@ -17,9 +22,20 @@ if (-not (Test-Path (Join-Path $ensembleHome 'CLAUDE.md'))) {
 }
 
 $prev = $env:CLAUDE_CONFIG_DIR
+$prevNoFlicker = $env:CLAUDE_CODE_NO_FLICKER
+$prevRepaint = $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT
 $code = 0
 try {
     $env:CLAUDE_CONFIG_DIR = $ensembleHome
+    # Fullscreen TUI rendering (a research-preview harness feature; no CLI flag)
+    # as an ensemble-launch default: CLAUDE_CODE_NO_FLICKER=1 turns on the
+    # fullscreen/alt-screen rendering, and CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT=1
+    # fixes a documented Windows Terminal stale-fragment bug in that mode. Both are
+    # set-if-unset so a deliberate override (e.g. =0 to opt out for a session) wins,
+    # and both are restored below so the calling shell stays untouched.
+    # provenance: TUI-fullscreen wish, Aim.md (captured 2026-07-24).
+    if (-not (Test-Path Env:CLAUDE_CODE_NO_FLICKER)) { $env:CLAUDE_CODE_NO_FLICKER = '1' }
+    if (-not (Test-Path Env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT)) { $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT = '1' }
     # --setting-sources user: only the home's own settings govern the session
     # (no project or local settings files) - the whole-shape consistency lever.
     claude --setting-sources user @args
@@ -27,5 +43,7 @@ try {
 }
 finally {
     $env:CLAUDE_CONFIG_DIR = $prev
+    $env:CLAUDE_CODE_NO_FLICKER = $prevNoFlicker
+    $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT = $prevRepaint
 }
 exit $code
