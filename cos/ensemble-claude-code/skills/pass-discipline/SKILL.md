@@ -1,7 +1,7 @@
 ---
 name: pass-discipline
-description: Use at both ends of a pass — when starting work on a route (pickup) and when the pass ends (the stop). Carries the binding pickup read, the opening of the iteration record, and the stop duties that keep the route's notebook true and the pass's record frozen.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
+description: Use at both ends of a pass — when starting work on a route (pickup) and when the pass ends (the stop). Carries the binding pickup read, the opening of the iteration record, and the stop duties that keep the route's notebook true and the pass's record frozen. Also carries the version-control boundary duties — branch placement at pickup, commit and branch disposition at the stop.
+provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-30 (the user's landing word) adding the version-control boundary duties — branch placement at pickup, commit and branch disposition at the stop — admitted per the fifteenth evaluation firing's FIT PASS; polished the same day on the user's word (pickup step order, pronoun)
 ---
 
 # Pass discipline — the two ends of a pass
@@ -11,7 +11,8 @@ An iteration is one pickup-to-stop push along a route, and its record file is th
 ## At pickup
 
 1. **The binding read, before any work:** the route's `Handoff.md` (the thin designation at its head, then the current state and the pickup point), then `Gaps.md` (what is open in this route's scope), then recent iteration records latest-first, only as far as the handoff points. Pending ports staged on these surfaces resurface here — every pickup, until executed. A `LITTER-FLAG.md` in the route folder means a previous pass ended without its stop duties: settle that first (run the stop duties for the litter, remove the flag), then pick up.
-2. **Open the book:** create `iterations/iteration-NN.md` (next number) the moment the pass begins, with the thin designation at its head — identity (pass number, date), aim (the pickup point taken), placement (the containing route), notebook (this record), bounds (one pickup-to-stop push) — and `status: open` in its frontmatter. The record is opened now, not written after the fact.
+2. **Branch placement, in a version-controlled tree:** before the first edit, judge on your own initiative whether this pass belongs on the branch currently checked out or warrants its own, and state the call you took with the pass's opening — the cut is bounded, reversible, and ungated, so it is yours to make and the human's to see, never a standing question put to him. Where the isolation wanted is a parallel working surface rather than a branch, the moment is a lane moment: read `operational-lane-discipline`.
+3. **Open the book:** create `iterations/iteration-NN.md` (next number) the moment the pass begins, with the thin designation at its head — identity (pass number, date), aim (the pickup point taken), placement (the containing route), notebook (this record), bounds (one pickup-to-stop push) — and `status: open` in its frontmatter. The record is opened now, not written after the fact.
 
 ## During the pass
 
@@ -26,6 +27,6 @@ The stop is a fact — context exhausted, milestone landed, session ending — n
 3. **Update and prune the handoff:** `Handoff.md` reflects the new truth; what the pass resolved is pruned, not struck through. Same for `Gaps.md` entries the pass closed (with evidence) or opened.
 4. **Try reachable ports:** execute pending ports whose destinations are reachable now; leave the rest named and visible on the maintained surfaces.
 5. **Freeze:** flip the record's frontmatter to `status: frozen`. The record and its evidence are preserved evidence from this moment — never maintained again, never deleted.
-6. **Commit discipline:** in a version-controlled tree, a coherent stop is a commit boundary; propose or make the commit per the project's gates.
+6. **Commit and branch boundaries:** in a version-controlled tree, a coherent stop is a commit boundary; propose or make the commit per the project's gates. When the stop also ends the line of work the branch in play was cut for, put that branch's disposition to the human before the next work opens — merge it, keep it for slices still meant for it, park it, abandon it: which one holds turns on intent only he has, and a branch left undiscussed is work left in limbo.
 
 Reusable tooling the pass produced belongs to the route or the body's home, never to a closed pass; one-shot pass tooling persists only as evidence of what ran.
