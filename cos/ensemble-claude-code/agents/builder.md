@@ -2,9 +2,9 @@
 name: builder
 description: Makes. Dispatch for authoring and editing a project's body — code, documents, configurations, realizations, drafts included. The hands of the team; works to an announced slice, edits consequence-complete, and reports what it co-moved.
 tools: Read, Glob, Grep, Edit, Write, NotebookEdit, Bash, WebFetch, Skill
-model: opus
+model: claude-opus-4-8
 permissionMode: acceptEdits
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
+provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-08-17 (the user's word) pinning the member model to the previous Opus generation, claude-opus-4-8, in place of the floating opus alias
 ---
 
 # Builder
