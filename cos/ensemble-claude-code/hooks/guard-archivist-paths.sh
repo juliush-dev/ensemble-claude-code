@@ -163,10 +163,11 @@ if [ "$mode" = "main-session" ]; then
   # single long-form root would not match the real path and the write would ask.
   # Candidates, each normalized to forward slashes exactly as fp/cwd are (backslash
   # collapse then tr, trailing slash stripped): $LOCALAPPDATA/Temp/claude,
-  # $TEMP/claude, $TMP/claude (only those that are set), and on POSIX
-  # ${TMPDIR:-/tmp}/claude (appended only when NONE of the three Windows vars was
-  # set, so a Windows host never exempts a literal /tmp/claude path). For each
-  # Windows-derived root, when cygpath is
+  # $TEMP/claude, $TMP/claude (only those that are set), and on POSIX (only when
+  # NONE of the three Windows vars was set, so a Windows host never exempts a
+  # literal /tmp/claude path) two forms under ${TMPDIR:-/tmp}: the bare /claude
+  # root added in the posix_tmp block below, and the per-uid /claude-<uid> form
+  # matched in the case below. For each Windows-derived root, when cygpath is
   # available, both the long ("cygpath -m -l") and short 8.3 ("cygpath -m -s")
   # forms are added too; cygpath is applied to the root's existing parent
   # (.../Temp) and /claude re-appended, since the /claude leaf need not exist yet,
@@ -199,7 +200,7 @@ ${_s%/}/claude"
   [ -n "${LOCALAPPDATA:-}" ] && { add_win_root "$(norm_root "$LOCALAPPDATA")/Temp/claude"; win_root=1; }
   [ -n "${TEMP:-}" ] && { add_win_root "$(norm_root "$TEMP")/claude"; win_root=1; }
   [ -n "${TMP:-}" ] && { add_win_root "$(norm_root "$TMP")/claude"; win_root=1; }
-  # The POSIX root ${TMPDIR:-/tmp}/claude is a POSIX-host fallback: appended ONLY
+  # The POSIX roots under ${TMPDIR:-/tmp} are a POSIX-host fallback: built ONLY
   # when no Windows scratchpad root was derived (none of LOCALAPPDATA/TEMP/TMP
   # set). This is an environment test, not an OS test (no uname): on a Windows
   # host these vars are always set, so a literal "/tmp/claude/..." target is NOT
@@ -207,9 +208,23 @@ ${_s%/}/claude"
   # ("on POSIX"). An env test (rather than "case $(uname -s) in MINGW*|...") also
   # keeps the exemption correct when the env is cleared to simulate a POSIX host,
   # and adds no external-tool dependency.
+  #
+  # Two POSIX forms live here. The bare ${TMPDIR:-/tmp}/claude root is added
+  # below; the per-uid ${TMPDIR:-/tmp}/claude-<uid> form a Linux host advertises
+  # (observed 2026-08-25 as /tmp/claude-1000 on the user's Linux host) is matched
+  # in the case below as a claude-<digits> segment anchored to posix_tmp, the
+  # normalized ${TMPDIR:-/tmp} base. A digits-only segment test, not claude-$(id -u):
+  # id -u is the running session's uid, but the fixtures simulate a POSIX host where
+  # it differs, and a real Linux host's uid is whatever it is - the segment test
+  # matches the advertised form on any POSIX host without pinning one uid. The cost
+  # is that it also exempts another uid's claude-<n> dir under the same tmp base, a
+  # narrow widening still bounded by the tmp-base anchor and the ..-fall-through
+  # below.
+  posix_tmp=""
   if [ "$win_root" -eq 0 ]; then
+    posix_tmp="$(norm_root "${TMPDIR:-/tmp}")"
     scratch_roots="$scratch_roots
-$(norm_root "${TMPDIR:-/tmp}")/claude"
+$posix_tmp/claude"
   fi
 
   in_scratch=0
@@ -227,6 +242,24 @@ $(norm_root "${TMPDIR:-/tmp}")/claude"
         esac
       done
       IFS="$_oldifs"
+      # POSIX per-uid form: a claude-<digits> dir directly under the tmp base
+      # (posix_tmp is non-empty only on a POSIX host, win_root=0), so a Linux
+      # /tmp/claude-<uid>/... scratchpad matches without pinning one uid. The
+      # first segment after the base is taken and exempted only when non-empty
+      # and all digits, so claude-1abc, claude-1000-attacker, claude-9_evil do
+      # not ride the exemption (a case glob's [0-9]* would let them through).
+      if [ -n "$posix_tmp" ]; then
+        case "$_target" in
+          "$posix_tmp"/claude-*/*)
+            _seg="${_target#"$posix_tmp"/claude-}"
+            _seg="${_seg%%/*}"
+            case "$_seg" in
+              ''|*[!0-9]*) ;;
+              *) in_scratch=1 ;;
+            esac
+            ;;
+        esac
+      fi
       ;;
   esac
   [ "$in_scratch" -eq 1 ] && exit 0
