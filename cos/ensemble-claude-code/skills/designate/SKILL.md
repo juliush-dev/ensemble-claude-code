@@ -1,7 +1,7 @@
 ---
 name: designate
-description: Use when new work is being born — a wish ripens into an acceptance, live work spawns a pursuit, a tending is chartered, a route seeds, or a project is founded. Carries the check-before-birthing reads, the five slots, the right instrument per unit kind, twin filing, and thin-kernel-first.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-28 (the user's port word) adding the "Designating over a body the ensemble did not found" subsection, ported from the fms project's port request (grounding/2026-07-28-fms-port-request.md, the Archivist), admitted per the Examiner's evaluation of 2026-07-28 (evaluation-precedes-adoption bound)
+description: Use when new work is being born — a wish ripens into an acceptance, live work spawns a pursuit, a tending is chartered, a route seeds, a project is founded, or an existing project is wrapped into the anatomy. Carries the check-before-birthing reads, the five slots, the right instrument per unit kind, twin filing, and thin-kernel-first.
+provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-28 (the user's port word) adding the "Designating over a body the ensemble did not found" subsection, ported from the fms project's port request (grounding/2026-07-28-fms-port-request.md, the Archivist), admitted per the Examiner's evaluation of 2026-07-28 (evaluation-precedes-adoption bound); amended 2026-08-25 (the user's word, pursuit framework-dna, route dna-into-the-cos) bringing the project instrument and the adoption subsection to the prescribed anatomy — three repositories, `pursuits/` and `tendings/` as the nurseries, the grouping folder, the wrap's larger forms, the health-check tending chartered at wrap time
 ---
 
 # Designate — the birth certificate of work
@@ -18,15 +18,17 @@ Before designating anything, read: the project aim surface's **ripening region**
 
 ## The instrument, by unit kind
 
-- **Pursuit → contract.** Singular per pursuit, living, refined inline, never re-minted. Six facets: the five slots plus the rough path. Its spec elaborates the destination, its plan the path — **designate first as a thin kernel, then elaborate**.
-- **Tending → charter.** Standard (checkable kept-conditions), trigger rule (never "regularly" or "as needed" — those are how tendings die), placement, bounds (beat versus flag-and-spawn), notebook declaration, and method (elaborating into a runbook).
-- **Project → constitution.** Identity, aim (founding wish plus body-state asymptote, elaborating into `Aim.md` beside it), placement (`triggered-by` provenance), bounds, notebook declaration. No path facet: the registry roster is the living path.
-- **Route → no instrument.** Thin designation at the head of its `Handoff.md`; folder at `routes/<route-name>/` with `Handoff.md`, `Gaps.md`, `iterations/` — and nothing extra manufactured. Registry line in the pursuit plan's Routes section.
+- **Pursuit → contract.** Singular per pursuit, living, refined inline, never re-minted. Six facets: the five slots plus the rough path. Its spec elaborates the destination, its plan the path — **designate first as a thin kernel, then elaborate**. Lives in the unit's own folder under `notebook/pursuits/`.
+- **Tending → charter.** Standard (checkable kept-conditions), trigger rule (never "regularly" or "as needed" — those are how tendings die), placement, bounds (beat versus flag-and-spawn), notebook declaration, and method (elaborating into a runbook). Lives in the unit's own folder under `notebook/tendings/`.
+- **Project → constitution.** Identity, aim (founding wish plus body-state asymptote, elaborating into `Aim.md` beside it), placement (`triggered-by` provenance), bounds, notebook declaration (the anatomy: `notebook/` holding the face, `pursuits/` and `tendings/` beneath it as the nurseries where each unit's instrument lives in its own folder). No path facet: the registry roster is the living path.
+- **Route → no instrument.** Thin designation at the head of its `Handoff.md`; folder at `routes/<route-name>/` inside its pursuit's folder, with `Handoff.md`, `Gaps.md`, `iterations/` — and nothing extra manufactured. Registry line in the pursuit plan's Routes section.
 - **Iteration → no instrument.** Thin designation at the head of its record file, opened at pickup (that is the `pass-discipline` runbook's job, not this one's).
 
-## Designating over a body the ensemble did not found
+## Wrapping a project — founded or adopted
 
-When the body pre-existed the ensemble — adoption, not founding — the notebook slot is an explicit geography choice put to the human, never silently defaulted: the root `notebook/` folder is the default he can override (this aligns with the standing Notebooks paragraph in `10-work-object-model.md` — read it before designating).
+A project is wrapped when it holds the anatomy of `10-work-object-model.md` — read it before designating: a folder with three repositories, `notebook/` (the face, then `pursuits/` and `tendings/` as the nurseries, each unit's instrument in its own folder), `body/`, `inbox/`. Wrapping initializes as a repository any of the three that is not one, files the face, and charters the project's health-check tending at `notebook/tendings/health-check/` (the `health-check` runbook). Beside the single project sits the multi-body kind: a pure grouping folder with no notebook, body, or face of its own, each sub-project inside carrying the full shape.
+
+The wrap has larger forms, each named to the human at the ask and each a broad restructure that moves only on his word: **fusion** (many projects that need to become one), **absorption** (one or many joining an existing multi-body project), **renaming** and **restructuring** to match the anatomy. Plain wrapping of a body the ensemble did not found is the smallest form; its notebook geography is still declared explicitly in the constitution's notebook declaration, and what it declares is the anatomy.
 
 The placement-and-notebook work at designation includes surveying the body's own pre-existing governance surfaces: list each one, name the notebook role it already fills (registry-like, handoff-like, capture-like, bounds-like), and state its disposition — stays authoritative in place, superseded, or closed — dated where adjudicated.
 

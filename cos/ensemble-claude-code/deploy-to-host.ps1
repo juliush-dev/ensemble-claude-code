@@ -83,10 +83,53 @@ Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
 }
 Copy-Item (Join-Path $src 'hooks\*.sh') (Join-Path $target 'hooks')
 Copy-Item (Join-Path $src 'launch\*.ps1') (Join-Path $target 'launch')
-Copy-Item (Join-Path $src 'settings.json') $target
+
+# Host companion: settings.local.json beside this script (gitignored, never
+# tracked - publishable-clean) carries host-specific settings such as
+# permissions.additionalDirectories. When present it is deep-merged into the
+# deployed settings.json (objects merge key by key, arrays concatenate without
+# duplicates, companion scalars win); the tracked settings.json stays clean.
+# The launcher's --setting-sources user means only the deployed settings.json
+# governs a session, so this merge is the one door for host values. Tracked
+# example: settings.local.example.json. (ConvertTo-Json re-serializes: the
+# deployed text is JSON-equivalent to the source, not byte-identical, so the
+# hash check below compares the target against the merged text itself.)
+# provenance: pursuit framework-dna, route dna-into-the-cos, the user's word 2026-08-25.
+function Merge-Json($base, $over) {
+    foreach ($p in $over.PSObject.Properties) {
+        $name = $p.Name
+        $ov = $p.Value
+        $bp = $base.PSObject.Properties[$name]
+        if ($null -eq $bp) {
+            $base | Add-Member -NotePropertyName $name -NotePropertyValue $ov
+            continue
+        }
+        $bv = $bp.Value
+        if (($bv -is [System.Management.Automation.PSCustomObject]) -and ($ov -is [System.Management.Automation.PSCustomObject])) {
+            Merge-Json $bv $ov
+        } elseif (($bv -is [System.Array]) -and ($ov -is [System.Array])) {
+            $bp.Value = @(($bv + $ov) | Select-Object -Unique)
+        } else {
+            $bp.Value = $ov
+        }
+    }
+}
+$companion = Join-Path $src 'settings.local.json'
+$settingsMergedText = $null
+if (Test-Path $companion) {
+    $base = Get-Content (Join-Path $src 'settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $over = Get-Content $companion -Raw -Encoding UTF8 | ConvertFrom-Json
+    Merge-Json $base $over
+    $settingsMergedText = ($base | ConvertTo-Json -Depth 20)
+    [IO.File]::WriteAllText((Join-Path $target 'settings.json'), $settingsMergedText, $utf8NoBom)
+    Write-Host "settings.json: deployed as source merged with the host companion settings.local.json."
+} else {
+    Copy-Item (Join-Path $src 'settings.json') $target
+}
 Copy-Item (Join-Path $src '.mcp.json') $target
 
-# Integrity: the 39 files deployed byte-identical hash-compare against source.
+# Integrity: the 40 files deployed byte-identical hash-compare against source
+# (settings.json against the merged text instead when a host companion is present).
 # (19 core - the 18 v1 core plus launch\cos.ps1, the cos dispatcher admitted
 # through the designated-work door via pursuit shell-ergonomics (delegation-only
 # wrappers), 2026-07-24; + the 8 curated obsidian skill files: three SKILL.md plus five
@@ -98,7 +141,9 @@ Copy-Item (Join-Path $src '.mcp.json') $target
 # (the strict-ontological audit slice, ontological-audit.md) and mermaid's
 # four references (REFERENCE, QUALITY_CHECKLIST, and two flattened templates);
 # + 1 native skill (operational-lane-discipline) through the designated-work
-# door, the operational-lane adoption on the user's word 2026-07-11.)
+# door, the operational-lane adoption on the user's word 2026-07-11; + 1 native
+# skill (health-check) through the designated-work door, pursuit framework-dna,
+# the user's word 2026-08-25.)
 $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
     'hooks\session-end-litter-flag.sh', 'hooks\guard-examiner-bash.sh', 'hooks\guard-archivist-paths.sh',
@@ -108,6 +153,7 @@ $same = @(
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
     'skills\operational-lane-discipline\SKILL.md',
+    'skills\health-check\SKILL.md',
     'skills\cross-shell-command-discipline\SKILL.md',
     'skills\skill-frontmatter-discipline\SKILL.md',
     'skills\decision-proposal-discipline\SKILL.md',
@@ -130,6 +176,13 @@ $same = @(
 )
 $failed = @()
 foreach ($p in $same) {
+    if (($p -eq 'settings.json') -and ($null -ne $settingsMergedText)) {
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        $a = ([BitConverter]::ToString($sha.ComputeHash($utf8NoBom.GetBytes($settingsMergedText)))) -replace '-', ''
+        $b = (Get-FileHash (Join-Path $target $p) -Algorithm SHA256).Hash
+        if ($a -ne $b) { $failed += $p }
+        continue
+    }
     $a = (Get-FileHash (Join-Path $src $p) -Algorithm SHA256).Hash
     $b = (Get-FileHash (Join-Path $target $p) -Algorithm SHA256).Hash
     if ($a -ne $b) { $failed += $p }
@@ -140,7 +193,7 @@ if ($failed.Count -gt 0) {
     exit 1
 }
 Write-Host ""
-Write-Host "All 39 byte-identical files hash-verified; 6 always-on files deployed with the provenance line stripped."
+Write-Host "All $($same.Count) files hash-verified (settings.json against the merged text when a host companion is present); 6 always-on files deployed with the provenance line stripped."
 Write-Host ""
 Write-Host "Deployed inventory (the staged set only):"
 $staged = @('CLAUDE.md', 'settings.json', '.mcp.json')

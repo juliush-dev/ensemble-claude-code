@@ -152,8 +152,42 @@ for f in "$src"/launch/*.sh; do
   chmod +x "$target/launch/$(basename "$f")"   # the launcher scripts must be executable
 done
 
-copy_verified 'settings.json' 'settings.json'
 copy_verified '.mcp.json' '.mcp.json'
+
+# Host companion: settings.local.json beside this script (gitignored, never
+# tracked - publishable-clean) carries host-specific settings such as
+# permissions.additionalDirectories. When present it is deep-merged into the
+# deployed settings.json (objects merge key by key, arrays concatenate without
+# duplicates, companion scalars win); the tracked settings.json stays clean.
+# The launcher's --setting-sources user means only the deployed settings.json
+# governs a session, so this merge is the one door for host values. Tracked
+# example: settings.local.example.json. Mirrors deploy-to-host.ps1; needs
+# python3 only when a companion is present. The merged file is not in the
+# byte-identical list (it is derived, not copied).
+# provenance: pursuit framework-dna, route dna-into-the-cos, the user's word 2026-08-25.
+companion="$src/settings.local.json"
+if [ -f "$companion" ]; then
+  command -v python3 >/dev/null 2>&1 || { echo "ERROR: settings.local.json is present but python3 was not found; the merge needs it." >&2; exit 1; }
+  python3 - "$src/settings.json" "$companion" "$target/settings.json" <<'PY'
+import json, sys
+def merge(b, o):
+    for k, v in o.items():
+        if k in b and isinstance(b[k], dict) and isinstance(v, dict):
+            merge(b[k], v)
+        elif k in b and isinstance(b[k], list) and isinstance(v, list):
+            b[k] = b[k] + [x for x in v if x not in b[k]]
+        else:
+            b[k] = v
+    return b
+with open(sys.argv[1], encoding='utf-8') as f: base = json.load(f)
+with open(sys.argv[2], encoding='utf-8') as f: over = json.load(f)
+with open(sys.argv[3], 'w', encoding='utf-8') as f:
+    json.dump(merge(base, over), f, indent=2, ensure_ascii=False); f.write('\n')
+PY
+  echo "settings.json: deployed as source merged with the host companion settings.local.json."
+else
+  copy_verified 'settings.json' 'settings.json'
+fi
 
 # Integrity: every file deployed byte-identical hash-compares against source.
 # (chmod above changes mode, not content, so it does not affect these hashes.)
@@ -181,6 +215,7 @@ echo ""
 echo "Deployed inventory (the staged set only):"
 {
   echo "CLAUDE.md"
+  [ -f "$companion" ] && echo "settings.json (merged with the host companion)"
   for f in "$src"/always-on/rules/*.md; do echo "rules/$(basename "$f")"; done
   for pair in "${verify_list[@]}"; do echo "${pair##*|}"; done
 } | LC_ALL=C sort | sed 's/^/  /'
