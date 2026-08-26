@@ -1,7 +1,7 @@
 ---
 name: designate
-description: Use when new work is being born — a wish ripens into an acceptance, live work spawns a pursuit, a tending is chartered, a route seeds, a project is founded, or an existing project is wrapped into the anatomy. Carries the check-before-birthing reads, the five slots, the right instrument per unit kind, twin filing, and thin-kernel-first.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-28 (the user's port word) adding the "Designating over a body the ensemble did not found" subsection, ported from the fms project's port request (grounding/2026-07-28-fms-port-request.md, the Archivist), admitted per the Examiner's evaluation of 2026-07-28 (evaluation-precedes-adoption bound); amended 2026-08-25 (the user's word, pursuit framework-dna, route dna-into-the-cos) bringing the project instrument and the adoption subsection to the prescribed anatomy — three repositories, `pursuits/` and `tendings/` as the nurseries, the grouping folder, the wrap's larger forms, the health-check tending chartered at wrap time
+description: Use when new work is being born — a wish ripens into an acceptance, live work spawns a pursuit, a tending is chartered, a route seeds, a project is founded, or the face of a wrapped project is filed. Carries the check-before-birthing reads, the five slots, the right instrument per unit kind, twin filing, and thin-kernel-first.
+provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-28 (the user's port word) adding the "Designating over a body the ensemble did not found" subsection, ported from the fms project's port request (grounding/2026-07-28-fms-port-request.md, the Archivist), admitted per the Examiner's evaluation of 2026-07-28 (evaluation-precedes-adoption bound); amended 2026-08-25 (the user's word, pursuit framework-dna, route dna-into-the-cos) bringing the project instrument and the adoption subsection to the prescribed anatomy — three repositories, `pursuits/` and `tendings/` as the nurseries, the grouping folder, the wrap's larger forms, the health-check tending chartered at wrap time; amended 2026-08-26 (pursuit framework-dna, route wrap-method-into-the-cos, the fms 0851 port admitted at the nineteenth firing, the user's word) spinning the whole wrapping section out into its own `wrap` runbook — recursive grouping, the closed moves list with wiring, the focused-body and wrapping-correction terms, the name doctrine, the derived nine-step method with its residue-smell test, and the governance-surface survey now live in `wrap`; this skill keeps a one-paragraph pointer and files the face as a step of a wrap
 ---
 
 # Designate — the birth certificate of work
@@ -24,19 +24,9 @@ Before designating anything, read: the project aim surface's **ripening region**
 - **Route → no instrument.** Thin designation at the head of its `Handoff.md`; folder at `routes/<route-name>/` inside its pursuit's folder, with `Handoff.md`, `Gaps.md`, `iterations/` — and nothing extra manufactured. Registry line in the pursuit plan's Routes section.
 - **Iteration → no instrument.** Thin designation at the head of its record file, opened at pickup (that is the `pass-discipline` runbook's job, not this one's).
 
-## Wrapping a project — founded or adopted
+## Wrapping a project — founded, adopted, or corrected
 
-A project is wrapped when it holds the anatomy of `10-work-object-model.md` — read it before designating: a folder with three repositories, `notebook/` (the face, then `pursuits/` and `tendings/` as the nurseries, each unit's instrument in its own folder), `body/`, `inbox/`. Wrapping initializes as a repository any of the three that is not one, files the face, and charters the project's health-check tending at `notebook/tendings/health-check/` (the `health-check` runbook). Beside the single project sits the multi-body kind: a pure grouping folder with no notebook, body, or face of its own, each sub-project inside carrying the full shape.
-
-The wrap has larger forms, each named to the human at the ask and each a broad restructure that moves only on his word: **fusion** (many projects that need to become one), **absorption** (one or many joining an existing multi-body project), **renaming** and **restructuring** to match the anatomy. Plain wrapping of a body the ensemble did not found is the smallest form; its notebook geography is still declared explicitly in the constitution's notebook declaration, and what it declares is the anatomy.
-
-The placement-and-notebook work at designation includes surveying the body's own pre-existing governance surfaces: list each one, name the notebook role it already fills (registry-like, handoff-like, capture-like, bounds-like), and state its disposition — stays authoritative in place, superseded, or closed — dated where adjudicated.
-
-Those surfaces are overlaid by reference, never re-minted or duplicated: a notebook entry about an item that lives on one of them cites it by that surface's own identifier — a backlog ID such as `B-120`, a handoff name, a file-plus-section pointer — so which item is under discussion stays unambiguous across the two vocabularies.
-
-Twin filing still holds unreduced: the ensemble's registry line is still written in the parent's notebook — overlaying by reference governs content duplication, never the designation's own twin filing.
-
-Thin kernel first, per this runbook's own law: the survey starts as lines in the constitution's notebook declaration and becomes its own maintained surface only when it outgrows them.
+Wrapping is its own moment of the shape, with its own runbook, `wrap`. That runbook carries the anatomy a wrap produces, the closed list of moves, the focused-body and wrapping-correction terms, the name doctrine, and the correction method with its residue-smell test. Designation is a step inside a wrap: filing each project's face (the constitution and its notebook declaration) and chartering its health-check tending run per the sections above, called from `wrap` at the moves that need them.
 
 ## Twin filing
 

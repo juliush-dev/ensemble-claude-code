@@ -128,7 +128,7 @@ if (Test-Path $companion) {
 }
 Copy-Item (Join-Path $src '.mcp.json') $target
 
-# Integrity: the 41 files deployed byte-identical hash-compare against source
+# Integrity: the 42 files deployed byte-identical hash-compare against source
 # (settings.json against the merged text instead when a host companion is present).
 # (19 core - the 18 v1 core plus launch\cos.ps1, the cos dispatcher admitted
 # through the designated-work door via pursuit shell-ergonomics (delegation-only
@@ -143,7 +143,9 @@ Copy-Item (Join-Path $src '.mcp.json') $target
 # + 1 native skill (operational-lane-discipline) through the designated-work
 # door, the operational-lane adoption on the user's word 2026-07-11; + 1 native
 # skill (health-check) through the designated-work door, pursuit framework-dna,
-# the user's word 2026-08-25; + 1 curated skill (unslop) through the curation
+# the user's word 2026-08-25; + 1 native skill (wrap) through the designated-work
+# door, pursuit framework-dna, split out of designate, the user's word 2026-08-26;
+# + 1 curated skill (unslop) through the curation
 # door, admitted through curation/claude-code/records/unslop.md, tending
 # third-party-curation, beat 2026-08-25-1 (one SKILL.md, no references/,
 # deployed and footprint-verified 2026-08-25 on the user's cos update).)
@@ -157,6 +159,7 @@ $same = @(
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
     'skills\operational-lane-discipline\SKILL.md',
     'skills\health-check\SKILL.md',
+    'skills\wrap\SKILL.md',
     'skills\unslop\SKILL.md',
     'skills\cross-shell-command-discipline\SKILL.md',
     'skills\skill-frontmatter-discipline\SKILL.md',
