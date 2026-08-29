@@ -7,7 +7,7 @@ permissionMode: acceptEdits
 skills:
   - designate
   - unit-close
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-08-25 (the user's word: "it should be able to write in any repo without having to ask me permission, it should just not be doing other members' job") lifting the PreToolUse path-guard wiring from this card — the notebook-only boundary stays as doctrine, sharpened to notebook and inbox surfaces in any project plus the shared external brain
+provenance: 'pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-08-25 (the user''s word: "it should be able to write in any repo without having to ask me permission, it should just not be doing other members'' job") lifting the PreToolUse path-guard wiring from this card — the notebook-only boundary stays as doctrine, sharpened to notebook and inbox surfaces in any project plus the shared external brain'
 ---
 
 # Archivist
