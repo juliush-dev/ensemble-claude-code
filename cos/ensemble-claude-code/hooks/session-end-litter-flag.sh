@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
+#   extended by pursuit session-scoped-guard-grants, the user's gate word
+#   "land as recommended" (the Examiner's twenty-first-firing evaluation),
+#   2026-08-30 - session-scoped grant-file cleanup at SessionEnd.
 # Ensemble (ensemble-claude-code) — SessionEnd litter-flag hook.
 # Structural remedy for the pass-litter scar: at session end, flag open pass
 # state where the next session's binding pickup read already looks.
@@ -12,6 +15,20 @@ input="$(cat 2>/dev/null || true)"
 cwd="$(printf '%s' "$input" | sed -n 's/.*"cwd"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
 # JSON escapes backslashes; collapse them so Windows paths resolve.
 cwd="$(printf '%s' "$cwd" | sed 's/\\\\/\\/g')"
+
+# Session-scoped grant cleanup: the grant file the path guard may have
+# consulted for this session (hooks/guard-archivist-paths.sh's
+# session-roots/<session_id>.txt) is scoped to the session's own lifetime, so
+# it is removed here unconditionally of cwd being usable - unlike the litter
+# flags below, a stray or missing cwd must never leave a grant behind. Parsed
+# and validated from the same stdin JSON, same charset as the guard's own
+# check (non-empty, [0-9A-Za-z-]+ only).
+session_id="$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+case "$session_id" in
+  ''|*[!0-9A-Za-z-]*) session_id="" ;;
+esac
+[ -n "$session_id" ] && rm -f "$(dirname "$0")/session-roots/$session_id.txt"
+
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
 cd "$cwd" || exit 0
 

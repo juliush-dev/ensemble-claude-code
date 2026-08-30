@@ -2,6 +2,21 @@
 # provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 #   refined by pursuit guard-mediation-refinement (contracts/2026-07-19-guard-mediation-refinement/),
 #   the user's word 2026-07-19: "Let's go with the trio" (R1+R2+R3).
+#   amended 2026-08-30 by pursuit session-scoped-guard-grants, the user's gate
+#   word "land as recommended" (the Examiner's twenty-first-firing evaluation)
+#   - the session grant check in the main-session block below.
+#   FIT repairs 2026-08-30 (canonical-order minimality floor, hooks-dir
+#   self-cover refusal, grant-line CR/whitespace trimming, set -f around the
+#   segment-count loop) - closing the four findings the FIT read raised
+#   against that same session grant check.
+#   re-examination repairs 2026-08-30 (dual-form self-cover, bidirectional
+#   containment, three-segment floor, header truth, set -f restore) -
+#   closing the five residues the re-examination raised against that same
+#   session grant check.
+#   reworded 2026-08-30 at the thirteenth pre-release beat's findings
+#   (HIGH-1 Branch B, the user's word "reword"; MED-1) - the drive-rooted
+#   user-home path shape removed from both minimality-floor comment blocks
+#   so the leak scanner's placeholder-path check passes; no claim changed.
 # Ensemble (ensemble-claude-code) - PreToolUse path guard on Edit|Write.
 #
 # This guard now serves TWO wirings, selected by its first argument ($1):
@@ -36,6 +51,58 @@
 #   - main-session's default disposition is PASS (it blacklists only foreign
 #     roots), so when foreign cannot be PROVEN it falls to pass - the friction
 #     budget dominates: a main session must never be blanket-asked.
+#
+# Session-scoped grant mechanism (main-session mode only, amended 2026-08-30):
+# a foreign-root ask this guard would otherwise raise can be pre-empted by a
+# grant the Concertmaster itself wrote for the session - one absolute root per
+# line in hooks/session-roots/<session_id>.txt, beside this script (located
+# via the script's own directory, never $CLAUDE_CONFIG_DIR, so the grant
+# travels with the guard). session_id is parsed from the same PreToolUse input
+# as every other field here, validated (non-empty, [0-9A-Za-z-]+ only), and
+# the whole check is skipped outright when the input carries an agent_id - a
+# dispatched subagent never consumes or widens a grant meant for the session
+# that dispatched it (no self-widening). Each grant line is trimmed first
+# (leading/trailing whitespace and a trailing CR, so a CRLF-terminated grant
+# file still parses) then normalized and canonicalized FIRST - unlike the
+# scratch_roots loop below, which normalizes its own candidate roots but
+# canonicalizes only the target; a grant line gets the full canonicalize()
+# treatment before the minimality floor is counted on that CANONICAL result,
+# never the raw line: the root must resolve to at least three path segments
+# below its anchor - the drive root, the users directory, and any whole
+# user home are refused; the shallowest grantable root is a Projects-level
+# folder immediately below a user home (three segments from the anchor),
+# and a project folder nested one level inside that (four segments) is
+# also accepted - so ".."/"." padding on the raw line buys nothing the
+# canonicalization does not also collapse away, and a
+# grant line can never widen to a whole drive, a whole top-level directory,
+# or a whole user home. A canonical root that equals, contains, or is
+# contained by this script's own hooks directory (the grant file's own home)
+# is refused outright, checked in both directions so a grant landing INSIDE
+# the hooks dir (e.g. <hooks>/session-roots) is caught the same as one
+# covering it - and checked against both the long and short (Windows 8.3)
+# canonical forms of the hooks directory, so a grant line phrased in either
+# naming convention cannot evade the test the way a lexical prefix check
+# alone could (the same dual-form treatment the scratchpad exemption above
+# gives its own candidate roots, via cygpath -m -l / -m -s, degrading to the
+# single plain form where cygpath is absent). This is the same
+# no-self-widening principle as the agent_id skip above, since a grant
+# covering the hooks directory, or one landing inside it, would make every
+# later write to a grant file in it silent. A line that fails any test, or
+# that does not canonicalize to a recognized absolute anchor at all, is
+# skipped, never treated as a match. The surviving canonical root is
+# prefix-matched against the already-canonical target; a match sets
+# own_root=1, the same verdict an own-root write earns.
+# The grant file is written by the Concertmaster (via the Write tool, so the
+# guard's own ask still carries the widening to the human the first time it is
+# needed) and removed by the SessionEnd litter-flag hook; this script never
+# creates the session-roots/ directory itself, and its absence is the
+# ordinary case - tolerated the same as a missing grant file for one session.
+# Whether --resume/--continue reuse a prior run's session id is undocumented
+# (checked 2026-08-29 against the official hooks documentation, which is
+# silent on it); both possible branches are benign here regardless: reuse
+# after the grant file was already cleaned up just returns to the ordinary ask
+# path, and reuse after a crash (file never cleaned) resumes that session's
+# own prior grant, never a foreign session's.
 
 set -u
 
@@ -263,6 +330,136 @@ $posix_tmp/claude"
       ;;
   esac
   [ "$in_scratch" -eq 1 ] && exit 0
+
+  # Session-scoped grant check: only a foreign-root verdict (own_root=0) has
+  # anything to gain from a grant, so gate the whole lookup on it - own-root
+  # and undeterminable verdicts already pass below, untouched.
+  if [ "$own_root" -eq 0 ]; then
+    session_id="$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+    case "$session_id" in
+      ''|*[!0-9A-Za-z-]*) session_id="" ;;
+    esac
+    agent_id="$(printf '%s' "$input" | sed -n 's/.*"agent_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+    # A subagent must not consume or widen a grant made for the dispatching
+    # session; agent_id present at all (any value) means this call is a
+    # subagent's, so the grant check is skipped outright - no self-widening.
+    if [ -n "$session_id" ] && [ -z "$agent_id" ]; then
+      grant_file="$(dirname "$0")/session-roots/$session_id.txt"
+      if [ -f "$grant_file" ]; then
+        # This guard's own hooks directory, canonicalized once in BOTH its
+        # long and short (Windows 8.3, e.g. RUNNER~1) canonical forms - the
+        # same treatment the scratchpad exemption above gives its own
+        # candidate roots (cygpath -m -l / -m -s), reused here because a
+        # lexical-prefix self-cover test is evadable by an 8.3-form grant
+        # line against a long-form $0, or the reverse (observed live, both
+        # directions). A grant covering the hooks directory would make every
+        # later write to a grant file in it silent, defeating the
+        # one-ask-per-widening property. Only computed when dirname "$0"
+        # itself carries a recognized absolute anchor; otherwise both forms
+        # stay empty and the self-cover check below simply never matches
+        # (fails toward the pre-repair behavior, never toward a new hazard).
+        # cygpath is applied directly to the hooks directory itself (unlike
+        # the scratchpad block, which applies it to a not-yet-existing
+        # leaf's parent) since the hooks directory always exists while this
+        # script is running from it; where cygpath is absent, or a given
+        # form comes back empty, that variable degrades to the single plain
+        # canonicalize() result, so the test still runs, just without the
+        # second form.
+        hooks_dir_raw="$(norm_root "$(dirname "$0")")"
+        hooks_dir_canon_l=""
+        hooks_dir_canon_s=""
+        case "$hooks_dir_raw" in
+          [A-Za-z]:/*|/*)
+            if command -v cygpath >/dev/null 2>&1; then
+              _hl="$(cygpath -m -l "$hooks_dir_raw" 2>/dev/null)"
+              [ -n "$_hl" ] && hooks_dir_canon_l="$(canonicalize "$(norm_root "$_hl")")"
+              _hs="$(cygpath -m -s "$hooks_dir_raw" 2>/dev/null)"
+              [ -n "$_hs" ] && hooks_dir_canon_s="$(canonicalize "$(norm_root "$_hs")")"
+            fi
+            [ -n "$hooks_dir_canon_l" ] || hooks_dir_canon_l="$(canonicalize "$hooks_dir_raw")"
+            [ -n "$hooks_dir_canon_s" ] || hooks_dir_canon_s="$hooks_dir_canon_l"
+            ;;
+          *) ;;
+        esac
+        while IFS= read -r _line || [ -n "$_line" ]; do
+          # Trim a trailing CR (CRLF-terminated grant files) and leading/
+          # trailing whitespace before any other check.
+          _line="$(printf '%s' "$_line" | sed 's/\r$//; s/^[[:space:]]*//; s/[[:space:]]*$//')"
+          case "$_line" in
+            ''|'#'*) continue ;;
+          esac
+          _gr="$(norm_root "$_line")"
+          case "$_gr" in
+            [A-Za-z]:/*|/*) : ;;
+            *)               continue ;;
+          esac
+          # Canonicalize FIRST, then hold the CANONICAL result to the
+          # minimality floor - a raw "../.." padded line buys nothing the
+          # canonicalization does not also discard before the count runs.
+          _gr_canon="$(canonicalize "$_gr")"
+          case "$_gr_canon" in
+            [A-Za-z]:/*) _gcanon_anchor="${_gr_canon%%/*}"; _gcanon_rest="${_gr_canon#"$_gcanon_anchor"/}" ;;
+            /*)          _gcanon_rest="${_gr_canon#/}" ;;
+            *)           continue ;;
+          esac
+          # Minimality floor: refuse a canonical root fewer than three
+          # segments below its anchor - the drive root, the users directory,
+          # and any whole user home are refused; a Projects-level folder
+          # immediately below a user home (three segments) is the shallowest
+          # grantable root, a project folder nested one level inside that
+          # (four segments) also kept -
+          # Concertmaster's announced ruling raising the floor from two
+          # segments (which accepted a whole user home) to three, so a grant
+          # line can never widen to a whole drive, a whole top-level dir, or
+          # a whole user home, regardless of how it was padded on the raw
+          # line.
+          _seg_count=0
+          _oldifs2="$IFS"
+          _oldf2="$-"
+          set -f
+          IFS='/'
+          for _gseg in $_gcanon_rest; do
+            case "$_gseg" in '') continue ;; esac
+            _seg_count=$((_seg_count + 1))
+          done
+          IFS="$_oldifs2"
+          case "$_oldf2" in *f*) ;; *) set +f ;; esac
+          [ "$_seg_count" -ge 3 ] || continue
+          # No-self-widening: a canonical root that equals, contains, or is
+          # contained by this script's own hooks directory is refused - both
+          # directions (a grant covering the hooks dir, or landing inside it,
+          # e.g. <hooks>/session-roots), tested against both the long and
+          # short (8.3) canonical forms of the hooks directory computed
+          # above, so a grant line phrased in either naming convention is
+          # caught. Same principle as the agent_id skip above.
+          _self_cover=0
+          case "$hooks_dir_canon_l" in
+            "$_gr_canon"|"$_gr_canon"/*) _self_cover=1 ;;
+          esac
+          case "$_gr_canon" in
+            "$hooks_dir_canon_l"|"$hooks_dir_canon_l"/*) _self_cover=1 ;;
+          esac
+          if [ "$hooks_dir_canon_s" != "$hooks_dir_canon_l" ]; then
+            case "$hooks_dir_canon_s" in
+              "$_gr_canon"|"$_gr_canon"/*) _self_cover=1 ;;
+            esac
+            case "$_gr_canon" in
+              "$hooks_dir_canon_s"|"$hooks_dir_canon_s"/*) _self_cover=1 ;;
+            esac
+          fi
+          [ "$_self_cover" -eq 1 ] && continue
+          # own_root=0 here guarantees canon is non-empty (a root was already
+          # available to judge the target against), so no separate
+          # ".."-escape guard is needed on this side of the match.
+          case "$canon" in
+            "$_gr_canon"/*) own_root=1 ;;
+          esac
+          [ "$own_root" -eq 1 ] && break
+        done < "$grant_file"
+      fi
+    fi
+  fi
+
   [ "$own_root" -eq 0 ] || exit 0
   ask "Main-session path guard: this write targets a path outside the session's own root (a foreign root - e.g. another lane's worktree, or a stray external path). Cross-root writes - including a lane session touching main's topology face - are not auto-accepted; the human may still approve explicitly."
 fi
