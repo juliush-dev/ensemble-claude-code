@@ -1,5 +1,5 @@
 ---
-name: unslop
+name: writing-and-talking-style
 description: Write and clean prose the way a human writes it, with soul and with the fewest words that keep precision, understanding and depth. Every member uses it for anything a human may read, the human operator's answers first. Removes AI tells and adds voice.
 provenance: curation record curation/claude-code/records/unslop.md (tending third-party-curation, beat 2026-08-25-1, 2026-08-25)
 ---
@@ -43,9 +43,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
 
-# Unslop
+# Writing and talking style
 
-Write and clean prose so it reads as a human wrote it, with voice and with no word the reader would not miss. Edit out the patterns below, then add what a machine leaves out.
+Write and clean prose so it reads as a human wrote it, with voice and with no word the reader would not miss. Edit out the patterns below, then add what a machine leaves out. Curated from the upstream `unslop` skill.
 
 ## Reach and precedence
 

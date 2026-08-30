@@ -146,7 +146,7 @@ Copy-Item (Join-Path $src '.mcp.json') $target
 # skill (health-check) through the designated-work door, pursuit framework-dna,
 # the user's word 2026-08-25; + 1 native skill (wrap) through the designated-work
 # door, pursuit framework-dna, split out of designate, the user's word 2026-08-26;
-# + 1 curated skill (unslop) through the curation
+# + 1 curated skill (writing-and-talking-style) through the curation
 # door, admitted through curation/claude-code/records/unslop.md, tending
 # third-party-curation, beat 2026-08-25-1 (one SKILL.md, no references/,
 # deployed and footprint-verified 2026-08-25 on the user's cos update).)
@@ -161,7 +161,7 @@ $same = @(
     'skills\operational-lane-discipline\SKILL.md',
     'skills\health-check\SKILL.md',
     'skills\wrap\SKILL.md',
-    'skills\unslop\SKILL.md',
+    'skills\writing-and-talking-style\SKILL.md',
     'skills\cross-shell-command-discipline\SKILL.md',
     'skills\skill-frontmatter-discipline\SKILL.md',
     'skills\decision-proposal-discipline\SKILL.md',
