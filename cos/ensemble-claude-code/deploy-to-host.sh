@@ -68,7 +68,7 @@ sha256() {
 
 if [ -e "$target" ]; then
   if [ "$update" -eq 1 ]; then
-    echo "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git holds the source history for rollback.)"
+    echo "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried; a host skills folder never in source is pruned without recovery. The deployed home is a product of the source, so additions belong there, not here.)"
   elif [ "$force" -eq 1 ]; then
     backup="${target}.backup-$(date +%Y%m%d-%H%M%S)"
     mv "$target" "$backup"

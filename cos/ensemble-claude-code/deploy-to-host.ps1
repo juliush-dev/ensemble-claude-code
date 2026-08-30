@@ -33,7 +33,7 @@ Write-Host "Target: $target"
 
 if (Test-Path $target) {
     if ($Update) {
-        Write-Host "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git holds the source history for rollback.)"
+        Write-Host "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried; a host skills folder never in source is pruned without recovery. The deployed home is a product of the source, so additions belong there, not here.)"
     } elseif (-not $Force) {
         Write-Host ""
         Write-Host "Target already exists. Contents:"
