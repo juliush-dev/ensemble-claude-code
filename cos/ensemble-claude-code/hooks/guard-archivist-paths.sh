@@ -17,6 +17,12 @@
 #   (HIGH-1 Branch B, the user's word "reword"; MED-1) - the drive-rooted
 #   user-home path shape removed from both minimality-floor comment blocks
 #   so the leak scanner's placeholder-path check passes; no claim changed.
+#   amended 2026-08-30 by route grants-for-members (R2), the user's
+#   correction "for this session alone - its dispatched members included" -
+#   grant consumption opened to a session's dispatched members (each hand
+#   meeting the granted tree under the rules already governing it); the
+#   distinct self-widening ask (Rider A) added, since widening the grant
+#   surface itself stays Concertmaster-only.
 # Ensemble (ensemble-claude-code) - PreToolUse path guard on Edit|Write.
 #
 # This guard now serves TWO wirings, selected by its first argument ($1):
@@ -58,10 +64,19 @@
 # line in hooks/session-roots/<session_id>.txt, beside this script (located
 # via the script's own directory, never $CLAUDE_CONFIG_DIR, so the grant
 # travels with the guard). session_id is parsed from the same PreToolUse input
-# as every other field here, validated (non-empty, [0-9A-Za-z-]+ only), and
-# the whole check is skipped outright when the input carries an agent_id - a
-# dispatched subagent never consumes or widens a grant meant for the session
-# that dispatched it (no self-widening). Each grant line is trimmed first
+# as every other field here, validated (non-empty, [0-9A-Za-z-]+ only). A
+# grant is consumed by the dispatching session AND its dispatched members
+# alike (amended 2026-08-30, route grants-for-members - the user's
+# correction "for this session alone - its dispatched members included"): a
+# call carrying an agent_id meets the granted tree under the same rules
+# governing any own-root write, no agent_id exclusion on the match itself.
+# Widening the grant surface stays Concertmaster-only - a distinct ask
+# (Rider A, below) fires instead when an agent_id-carrying hand's write
+# targets the grant-file directory itself, catching the straightforward and
+# case-varied (case-folded, MED-1) forms of that write. It does not catch a
+# Bash-shaped write that never goes through the Edit|Write tool wiring this
+# guard is invoked through - that bypass is unclosed, named in the route's
+# recorded Gaps 2026-08-30-1. Each grant line is trimmed first
 # (leading/trailing whitespace and a trailing CR, so a CRLF-terminated grant
 # file still parses) then normalized and canonicalized FIRST - unlike the
 # scratch_roots loop below, which normalizes its own candidate roots but
@@ -85,9 +100,11 @@
 # alone could (the same dual-form treatment the scratchpad exemption above
 # gives its own candidate roots, via cygpath -m -l / -m -s, degrading to the
 # single plain form where cygpath is absent). This is the same
-# no-self-widening principle as the agent_id skip above, since a grant
-# covering the hooks directory, or one landing inside it, would make every
-# later write to a grant file in it silent. A line that fails any test, or
+# no-self-widening principle Rider A checks below for the target side (a
+# dispatched member's write landing in <hooks_dir>/session-roots), applied
+# here to a grant LINE instead: a grant covering the hooks directory, or one
+# landing inside it, would make every later write to a grant file in it
+# silent. A line that fails any test, or
 # that does not canonicalize to a recognized absolute anchor at all, is
 # skipped, never treated as a match. The surviving canonical root is
 # prefix-matched against the already-canonical target; a match sets
@@ -158,6 +175,19 @@ canonicalize() {
   printf '%s' "$_anchor$_out"
 }
 
+# Case-fold a canonical path for a case-insensitive-filesystem comparison
+# (Windows, default macOS): a byte-exact compare of two canonical paths
+# still misses a flipped-case variant of the same real file or directory
+# (MED-1, FIT read 2026-08-30 - the Rider A and grant-loop self-cover
+# comparisons below were byte-exact before this repair). Used only to fold
+# BOTH sides of a self-widening comparison immediately before it runs;
+# canonical forms stored elsewhere (root_canon, canon, grant lines) stay
+# case-preserving, since the own-root prefix match is not this guard's
+# reported defect and folding it is out of scope here.
+lc() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]'
+}
+
 # Absolute vs relative. An absolute Windows drive path (C:/...) or POSIX/UNC
 # path (/...) is judged against root as-is (after canonicalization); a relative
 # path is resolved against root FIRST (it is written from the session's own
@@ -214,11 +244,9 @@ JSON
 if [ "$mode" = "main-session" ]; then
   # Foreign-root-only: ask ONLY on a proven foreign-root write. Own-root
   # (own_root=1) and undeterminable (own_root=-1, fail to main's PASS default)
-  # both pass untouched - the friction budget honored.
-  # The Archivist writes the team's memory in any repo without asking (the
-  # user's word, 2026-08-25); its notebook-and-inbox-only boundary is doctrine
-  # on its card, not a prompt. Every other caller is unchanged.
-  [ "$agent_type" = "archivist" ] && exit 0
+  # both pass untouched - the friction budget honored. The Archivist's own
+  # silent exit (agent_type = "archivist") sits further down, AFTER Rider A
+  # (HIGH-1, FIT read 2026-08-30) - see the comment there for why.
   # The harness's own per-session scratchpad is never a topology surface or a
   # project tree; on the user's word 2026-08-25 writes there ask nobody. The
   # scratchpad root is derived from the environment so one script serves without a
@@ -331,56 +359,83 @@ $posix_tmp/claude"
   esac
   [ "$in_scratch" -eq 1 ] && exit 0
 
+  # session_id and agent_id are parsed unconditionally here (not gated on
+  # own_root=0), because Rider A's self-widening ask below needs agent_id
+  # regardless of own_root - it must hold even when the session's own root
+  # happens to contain the hooks dir (own_root=1 would otherwise exit
+  # silently at the gate that follows).
+  session_id="$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+  case "$session_id" in
+    ''|*[!0-9A-Za-z-]*) session_id="" ;;
+  esac
+  agent_id="$(printf '%s' "$input" | sed -n 's/.*"agent_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+
+  # This guard's own hooks directory, canonicalized once in BOTH its long and
+  # short (Windows 8.3, e.g. RUNNER~1) canonical forms - the same treatment
+  # the scratchpad exemption above gives its own candidate roots (cygpath -m
+  # -l / -m -s), reused here because a lexical-prefix self-cover test is
+  # evadable by an 8.3-form path against a long-form $0, or the reverse
+  # (observed live, both directions). Needed unconditionally (not only when a
+  # grant file exists) by both the grant loop's self-cover test below and by
+  # Rider A's self-widening-target test that follows it. Only computed when
+  # dirname "$0" itself carries a recognized absolute anchor; otherwise both
+  # forms stay empty and the checks that use them simply never match (fails
+  # toward the pre-repair behavior, never toward a new hazard). cygpath is
+  # applied directly to the hooks directory itself (unlike the scratchpad
+  # block, which applies it to a not-yet-existing leaf's parent) since the
+  # hooks directory always exists while this script is running from it;
+  # where cygpath is absent, or a given form comes back empty, that variable
+  # degrades to the single plain canonicalize() result, so the tests still
+  # run, just without the second form.
+  hooks_dir_raw="$(norm_root "$(dirname "$0")")"
+  hooks_dir_canon_l=""
+  hooks_dir_canon_s=""
+  case "$hooks_dir_raw" in
+    [A-Za-z]:/*|/*)
+      if command -v cygpath >/dev/null 2>&1; then
+        _hl="$(cygpath -m -l "$hooks_dir_raw" 2>/dev/null)"
+        [ -n "$_hl" ] && hooks_dir_canon_l="$(canonicalize "$(norm_root "$_hl")")"
+        _hs="$(cygpath -m -s "$hooks_dir_raw" 2>/dev/null)"
+        [ -n "$_hs" ] && hooks_dir_canon_s="$(canonicalize "$(norm_root "$_hs")")"
+      fi
+      [ -n "$hooks_dir_canon_l" ] || hooks_dir_canon_l="$(canonicalize "$hooks_dir_raw")"
+      [ -n "$hooks_dir_canon_s" ] || hooks_dir_canon_s="$hooks_dir_canon_l"
+      ;;
+    *)
+      # LOW-2 (latent, currently unreachable): if dirname "$0" is not
+      # absolute, both canonical forms stay empty and every check that
+      # depends on them - the grant loop's self-cover refusal, Rider A's
+      # self-widening-target test - simply never matches, same as when the
+      # hooks directory cannot be resolved at all. Every settings.json
+      # wiring invokes this script with an absolute path today, so this
+      # branch does not fire in practice; named here so a future rewiring
+      # that loses that guarantee does not silently reopen self-widening.
+      ;;
+  esac
+
+  # Case-folded copies of both canonical hooks-directory forms, computed
+  # once here and reused by both self-widening tests below (the grant
+  # loop's self-cover refusal and Rider A) so a flipped-case path on a
+  # case-insensitive filesystem is caught the same as a byte-exact one
+  # (MED-1, FIT read 2026-08-30). Folding "" yields "", so these stay
+  # harmlessly empty when the hooks directory could not be resolved above.
+  hooks_dir_canon_l_lc="$(lc "$hooks_dir_canon_l")"
+  hooks_dir_canon_s_lc="$(lc "$hooks_dir_canon_s")"
+
   # Session-scoped grant check: only a foreign-root verdict (own_root=0) has
-  # anything to gain from a grant, so gate the whole lookup on it - own-root
-  # and undeterminable verdicts already pass below, untouched.
+  # anything to gain from a grant match - own-root and undeterminable
+  # verdicts already pass below, untouched.
   if [ "$own_root" -eq 0 ]; then
-    session_id="$(printf '%s' "$input" | sed -n 's/.*"session_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-    case "$session_id" in
-      ''|*[!0-9A-Za-z-]*) session_id="" ;;
-    esac
-    agent_id="$(printf '%s' "$input" | sed -n 's/.*"agent_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-    # A subagent must not consume or widen a grant made for the dispatching
-    # session; agent_id present at all (any value) means this call is a
-    # subagent's, so the grant check is skipped outright - no self-widening.
-    if [ -n "$session_id" ] && [ -z "$agent_id" ]; then
+    # A grant is consumed by the dispatching session AND its dispatched
+    # members alike - a member's hand meets the granted tree under the same
+    # rules governing any own-root write, no agent_id exclusion on the match
+    # itself (amended 2026-08-30, route grants-for-members, the user's
+    # correction). Widening the grant surface stays Concertmaster-only,
+    # guarded separately by Rider A below - never by excluding
+    # agent_id-carrying calls from consuming a grant here.
+    if [ -n "$session_id" ]; then
       grant_file="$(dirname "$0")/session-roots/$session_id.txt"
       if [ -f "$grant_file" ]; then
-        # This guard's own hooks directory, canonicalized once in BOTH its
-        # long and short (Windows 8.3, e.g. RUNNER~1) canonical forms - the
-        # same treatment the scratchpad exemption above gives its own
-        # candidate roots (cygpath -m -l / -m -s), reused here because a
-        # lexical-prefix self-cover test is evadable by an 8.3-form grant
-        # line against a long-form $0, or the reverse (observed live, both
-        # directions). A grant covering the hooks directory would make every
-        # later write to a grant file in it silent, defeating the
-        # one-ask-per-widening property. Only computed when dirname "$0"
-        # itself carries a recognized absolute anchor; otherwise both forms
-        # stay empty and the self-cover check below simply never matches
-        # (fails toward the pre-repair behavior, never toward a new hazard).
-        # cygpath is applied directly to the hooks directory itself (unlike
-        # the scratchpad block, which applies it to a not-yet-existing
-        # leaf's parent) since the hooks directory always exists while this
-        # script is running from it; where cygpath is absent, or a given
-        # form comes back empty, that variable degrades to the single plain
-        # canonicalize() result, so the test still runs, just without the
-        # second form.
-        hooks_dir_raw="$(norm_root "$(dirname "$0")")"
-        hooks_dir_canon_l=""
-        hooks_dir_canon_s=""
-        case "$hooks_dir_raw" in
-          [A-Za-z]:/*|/*)
-            if command -v cygpath >/dev/null 2>&1; then
-              _hl="$(cygpath -m -l "$hooks_dir_raw" 2>/dev/null)"
-              [ -n "$_hl" ] && hooks_dir_canon_l="$(canonicalize "$(norm_root "$_hl")")"
-              _hs="$(cygpath -m -s "$hooks_dir_raw" 2>/dev/null)"
-              [ -n "$_hs" ] && hooks_dir_canon_s="$(canonicalize "$(norm_root "$_hs")")"
-            fi
-            [ -n "$hooks_dir_canon_l" ] || hooks_dir_canon_l="$(canonicalize "$hooks_dir_raw")"
-            [ -n "$hooks_dir_canon_s" ] || hooks_dir_canon_s="$hooks_dir_canon_l"
-            ;;
-          *) ;;
-        esac
         while IFS= read -r _line || [ -n "$_line" ]; do
           # Trim a trailing CR (CRLF-terminated grant files) and leading/
           # trailing whitespace before any other check.
@@ -431,20 +486,25 @@ $posix_tmp/claude"
           # e.g. <hooks>/session-roots), tested against both the long and
           # short (8.3) canonical forms of the hooks directory computed
           # above, so a grant line phrased in either naming convention is
-          # caught. Same principle as the agent_id skip above.
+          # caught. Same principle as Rider A's self-widening-target check
+          # below. Both sides are case-folded before the compare (MED-1, FIT
+          # read 2026-08-30) - a byte-exact compare on a case-insensitive
+          # filesystem (Windows, default macOS) misses a flipped-case grant
+          # line that still names the same real hooks directory.
           _self_cover=0
-          case "$hooks_dir_canon_l" in
-            "$_gr_canon"|"$_gr_canon"/*) _self_cover=1 ;;
+          _gr_canon_lc="$(lc "$_gr_canon")"
+          case "$hooks_dir_canon_l_lc" in
+            "$_gr_canon_lc"|"$_gr_canon_lc"/*) _self_cover=1 ;;
           esac
-          case "$_gr_canon" in
-            "$hooks_dir_canon_l"|"$hooks_dir_canon_l"/*) _self_cover=1 ;;
+          case "$_gr_canon_lc" in
+            "$hooks_dir_canon_l_lc"|"$hooks_dir_canon_l_lc"/*) _self_cover=1 ;;
           esac
           if [ "$hooks_dir_canon_s" != "$hooks_dir_canon_l" ]; then
-            case "$hooks_dir_canon_s" in
-              "$_gr_canon"|"$_gr_canon"/*) _self_cover=1 ;;
+            case "$hooks_dir_canon_s_lc" in
+              "$_gr_canon_lc"|"$_gr_canon_lc"/*) _self_cover=1 ;;
             esac
-            case "$_gr_canon" in
-              "$hooks_dir_canon_s"|"$hooks_dir_canon_s"/*) _self_cover=1 ;;
+            case "$_gr_canon_lc" in
+              "$hooks_dir_canon_s_lc"|"$hooks_dir_canon_s_lc"/*) _self_cover=1 ;;
             esac
           fi
           [ "$_self_cover" -eq 1 ] && continue
@@ -459,6 +519,53 @@ $posix_tmp/claude"
       fi
     fi
   fi
+
+  # Rider A - the distinct self-widening ask: a dispatched member (agent_id
+  # non-empty) writing to, or into, the grant-file directory itself
+  # (<hooks_dir>/session-roots) is attempted self-widening of the grant
+  # mechanism, not an ordinary foreign-root write - checked here, BEFORE the
+  # own-root gate below, so it holds even when own_root=1 (the session's own
+  # root happens to contain the hooks dir). Tested against both the long and
+  # short (8.3) canonical forms of the hooks directory computed above, same
+  # reasoning as the grant loop's self-cover test, and case-folded on both
+  # sides before the compare (MED-1, FIT read 2026-08-30) so a flipped-case
+  # path on a case-insensitive filesystem is caught the same as a byte-exact
+  # one. An ask, never a deny - the "neither mode ever hard-blocks" invariant
+  # holds here too; the Concertmaster's own hand (no agent_id) is untouched by
+  # this check and keeps the ordinary once-per-root foreign-root ask below.
+  # This catches the straightforward and case-varied forms of a self-widening
+  # write; it does not catch a Bash-shaped write that bypasses the Edit|Write
+  # tool wiring this guard is invoked through entirely - unclosed, named in
+  # the route's recorded Gaps 2026-08-30-1.
+  if [ -n "$agent_id" ]; then
+    _sw_target_lc="$(lc "${canon:-$norm}")"
+    _sw_hit=0
+    if [ -n "$hooks_dir_canon_l" ]; then
+      _sw_root_lc="$hooks_dir_canon_l_lc/session-roots"
+      case "$_sw_target_lc" in
+        "$_sw_root_lc"|"$_sw_root_lc"/*) _sw_hit=1 ;;
+      esac
+    fi
+    if [ "$_sw_hit" -eq 0 ] && [ -n "$hooks_dir_canon_s" ]; then
+      _sw_root_lc="$hooks_dir_canon_s_lc/session-roots"
+      case "$_sw_target_lc" in
+        "$_sw_root_lc"|"$_sw_root_lc"/*) _sw_hit=1 ;;
+      esac
+    fi
+    [ "$_sw_hit" -eq 1 ] && ask "Main-session path guard: this write targets the session-grant directory itself, from a dispatched member (agent_id present). A member may consume a grant the Concertmaster wrote, never widen or overwrite the grant mechanism itself - attempted self-widening, distinct from an ordinary foreign-root write. Not auto-accepted; the human may still approve explicitly."
+  fi
+
+  # The Archivist writes the team's memory in any repo without asking (the
+  # user's word, 2026-08-25); its notebook-and-inbox-only boundary is doctrine
+  # on its card, not a prompt. This exit sits HERE - after Rider A, not at the
+  # top of main-session mode - so a dispatched Archivist targeting the
+  # grant-file directory itself (<hooks_dir>/session-roots) still meets
+  # Rider A's distinct self-widening ask instead of passing silently (HIGH-1,
+  # FIT read 2026-08-30: the early exit previously sat before Rider A and
+  # swallowed that case). Every other archivist write reaches this same
+  # silent exit unchanged - the disposition change is scoped to session-roots
+  # targets only.
+  [ "$agent_type" = "archivist" ] && exit 0
 
   [ "$own_root" -eq 0 ] || exit 0
   ask "Main-session path guard: this write targets a path outside the session's own root (a foreign root - e.g. another lane's worktree, or a stray external path). Cross-root writes - including a lane session touching main's topology face - are not auto-accepted; the human may still approve explicitly."

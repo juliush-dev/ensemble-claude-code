@@ -72,8 +72,9 @@ Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
     $d = Join-Path $target ("skills\" + $_.Name)
     New-Item -ItemType Directory -Force -Path $d | Out-Null
     Copy-Item (Join-Path $_.FullName 'SKILL.md') $d
-    # Carry a skill's references\ folder if it has one (the curated obsidian
-    # trio ships references; the five native runbooks do not).
+    # Carry a skill's references\ folder if it has one (five skills ship
+    # references - the curated obsidian trio plus felt-intent-extraction and
+    # mermaid-multiview-learning-document; the seven native runbooks do not).
     $refs = Join-Path $_.FullName 'references'
     if (Test-Path $refs) {
         $rd = Join-Path $d 'references'
