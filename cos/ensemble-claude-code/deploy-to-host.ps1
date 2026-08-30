@@ -16,7 +16,8 @@
 # What it does: copies the staged set from this folder to
 # %LOCALAPPDATA%\ensemble-claude-code per the COS.md deploy map, stripping the
 # provenance comment line from the deployed always-on copies (the source keeps
-# them), then hash-verifies every byte-identical file and prints the inventory.
+# them), pruning any host skills\ folder no longer present in source, then
+# hash-verifies every byte-identical file and prints the inventory.
 # It refuses to overwrite an existing target unless -Force (which moves the
 # existing directory to a timestamped backup first; that backup is the
 # rollback baseline).
@@ -82,6 +83,20 @@ Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
         Copy-Item (Join-Path $refs '*') $rd
     }
 }
+# Prune host skill folders that no longer exist in source. A renamed or removed
+# skill (e.g. skills\unslop -> skills\writing-and-talking-style) would otherwise
+# linger beside its replacement on an -Update. Scoped strictly to skills\
+# subdirectories; nothing else is ever removed.
+$targetSkills = Join-Path $target 'skills'
+if (Test-Path $targetSkills) {
+    Get-ChildItem $targetSkills -Directory | ForEach-Object {
+        if (-not (Test-Path (Join-Path $src ("skills\" + $_.Name)))) {
+            Remove-Item $_.FullName -Recurse -Force
+            Write-Host "Pruned stale skill folder (absent from source): skills\$($_.Name)"
+        }
+    }
+}
+
 Copy-Item (Join-Path $src 'hooks\*.sh') (Join-Path $target 'hooks')
 Copy-Item (Join-Path $src 'launch\*.ps1') (Join-Path $target 'launch')
 

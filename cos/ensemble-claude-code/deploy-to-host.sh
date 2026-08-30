@@ -8,8 +8,9 @@
 # The Linux/macOS analog of deploy-to-host.ps1. Same behavior, same honesty:
 # copies the staged set from this folder into an isolated Claude Code config
 # home, strips the provenance comment line from the deployed always-on copies
-# (the source keeps them), hash-verifies every byte-identical file, prints the
-# inventory, and refuses to clobber an existing home unless --update or --force.
+# (the source keeps them), prunes any host skills/ folder no longer present in
+# source, hash-verifies every byte-identical file, prints the inventory, and
+# refuses to clobber an existing home unless --update or --force.
 #
 # TARGET HOME - config-home semantics:
 #   ${CLAUDE_ENSEMBLE_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ensemble-claude-code}
@@ -141,6 +142,21 @@ for d in "$src"/skills/*/; do
     done
   fi
 done
+
+# Prune host skill folders that no longer exist in source. A renamed or removed
+# skill (e.g. skills/unslop -> skills/writing-and-talking-style) would otherwise
+# linger beside its replacement on an --update. Scoped strictly to skills/
+# subdirectories; nothing else is ever removed.
+if [ -d "$target/skills" ]; then
+  for d in "$target"/skills/*/; do
+    [ -d "$d" ] || continue
+    sk="$(basename "$d")"
+    if [ ! -d "$src/skills/$sk" ]; then
+      rm -rf "$d"
+      echo "Pruned stale skill folder (absent from source): skills/$sk"
+    fi
+  done
+fi
 
 for f in "$src"/hooks/*.sh; do
   copy_verified "hooks/$(basename "$f")" "hooks/$(basename "$f")"

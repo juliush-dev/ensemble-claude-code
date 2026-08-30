@@ -15,6 +15,7 @@ Provenance: tailored third-party OSCC realization, admitted through the curation
   License: MIT (pstack/LICENSE, (c) 2026 Lauren Tan); full notice below. The repo
     root carries no LICENSE; the plugin-level notice is the licensing basis.
   Tailored on: 2026-08-25 (deployed, footprint-verified 2026-08-25)
+  Renamed: 2026-08-30, from the upstream name unslop, the user's word.
 This file is a tailored copy; the pristine intake snapshot lives under
 curation/claude-code/intake/unslop/upstream/ and is never edited by us. The
 deploy loop carries SKILL.md and references/ only, so the sibling LICENSE file
