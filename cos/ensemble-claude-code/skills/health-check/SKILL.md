@@ -1,7 +1,6 @@
 ---
 name: health-check
 description: Use when the human orders a health check of a project or a grouping folder; never self-triggered. Carries the runbook of the health-check tending - the two common metrics as kept-conditions plus the project's own, the sweep from atoms to the whole considered collectively, the occurrence record, and flag-and-spawn for what exceeds the beat.
-provenance: pursuit framework-dna, route dna-into-the-cos (the user's word 2026-08-25); the meaning of record the project-health entry in the workbench's Aim.md, blessed 2026-08-25
 ---
 
 # Health check — the ordered beat on a project's health

@@ -38,7 +38,6 @@ fi
 # a deliberate override such as =0 to opt out for a session), then exported so the
 # exec'd claude child inherits them; this script runs in its own process, so the
 # calling shell is untouched with no restore needed.
-# provenance: TUI-fullscreen wish, Aim.md (captured 2026-07-24).
 : "${CLAUDE_CODE_NO_FLICKER:=1}"
 : "${CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT:=1}"
 export CLAUDE_CODE_NO_FLICKER CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT

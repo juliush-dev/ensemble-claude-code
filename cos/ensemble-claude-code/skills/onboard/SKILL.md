@@ -1,7 +1,6 @@
 ---
 name: onboard
 description: Use when joining or re-entering a project — at session start once the working project is known, when dispatched into a project not yet read this session, or when resuming after a long absence. Reads the project's face in order (constitution, aim surface, registry) before any work touches it.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-28 (the user's port word) extending the Honesty notes' undesignated-space bullet with pre-designation authority for the body's own governance surfaces and the non-blocking designation offer, ported from the fms project's port request (grounding/2026-07-28-fms-port-request.md, the Archivist), admitted per the Examiner's evaluation of 2026-07-28 (evaluation-precedes-adoption bound); amended 2026-08-25 (the user's word, pursuit framework-dna, route dna-into-the-cos) reversing the honesty note's serve-first shape to wrap-first — the offer to wrap precedes work and a declined wrap stands the ensemble down — reading the face at the anatomy's `notebook/`, and repointing the same note's dangling "locality law's carve-out" citation to name what the locality law actually says (MED-1 from the pre-release beat); amended 2026-08-26 (pursuit framework-dna, route wrap-method-into-the-cos, the user's word) repointing the wrap ask from the `designate` runbook's wrap section to the new `wrap` runbook
 ---
 
 # Onboard — read the project's face before touching it

@@ -1,7 +1,6 @@
 ---
 name: skill-frontmatter-discipline
 description: Use when authoring or editing SKILL.md frontmatter, reviewing a skill's metadata for parser compatibility, or when a strict YAML consumer (gray-matter, js-yaml, PyYAML) rejects a SKILL.md with an error like incomplete explicit mapping pair or missing key node.
-provenance: pursuit formal-skills-promotion, agreed triage map contracts/2026-07-09-formal-skills-promotion/routes/triage-map/map.md, promoted 2026-07-09 on the user's word (deployed, footprint-verified 2026-07-09); source skills/formal/skill-frontmatter-discipline/ (the team's own authored material, the designated-work door, not curation)
 ---
 
 # Skill Frontmatter Discipline
@@ -42,4 +41,4 @@ The description is read by Claude as a triggering hint at skill-discovery time, 
 
 ## Related surfaces
 
-- The third-party-curation pipeline (its records live in the team's workbench project, oscc-workbench, reached via the workbench rather than any path on this host) is the COS's audit door: it vets an admitted skill for adversarial content, exfiltration, and other safety concerns after authoring. This skill runs during authoring and checks for parser compatibility — the two are complementary, not the same pass.
+- The third-party-curation pipeline (its records live in the maintainers' own workbench project, not on this host) is the COS's audit door: it vets an admitted skill for adversarial content, exfiltration, and other safety concerns after authoring. This skill runs during authoring and checks for parser compatibility — the two are complementary, not the same pass.

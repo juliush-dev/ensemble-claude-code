@@ -1,7 +1,6 @@
 ---
 name: decision-proposal-discipline
 description: Make design, architecture, workflow, policy, operational, administrative, tool, stack, recommendation, and proposal decisions without anchoring on the current state or on an agent's earlier untested proposal. Use for nontrivial solution choices, process or governance design, provider/vendor/tool selection, concrete defaults, eligibility or scheduling rules, externally visible recommendations, or proposals that have propagated across multiple durable surfaces.
-provenance: pursuit formal-skills-promotion, agreed triage map contracts/2026-07-09-formal-skills-promotion/routes/triage-map/map.md, promoted 2026-07-09 on the user's word (deployed, footprint-verified 2026-07-09); source skills/formal/decision-proposal-discipline/ (the team's own authored material, the designated-work door, not curation)
 ---
 
 # Decision Proposal Discipline

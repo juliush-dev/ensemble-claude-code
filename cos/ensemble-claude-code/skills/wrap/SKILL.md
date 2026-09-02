@@ -1,7 +1,6 @@
 ---
 name: wrap
 description: Use when a project meets the shape unwrapped, when a messy wrap needs correcting (names from an unclear time, scaffolding mixed into a product, a notebook overlaying body-internal governance), or when any member raises a wrap smell for the human to open. Carries the two entries explicit and unattended, the closed list of wrap moves, the focused-body and wrapping-correction terms, the name doctrine, and the correction method with its residue-smell test.
-provenance: pursuit framework-dna, route wrap-method-into-the-cos; the fms 0851 port admitted at the evaluation-precedes-adoption bound's nineteenth firing (Examiner ADMIT IN PART, Fable), spun out of `designate` on the user's word 2026-08-26; the smell-watch made always-on DNA the same day (rule 10-work-object-model.md)
 ---
 
 # Wrap — putting the anatomy around a project

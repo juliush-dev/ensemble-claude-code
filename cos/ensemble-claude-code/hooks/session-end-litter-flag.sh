@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
-#   extended by pursuit session-scoped-guard-grants, the user's gate word
-#   "land as recommended" (the Examiner's twenty-first-firing evaluation),
-#   2026-08-30 - session-scoped grant-file cleanup at SessionEnd.
 # Ensemble (ensemble-claude-code) — SessionEnd litter-flag hook.
 # Structural remedy for the pass-litter scar: at session end, flag open pass
 # state where the next session's binding pickup read already looks.

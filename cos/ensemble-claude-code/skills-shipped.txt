@@ -1,0 +1,34 @@
+# skills-shipped.txt - the ever-shipped skill manifest.
+#
+# The append-only list of every skill-folder name this COS has ever shipped
+# (deployed to a host or published), one name per line. It is the deploy
+# scripts' PRUNE GATE: on an update, a host skills/ folder is removed only when
+# its name is listed here AND the current source no longer carries it - a skill
+# this COS shipped in an earlier release and has since retired. A host folder
+# whose name is NOT listed is one this COS never shipped (a skill the adopter
+# added), and the deploy leaves it alone.
+#
+# Maintain it at the moment a skill is added - the same moment the PowerShell
+# deploy script's $same hash-verify array gains the new SKILL.md entry. Never
+# remove a name: a retired skill must stay listed so a future update can prune
+# it. Lines beginning with # are comments; blank lines are ignored. Keep the
+# file pure ASCII with LF line endings, like the deploy scripts that read it.
+onboard
+pass-discipline
+unit-close
+occurrence
+designate
+obsidian-markdown
+obsidian-bases
+json-canvas
+cross-shell-command-discipline
+skill-frontmatter-discipline
+decision-proposal-discipline
+felt-intent-extraction
+ubiquitous-language-stewardship
+mermaid-multiview-learning-document
+operational-lane-discipline
+health-check
+unslop
+writing-and-talking-style
+wrap

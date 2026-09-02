@@ -1,12 +1,11 @@
 ---
 name: operational-lane-discipline
 description: Use at the operational-lane moments — initiating a lane, judging lane placement at a substantial work-unit designation, working inside a secondary lane, preparing or gating lane convergence, ending or suspending a lane, and maintaining the lane-topology registry. Moment-loaded and retrieve-at-need, not always-on law.
-provenance: operational-lane adoption through the designated-work door (the user's word 2026-07-11, "Admit in part as recommended"); meaning of record in Aim.md's operational-lanes entry and the Shared External Brain canon note ported in parallel; deferred-machinery gate settled 2026-07-19 (the user's word, "Adopt as amended — verify 2 with the mediation question, land 4 with the watch items, land 1's trigger line, hold the rest") — held-automation watch and honest-scope true-up landed here
 ---
 
 # Operational lane discipline — advancing lines in parallel without collision
 
-Moment-loaded, retrieve-at-need — **not always-on law**. The always-on worldview deliberately carries no lane text yet; every fold into it (convergence joining the hard-gate family, lane-relative registry/retrieval/capture notes, the amnesia authority refinement) is deferred on-trigger. Read this runbook at the lane moments; settle the *meaning* of the protected terms against `Vocabulary.md` and the Shared External Brain canon note, never from here — this surface is **method**, not the meaning of record.
+Moment-loaded, retrieve-at-need — **not always-on law**. Read this runbook at the lane moments; settle the *meaning* of the protected terms against the project's own vocabulary surface, never from here — this surface is **method**, not the meaning of record.
 
 ## The concept in one breath
 
@@ -34,7 +33,7 @@ Explicit user-requested initiation is available any time, factors or none.
 
 Initiation is a short **two-sided transaction** that establishes a new isolated lane from a **named state of an existing lane** (main or secondary), recording the source lane and source commit. First realization: `git worktree add` from that named state.
 
-**The initiation invariant (verbatim, load-bearing — adopted 2026-07-12 on the user's word, born of the first lane initiation's lived failure window):**
+**The initiation invariant (verbatim, load-bearing — born of the first lane initiation's lived failure window):**
 
 > A secondary lane may not begin substantive work until its initiation is durably and inspectably recorded on both sides: the main-lane topology entry is committed, and the secondary lane's local declaration is committed.
 
@@ -49,7 +48,7 @@ The transaction, in order:
 
 This closes both failure windows: a lane advancing while main's topology map is still uncommitted, and main claiming a lane whose own declaration is not yet durable.
 
-**Held-automation watch (2026-07-19 gate).** Lane scripts are deliberately held — this transaction runs by hand. At every initiation, re-surface the held-scripts question to the user if any step slips, runs out of order, or produces friction: the slip itself **is** the held trigger firing, surfaced in the moment with this gate's provenance, never silently absorbed.
+**Held-automation watch.** Lane scripts are deliberately held — this transaction runs by hand. At every initiation, re-surface the held-scripts question to the user if any step slips, runs out of order, or produces friction: the slip itself **is** the held trigger firing, surfaced in the moment, never silently absorbed.
 
 ## Focus guard — three-way, while working in-lane
 
@@ -71,12 +70,12 @@ All work-unit truth born in-lane — designations, registry lines, captures, han
 
 **Instantiated at the first secondary lane's initiation** — do not create the file before then. **Lane grain only:** identity, status, source lane + initiation state, declared focus, isolation mechanism, current head/inspectable-state reference, intended or actual convergence target, readiness/unresolved integration concerns, final outcome. It **points into lanes, never mirrors their internal work units**, and updates at the named lifecycle moments only — initiation, suspension, convergence request, convergence, abandonment/closure — the one governed topology-grain boundary crossing, never a channel for work-unit contents to leak piecemeal into main. The collision-safe mediation of that crossing is open engineering (the concept requires the update without assuming secondary-lane agents directly edit main's files).
 
-## Honest scope — first realization, open engineering deferred
+## Honest scope — what this runbook does and does not govern
 
-First realization is git worktrees. Named **open engineering**, deferred to the first lane's pursuit as each became load-bearing — the 2026-07-19 deferred-machinery gate dispositioning them as noted:
+First realization is git worktrees. The following are **open engineering** — named here, but not governed by this runbook:
 
-- focus-guard behavior across worktree roots — was unverified; **under Examiner verification since the 2026-07-19 gate.**
-- the mediated topology-update mechanism — was undesigned; **held as procedural mediation (topology-face writes are main-side session work at the named lifecycle moments), the mechanical-guard answer pending from that same verification** (whether the guard can mechanically downgrade a lane-side write to main's topology face to an explicit ask).
-- drift-watch conduct across converged vs. unintegrated lane states — needed multi-lane runtime evidence; **settled 2026-07-19 — the cross-lane clause landed on the drift-watch charter (`charters/drift-watch/charter.md`), now the surface of record.**
+- focus-guard behavior across worktree roots — not yet verified across roots; this runbook does not settle it.
+- the mediated topology-update mechanism — the topology face is updated by main-side session work at the named lifecycle moments; whether a mechanical guard can downgrade a lane-side write to that face to an explicit ask is open, and this runbook does not settle it.
+- drift-watch conduct across converged versus unintegrated lane states — needs multi-lane runtime evidence; a project's own drift-watch surface carries it where adopted, not this runbook.
 
-Lifecycle names above are first-realization working names; re-rooting a lane's species is unasserted; the always-on folds stay deferred on-trigger, each re-firing the gate.
+Lifecycle names above are first-realization working names; re-rooting a lane's species is unasserted.

@@ -1,17 +1,14 @@
 ---
 name: obsidian-bases
 description: Create and edit Obsidian Bases (.base files) with views, filters, formulas, and summaries. Use when working with .base files, creating database-like views of notes, or when the user mentions Bases, table views, card views, filters, or formulas in Obsidian.
-provenance: curation record curation/claude-code/records/obsidian.md (tending third-party-curation, obsidian beat, 2026-07-09)
 ---
 
 <!--
 Provenance: tailored third-party OSCC realization, admitted through the curation door.
-  Record (the door): curation/claude-code/records/obsidian.md
   Source repo: github.com/kepano/obsidian-skills (independent, non-Anthropic marketplace)
   Snapshot identity: commit a1dc48e68138490d522c04cbf5822214c6eb1202, plugin version 1.0.1
-  Tailored on: 2026-07-09 (deployed, footprint-verified 2026-07-09)
-This file is a tailored copy; the pristine intake snapshot lives under
-curation/claude-code/intake/obsidian/upstream/ and is never edited.
+  Tailored on: 2026-07-09
+This file is a tailored copy.
 -->
 
 # Obsidian Bases Skill

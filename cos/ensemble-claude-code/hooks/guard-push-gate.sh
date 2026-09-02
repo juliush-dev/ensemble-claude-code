@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 # Ensemble (ensemble-claude-code) - session-level PreToolUse guard on Bash|PowerShell.
 # Pushes are a hard human gate. The staged ask rules are prefix patterns and
 # were evaded by the ordinary flag-first shape (git -C <path> push - P8 probe

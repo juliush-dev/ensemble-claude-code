@@ -1,7 +1,6 @@
 ---
 name: pass-discipline
 description: Use at both ends of a pass — when starting work on a route (pickup) and when the pass ends (the stop). Carries the binding pickup read, the opening of the iteration record, and the stop duties that keep the route's notebook true and the pass's record frozen. Also carries the version-control boundary duties — branch placement at pickup, commit and branch disposition at the stop.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/); amended 2026-07-30 (the user's landing word) adding the version-control boundary duties — branch placement at pickup, commit and branch disposition at the stop — admitted per the fifteenth evaluation firing's FIT PASS; polished the same day on the user's word (pickup step order, pronoun)
 ---
 
 # Pass discipline — the two ends of a pass

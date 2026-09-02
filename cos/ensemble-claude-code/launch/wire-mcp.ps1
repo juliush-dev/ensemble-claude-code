@@ -1,4 +1,3 @@
-# provenance: curation record curation/claude-code/records/playwright.md (tending third-party-curation, beat 2026-07-09-1)
 # Ensemble (ensemble-claude-code) - one-time MCP wiring for the playwright OSCC realization.
 # Windows PowerShell 5.1 compatible. ASCII-ONLY FILE, deliberately (PS 5.1 reads
 # BOM-less files as ANSI; keep pure ASCII).
@@ -8,9 +7,8 @@
 # $CLAUDE_CONFIG_DIR\.claude.json - harness runtime state that deploy-to-host.ps1
 # deliberately never touches (same boundary as login/session state). The staged
 # .mcp.json at the config-home root is NOT a harness-read location for user scope
-# (project scope reads .mcp.json from the WORKING directory only); that was the
-# first footprint failure (2026-07-09). This script writes the one user-scope
-# entry instead. Run it ONCE, in YOUR OWN PowerShell, after deploy:
+# (project scope reads .mcp.json from the WORKING directory only). This script
+# writes the one user-scope entry instead. Run it ONCE, in YOUR OWN PowerShell, after deploy:
 #   powershell -ExecutionPolicy Bypass -File .\wire-mcp.ps1
 #
 # It is idempotent (re-running removes and re-adds the same pinned entry) and it
@@ -20,8 +18,8 @@
 # and -y, or re-verify those by eye.
 #
 # WINDOWS FOOTGUNS this script guards against (each undocumented; each caught by
-# the verify step - if one bites, adjust here and record it in the curation
-# record's patch ledger, do not silently wonder):
+# the verify step - if one bites, adjust here and note the divergence in this
+# script's own output or report it upstream, do not silently wonder):
 #   1. Whether CLAUDE_CONFIG_DIR redirects add-json WRITES (docs only promise it
 #      redirects reads). If the entry lands in the default ~\.claude.json instead,
 #      the verify below says so explicitly.
@@ -48,8 +46,8 @@ $configFile = Join-Path $ensembleHome '.claude.json'
 # ephemeral, credential-free browser profile. Double quotes escaped as \" for
 # PS 5.1 native-arg passing; no spaces in the JSON keeps PowerShell from
 # re-wrapping the token. NO provenance or other custom keys inside this entry -
-# .claude.json is harness-owned; the door is carried by the curation record and
-# this script's header, never in-entry.
+# .claude.json is harness-owned; the rationale for this wiring lives in this
+# script's header, never in-entry.
 $serverJson = '{\"type\":\"stdio\",\"command\":\"npx\",\"args\":[\"-y\",\"@playwright/mcp@0.0.77\",\"--isolated\"]}'
 
 $prev = $env:CLAUDE_CONFIG_DIR

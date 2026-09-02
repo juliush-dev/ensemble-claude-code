@@ -1,18 +1,17 @@
-# provenance: pursuit shell-ergonomics (contracts/2026-07-24-shell-ergonomics/)
 # Ensemble (ensemble-claude-code) - the `cos` dispatcher: short subcommands that
 # replace the long, fully-typed COS usage and management invocations. Windows
 # PowerShell 5.1 compatible.
 # ASCII-ONLY FILE, deliberately (PS 5.1 reads BOM-less files as ANSI; keep pure ASCII).
 # PS 5.1 note: no '&&', no ternary, no null-coalescing anywhere in this file.
 #
-# DELEGATION-ONLY (pursuit bound 1): every subcommand is a thin `& <script> @args`
+# DELEGATION-ONLY: every subcommand is a thin `& <script> @args`
 # call to a canonical script. This dispatcher re-implements NO flag, argument, or
 # invocation logic of its targets - it never spells out `claude --setting-sources
 # user`, never re-does a deploy step. If a target script moves or changes its
 # parameters, this dispatcher keeps working or fails loudly, because it carries no
 # duplicated knowledge of what the targets do.
 #
-# WHAT DELEGATES WHERE (matched to reality 2026-07-24):
+# WHAT DELEGATES WHERE:
 #   cos launch    -> DEPLOYED  launch\start-ensemble.ps1   (post-deploy session start)
 #   cos wire-mcp  -> DEPLOYED  launch\wire-mcp.ps1         (post-deploy MCP wiring)
 #   cos update    -> REPO      deploy-to-host.ps1 -Update  (source-side; the deploy
@@ -22,9 +21,9 @@
 # Deployed-side targets live under %LOCALAPPDATA%\ensemble-claude-code and need no
 # anchor. Repo-side targets (update, probe) are located via the $env:OSCC_WORKBENCH
 # anchor - the workbench repo root - which the user sets in the gitignored host-local
-# companion. No host path is ever tracked in source (pursuit bound 4, publishable-clean).
+# companion. No host path is ever tracked in source (publishable-clean).
 #
-# `cos release` is deliberately ABSENT (pursuit bound 3): the release-hop keeps its
+# `cos release` is deliberately ABSENT: the release-hop keeps its
 # own gating; no shortcut around it lives here, not even as a stub.
 #
 # INSTALL (one-time; the user's own hand, under its own permission gate): add this

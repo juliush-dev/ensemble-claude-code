@@ -1,12 +1,10 @@
 ---
 name: writing-and-talking-style
 description: Write and clean prose the way a human writes it, with soul and with the fewest words that keep precision, understanding and depth. Every member uses it for anything a human may read, the human operator's answers first. Removes AI tells and adds voice.
-provenance: curation record curation/claude-code/records/unslop.md (tending third-party-curation, beat 2026-08-25-1, 2026-08-25)
 ---
 
 <!--
 Provenance: tailored third-party OSCC realization, admitted through the curation door.
-  Record (the door): curation/claude-code/records/unslop.md
   Source repo: github.com/cursor/plugins, path pstack/skills/unslop/SKILL.md
   Snapshot commit: bdf7aa355337897f167153e05069aca505dae17c (main HEAD at fetch, 2026-08-25)
   File last touched: 99559f2f52047978602ef365589275831e76af07 (2026-08-02, pstack 0.14.0)
@@ -14,10 +12,7 @@ Provenance: tailored third-party OSCC realization, admitted through the curation
   Author: Lauren Tan (poteto)
   License: MIT (pstack/LICENSE, (c) 2026 Lauren Tan); full notice below. The repo
     root carries no LICENSE; the plugin-level notice is the licensing basis.
-  Tailored on: 2026-08-25 (deployed, footprint-verified 2026-08-25)
-  Renamed: 2026-08-30, from the upstream name unslop, the user's word.
-This file is a tailored copy; the pristine intake snapshot lives under
-curation/claude-code/intake/unslop/upstream/ and is never edited by us. The
+This file is a tailored copy. Renamed from the upstream name unslop. The
 deploy loop carries SKILL.md and references/ only, so the sibling LICENSE file
 does not reach the host; this in-file notice is the license that travels.
 

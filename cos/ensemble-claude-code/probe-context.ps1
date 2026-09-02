@@ -1,4 +1,3 @@
-# provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 # Ensemble (ensemble-claude-code) - headless startup-context probe. Windows PowerShell 5.1 compatible.
 #
 # ASCII-ONLY FILE, deliberately: PowerShell 5.1 reads BOM-less files as ANSI,
@@ -7,9 +6,9 @@
 # PS 5.1 note: no '&&', no ternary, no null-coalescing anywhere in this file.
 #
 # PURPOSE
-#   The ceiling-doctrine anchor reading (DISPOSITIONS.md item 4, superseded
-#   2026-07-18): the always-on memory layer has NO provider hard cap, so house
-#   sizing is tracked as the measured share of the context window at
+#   The ceiling-doctrine anchor reading: the always-on memory layer has NO
+#   provider hard cap, so house sizing is tracked as the measured share of the
+#   context window at
 #   session start, pinned to a named model/window tier. This probe reads that
 #   startup total non-interactively, from the SAME deployed home an interactive
 #   session loads, so the anchor can be re-read at any -Update without the user
@@ -27,25 +26,23 @@
 #   the two are comparable (project-scope CLAUDE.md and git status, if any, load
 #   from the working directory in both).
 #
-# CALIBRATION STATUS (per grounding/2026-07-18-headless-context-metrics.md)
-#   CALIBRATED 2026-07-18 (user-executed): this probe is now the INSTRUMENT OF
-#   RECORD for the whole-startup share. Interactive /context is the ATTRIBUTION
-#   instrument (it breaks the startup total into categories); this probe's usage
-#   fields carry NO category breakdown, so read /context when the tripwire fires
-#   or at deploy footprints.
+# CALIBRATION STATUS
+#   This probe is the INSTRUMENT OF RECORD for the whole-startup share.
+#   Interactive /context is the ATTRIBUTION instrument (it breaks the startup
+#   total into categories); this probe's usage fields carry NO category
+#   breakdown, so read /context when the tripwire fires or at deploy footprints.
 #   Calibration pair (same host, same day, same working directory):
 #     probe startup total 34,270 tokens (API-counted) vs interactive /context
 #     estimate 35.3k; offset ~ -1.0k / ~2.9% (probe below /context), inside the
 #     documented +/-10% /context wobble. The probe reports API-counted usage
 #     where /context estimates.
 #   The headless first-assistant-message usage is the same input-only quantity
-#   the statusline docs define. Before this calibration the probe was NOT the
-#   instrument of record and interactive /context stayed the measurement of
-#   record; that gate is now met.
+#   the statusline docs define.
 #
-# GROUNDING RECORDS
-#   grounding/2026-07-18-provider-max-ceilings.md      (no cap on the layer; the real caps that exist)
-#   grounding/2026-07-18-headless-context-metrics.md   (headless first-message usage is the anchor path)
+# GROUNDING NOTES
+#   The always-on memory layer has no provider hard cap; the real limits are the
+#   model/window tiers in the table below. Headless first-message usage is the
+#   anchor path this probe reads.
 #
 # USAGE
 #   powershell -ExecutionPolicy Bypass -File .\probe-context.ps1
@@ -171,7 +168,7 @@ function Show-Report {
     Write-Host ("Share of window : {0}%  (raw {1:N0} / {2:N0}, tier: {3})" -f $pct, $startupTotal, $tier.Window, $tier.Tier)
     Write-Host ""
     Write-Host "Note: this is a headless fresh-process startup reading, NOT a live /context."
-    Write-Host "Calibrated 2026-07-18: this probe is the instrument of record for the whole-startup share; interactive /context is the attribution instrument (category grain)."
+    Write-Host "This probe is the instrument of record for the whole-startup share; interactive /context is the attribution instrument (category grain)."
     Write-Host ""
 }
 

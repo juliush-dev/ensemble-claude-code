@@ -1,7 +1,6 @@
 ---
 name: occurrence
 description: Use when a tending's beat fires — a scheduled rescan comes due, a watched event lands, a trigger condition turns true. Carries the beat's discipline - run against the standard, record the occurrence (null results included), keep effects, and spawn only what exceeds the beat.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 ---
 
 # Occurrence — a tending's beat

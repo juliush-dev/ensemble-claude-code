@@ -1,7 +1,6 @@
 ---
 name: ubiquitous-language-stewardship
 description: Settle the shared vocabulary of a body of work so a term means the same thing across dialogue, notebooks, constitutions, and the shared external brain's canon. Use during designation dialogue or any settling dialogue where a new or protected term is being pinned down, when a term carries two meanings or two words carry one meaning, when a term contradicts the vocabulary canon or a constitution's bounds, when the vocabulary surface lags the work, or when a disputed term surfaces inside a dispatch.
-provenance: pursuit formal-skills-promotion, agreed triage map contracts/2026-07-09-formal-skills-promotion/routes/triage-map/map.md, promoted 2026-07-09 on the user's word (deployed, footprint-verified 2026-07-09); source skills/formal/ubiquitous-language-stewardship/ (the team's own authored material, the designated-work door, not curation)
 ---
 
 # Ubiquitous Language Stewardship

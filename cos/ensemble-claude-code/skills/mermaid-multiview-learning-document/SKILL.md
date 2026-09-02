@@ -1,7 +1,6 @@
 ---
 name: mermaid-multiview-learning-document
 description: Use when the human asks for a substantial learning document, conceptual model, domain map, or reference note about a topic explained through several coordinated Mermaid views. User-invoked by design (the json-canvas precedent) - a topic request is the trigger, not an autonomous every-turn stance. Produces one current, source-grounded, fully Obsidian-compliant Markdown note.
-provenance: pursuit formal-skills-promotion, agreed triage map contracts/2026-07-09-formal-skills-promotion/routes/triage-map/map.md, promoted 2026-07-09 on the user's word (deployed, footprint-verified 2026-07-09); source skills/formal/mermaid-multiview-learning-document/ (the team's own authored material, the designated-work door, not curation); authorship attested by the user at the map's agreement
 ---
 
 # Mermaid Multi-View Learning Document

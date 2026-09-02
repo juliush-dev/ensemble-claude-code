@@ -1,4 +1,3 @@
-# provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 # Ensemble (ensemble-claude-code) - session launcher. Windows PowerShell 5.1 compatible.
 # ASCII-ONLY FILE, deliberately (PS 5.1 reads BOM-less files as ANSI; keep pure ASCII).
 #
@@ -33,7 +32,6 @@ try {
     # fixes a documented Windows Terminal stale-fragment bug in that mode. Both are
     # set-if-unset so a deliberate override (e.g. =0 to opt out for a session) wins,
     # and both are restored below so the calling shell stays untouched.
-    # provenance: TUI-fullscreen wish, Aim.md (captured 2026-07-24).
     if (-not (Test-Path Env:CLAUDE_CODE_NO_FLICKER)) { $env:CLAUDE_CODE_NO_FLICKER = '1' }
     if (-not (Test-Path Env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT)) { $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT = '1' }
     # --setting-sources user: only the home's own settings govern the session

@@ -1,7 +1,6 @@
 ---
 name: unit-close
 description: Use when a work unit ends — a pursuit discharges, a tending retires, a route retires or ends with its pursuit, a project dissolves. Carries the sweep rule (no unit closes with silent open gaps), the closing stamps, the registry update, and the freeze.
-provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 ---
 
 # Unit close — nothing ends silently

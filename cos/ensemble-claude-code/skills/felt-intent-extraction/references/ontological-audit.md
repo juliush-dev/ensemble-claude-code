@@ -1,8 +1,8 @@
 # Ontological audit
 
-The construction-side engine of felt-intent extraction, carried here as the promote-a-slice of `strict-ontological-articulation` (agreed triage map, pursuit formal-skills-promotion, 2026-07-09). The extraction engine in `SKILL.md` calls this audit at stage 4 (offer candidate readings) and stage 7 (self-test the restatement): stage 4 asks whether an element in a candidate reading can bear the role assigned to it; stage 7 audits the whole restatement before it is offered for blessing.
+The construction-side engine of felt-intent extraction. The extraction engine in `SKILL.md` calls this audit at stage 4 (offer candidate readings) and stage 7 (self-test the restatement): stage 4 asks whether an element in a candidate reading can bear the role assigned to it; stage 7 audits the whole restatement before it is offered for blessing.
 
-This file carries the working audit — the questions battery and the compact governing instruction. The full canonical treatise is **not** copied here; it stays library-side, authoritative, at `skills/formal/strict-ontological-articulation/references/governance-for-collaborative-exposure-of-intended-meaning.md`. When a formulation is being produced with no live interlocutor at all, that library skill governs production on its own; here the audit serves the live extraction dialogue.
+This file carries the working audit in full for this skill's purposes — the questions battery and the compact governing instruction, enough to run the audit inside the extraction dialogue. It is a slice of a longer treatise on the ontology of intended meaning, held privately by the authors; the fuller treatise is not needed here, where the audit serves the live extraction dialogue.
 
 ## Central invariant
 

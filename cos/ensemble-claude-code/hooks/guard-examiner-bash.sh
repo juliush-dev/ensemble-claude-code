@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# provenance: pursuit claude-code-cos-realization (contracts/2026-07-07-claude-code-cos-realization/)
 # Ensemble (ensemble-claude-code) — Examiner PreToolUse guard on Bash.
 # The Examiner's shell exists to run tests and checks; it never changes
 # anything. This guard blocks write-shaped commands. It is a mitigation,

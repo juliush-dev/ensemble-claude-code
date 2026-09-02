@@ -1,7 +1,6 @@
 ---
 name: cross-shell-command-discipline
 description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, or verifying target state through a different shell than the one that will execute the command.
-provenance: pursuit formal-skills-promotion, agreed triage map contracts/2026-07-09-formal-skills-promotion/routes/triage-map/map.md, promoted 2026-07-09 on the user's word (deployed, footprint-verified 2026-07-09); source skills/formal/cross-shell-command-discipline/ (the team's own authored material, the designated-work door, not curation); amended 2026-07-10 (user's port word) with three cross-shell learnings through the designated-work door, source ledger P11 plus this project Aim.md
 ---
 
 # Cross-Shell Command Discipline

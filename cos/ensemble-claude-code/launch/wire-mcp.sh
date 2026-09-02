@@ -35,8 +35,8 @@ config_file="$home/.claude.json"
 # on an install prompt in a non-interactive stdio child; --isolated for an
 # ephemeral, credential-free browser profile. Plain single-quoted JSON - Bash
 # passes it literally, so no PS-5.1-style \" escaping is needed. NO provenance or
-# other custom keys inside this entry - .claude.json is harness-owned; the door
-# is carried by the curation record and this script's header, never in-entry.
+# other custom keys inside this entry - .claude.json is harness-owned; the
+# rationale for this wiring lives in this script's header, never in-entry.
 server_json='{"type":"stdio","command":"npx","args":["-y","@playwright/mcp@0.0.77","--isolated"]}'
 
 export CLAUDE_CONFIG_DIR="$home"
