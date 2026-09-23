@@ -1,6 +1,6 @@
 {
-  "_provenance_playwright": "The mcp__playwright__* rule asks on every browser act. The two deny rules — the glob browser_run_code* and the exact browser_run_code_unsafe — block the RCE-class code-execution tool outright: the glob covers current and legacy tool names (nothing else shares the prefix), and the exact string guarantees a match for the pinned tool version (mid-name glob behavior is undocumented). Name-based denies re-verify against the enumerated tool inventory on every version move.",
-  "_provenance_claude_ai_connectors": "The claude.ai account-connector rules are a layered set. Everything account-connector is ASK: the catch-all mcp__claude_ai_* floor gates current and future connector tools, and the per-tool exact-string Gmail/Drive ask entries are startup typo-check tripwires (glob rules are exempt from the startup check, exact strings are not — a mismatch surfaces a warning). The deny entries are TRIPWIRES, not boundaries: mcp__claude_ai_Google_Calendar__* and mcp__claude_ai_Supabase__* deny two un-curated connector classes wholesale; Gmail send*/delete* and Drive share*/delete* pre-empt name-prefixed destructive/exfil tools absent from the connector's toolset as enumerated at admission; the deny is a tripwire should upstream ever add them, and the drift shows when it bites. No allow rules by decision (everything stays ask). Name-based rules re-verify against the live inventory at every deploy and every re-enumeration. Operator confinement is doctrinal, not structural — the deny/ask layer is the structural carrier.",
+  "_provenance_playwright": "Browser reads flow for the Operator; browser writes ask. The ten write-shaped browser tools (click, drag, drop, evaluate, file_upload, fill_form, handle_dialog, press_key, select_option, type) each carry an exact-name ask rule. The read-shaped tools carry no rule of their own. The guard-live-reads.sh PreToolUse hook lets a call through to the auto-mode classifier only when the Operator makes it and the tool is on the hook's read list; it asks on a call from the main session or any other agent, and on any browser tool the list does not name. navigate and navigate_back are on the read list, so a URL the Operator opens is not prompted. Two deny rules, the glob browser_run_code* and the exact browser_run_code_unsafe, block the RCE-class code-execution tool outright. The glob covers current and legacy tool names (nothing else shares the prefix), and the exact string guarantees a match for the pinned tool version (mid-name glob behavior is undocumented). The ask rules, the denies and the hook's read list re-verify against the enumerated tool inventory on every version move.",
+  "_provenance_claude_ai_connectors": "The claude.ai account-connector rules are a layered set: reads flow for the Operator, writes ask. The guard-live-reads.sh PreToolUse hook sees every connector tool. It lets a call through silently to the auto-mode classifier only when the Operator makes it and the tool is on the hook's read list (the Gmail search, get and list tools; the Drive search, list, read, metadata, permissions and download tools), and asks on everything else: a write, a call from the main session or any other agent, a tool of a connector no curation has admitted, a tool upstream adds later, and input the hook cannot parse. The exact-string Gmail and Drive ask entries name every known write tool, so a write still asks if the hook ever fails to run; exact strings are also startup typo-check tripwires (glob rules are exempt from the startup check, exact strings are not, and a mismatch surfaces a warning). The deny entries are TRIPWIRES, not boundaries: mcp__claude_ai_Google_Calendar__* and mcp__claude_ai_Supabase__* deny two un-curated connector classes wholesale; Gmail send*/delete* and Drive share*/delete* pre-empt name-prefixed destructive and exfil tools absent from the connector's toolset as enumerated at admission; the deny is a tripwire should upstream ever add them, and the drift shows when it bites. The reply, forward and trash tools the connectors expose match none of those prefixes: they are writes, and they ask by exact name. No allow rules by decision; a read that flows is decided by the classifier, never auto-allowed. The ask rules, the denies and the hook's read list re-verify against the live inventory at every deploy and every re-enumeration. Operator confinement is doctrinal, not structural; the deny/ask layer and the hook are the structural carrier.",
   "_provenance_model_and_remote_control": "Two settings pairs control the model default and Remote Control's startup behavior. 'model' is set to the 'opus' alias, so it always tracks whatever build the alias currently resolves to. 'modelSettings' sets effortLevel to 'medium' under two keys: 'opus' and 'claude-opus-5'. The alias key is what the harness's alias resolver actually applies, since modelSettings keys are normalized through that resolver; the full-model-ID key stays declared so a later deploy never prunes the value from a host that still carries it. If an effort level is later saved through '/effort' for a specific model, the harness stores it under that model's own canonical ID, and a canonical-ID key always takes precedence over an alias key, so a saved choice is never overridden by this file. 'remoteControlAtStartup' is false, so the Remote Control bridge does not start itself each session, while the in-session toggle, the claude.ai/code route, and the --remote-control flag all stay available. 'disableRemoteControl' is deliberately not set, since that key would remove those manual routes too. These are user-level settings: repo-scoped (project or local) settings cannot enable Remote Control, and both keys are read from the merged settings across all tiers, so this file's values take effect once deployed.",
   "model": "opus",
   "modelSettings": {
@@ -20,29 +20,41 @@
       "Bash(git push *)",
       "PowerShell(git push)",
       "PowerShell(git push *)",
-      "mcp__playwright__*",
-      "mcp__claude_ai_*",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_drag",
+      "mcp__playwright__browser_drop",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_file_upload",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_handle_dialog",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_select_option",
+      "mcp__playwright__browser_type",
       "mcp__claude_ai_Gmail__apply_sensitive_message_label",
       "mcp__claude_ai_Gmail__apply_sensitive_thread_label",
       "mcp__claude_ai_Gmail__create_draft",
       "mcp__claude_ai_Gmail__create_label",
-      "mcp__claude_ai_Gmail__get_message",
-      "mcp__claude_ai_Gmail__get_thread",
+      "mcp__claude_ai_Gmail__forward",
       "mcp__claude_ai_Gmail__label_message",
       "mcp__claude_ai_Gmail__label_thread",
-      "mcp__claude_ai_Gmail__list_drafts",
-      "mcp__claude_ai_Gmail__list_labels",
-      "mcp__claude_ai_Gmail__search_threads",
+      "mcp__claude_ai_Gmail__mark_message_spam",
+      "mcp__claude_ai_Gmail__mark_thread_spam",
+      "mcp__claude_ai_Gmail__reply",
+      "mcp__claude_ai_Gmail__trash_message",
+      "mcp__claude_ai_Gmail__trash_thread",
       "mcp__claude_ai_Gmail__unlabel_message",
       "mcp__claude_ai_Gmail__unlabel_thread",
+      "mcp__claude_ai_Gmail__unmark_message_spam",
+      "mcp__claude_ai_Gmail__unmark_thread_spam",
+      "mcp__claude_ai_Gmail__untrash_message",
+      "mcp__claude_ai_Gmail__untrash_thread",
+      "mcp__claude_ai_Gmail__update_draft",
+      "mcp__claude_ai_Gmail__update_label",
+      "mcp__claude_ai_Gmail__update_message_labels",
       "mcp__claude_ai_Google_Drive__copy_file",
       "mcp__claude_ai_Google_Drive__create_file",
-      "mcp__claude_ai_Google_Drive__download_file_content",
-      "mcp__claude_ai_Google_Drive__get_file_metadata",
-      "mcp__claude_ai_Google_Drive__get_file_permissions",
-      "mcp__claude_ai_Google_Drive__list_recent_files",
-      "mcp__claude_ai_Google_Drive__read_file_content",
-      "mcp__claude_ai_Google_Drive__search_files"
+      "mcp__claude_ai_Google_Drive__trash_file",
+      "mcp__claude_ai_Google_Drive__update_file"
     ],
     "deny": [
       "Edit(/projects/**/memory/**)",
@@ -77,6 +89,16 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-archivist-paths.sh\" main-session"
+          }
+        ]
+      },
+      {
+        "_provenance_live_reads_guard": "Wires the live-reads guard onto every Playwright and claude.ai connector tool, for every caller. A call passes silently to the ordinary permission flow only when the Operator makes it (top-level agent_type 'operator') and the tool is on the guard's read list of 24 read-shaped tools. Every other call gets an explicit ask: a write, an unlisted or future tool, an uncurated connector, a call from the main session or another agent, unparseable input. The silent pass adds no allow: in auto mode the classifier still decides the read. The exact-name write asks in permissions.ask are the second layer should this hook fail to run.",
+        "matcher": "mcp__playwright__.*|mcp__claude_ai_.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-live-reads.sh\""
           }
         ]
       }

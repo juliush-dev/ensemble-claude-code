@@ -37,6 +37,20 @@
 # first deploy, where there is no host file to protect, writes source wholesale
 # instead (a home with no settings file is useless).
 #
+# A CHROMIUM-FAMILY BROWSER IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE.
+# The Scout's retrieval kit (tools\scout-fetch.sh) renders script-filled pages
+# in a headless Chrome, Edge or Chromium the host already carries (Brave is
+# left out of the search until its headless behavior is settled; a Brave path
+# still works when named through env.ENSEMBLE_BROWSER); this COS ships no
+# browser. Once per run, after everything has landed, the script
+# runs the deployed kit's own probe (tools\scout-fetch.sh --check, through Git
+# Bash) and prints the result as an inventory line: the browser's path and
+# version, or 'browser (NOT FOUND - the Scout's rendered reads report the
+# gap)'. Never fatal: without a browser everything else lands and the run
+# ends with exit code 0, and the Scout says so when a page needs rendering
+# instead of guessing. A browser off the standard install paths is named in
+# the host companion as env.ENSEMBLE_BROWSER (settings.local.example.md).
+#
 # DOCUMENTED DIVERGENCE FROM deploy-to-host.sh - WHERE the no-Python warning is
 # printed. The two scripts word that block identically, line for line. The
 # stream differs. This script prints it with Write-Host, so it goes to the
@@ -92,7 +106,7 @@ if (Test-Path $target) {
 }
 
 New-Item -ItemType Directory -Force -Path $target | Out-Null
-foreach ($d in 'rules', 'agents', 'skills', 'hooks', 'launch') {
+foreach ($d in 'rules', 'agents', 'skills', 'hooks', 'tools', 'launch') {
     New-Item -ItemType Directory -Force -Path (Join-Path $target $d) | Out-Null
 }
 
@@ -200,6 +214,7 @@ if (Test-Path $targetSkills) {
 }
 
 Copy-Item (Join-Path $src 'hooks\*.sh') (Join-Path $target 'hooks')
+Copy-Item (Join-Path $src 'tools\*.sh') (Join-Path $target 'tools')
 Copy-Item (Join-Path $src 'launch\*.ps1') (Join-Path $target 'launch')
 
 Copy-Item (Join-Path $src '.mcp.json') $target
@@ -335,7 +350,7 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 41 files hash-compare against source, byte-identical except the
+# Integrity: the 44 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
 # settings.json is NOT in this set and cannot be: the deployed file legitimately
@@ -343,8 +358,10 @@ if ($null -eq $python) {
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (18 core - the 19 that were here before, less settings.json, which the
-# assertion now covers; + the 8
+# (21 core - the 19 that were here before, less settings.json, which the
+# assertion now covers, plus the Scout's guard hooks\guard-scout-bash.sh,
+# its retrieval kit tools\scout-fetch.sh, and the Operator's live-reads guard
+# hooks\guard-live-reads.sh; + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 11
 # promoted formal-library files: six SKILL.md (cross-shell-command,
 # skill-frontmatter, decision-proposal, felt-intent-extraction,
@@ -356,7 +373,8 @@ if ($null -eq $python) {
 $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
     'hooks\session-end-litter-flag.sh', 'hooks\guard-examiner-bash.sh', 'hooks\guard-archivist-paths.sh',
-    'hooks\guard-push-gate.sh',
+    'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh',
+    'tools\scout-fetch.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
     '.mcp.json',
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
@@ -436,6 +454,60 @@ if ($settingsMerged) {
 
 Write-Host ""
 Write-Host "All $($same.Count) files hash-verified (the agent cards against their guard-processed content; settings.json is verified separately, by the assertion above). Provenance guards ran clean: $alwaysOnStrippedCount always-on comment line(s) and $fmStrippedCount agent card field(s) stripped - the source ships clean of factory provenance, so the guards act only if it ever creeps back."
+# --- The browser probe: a declared host requirement, reported, never fatal ----
+# Runs the DEPLOYED kit's own --check once, through Git Bash (the hooks'
+# prerequisite): Claude Code's CLAUDE_CODE_GIT_BASH_PATH when set, then Git's
+# standard install paths, then the bash.exe beside git.exe on PATH. The WSL
+# bash in System32 is never used; it cannot run a Git Bash script against
+# Windows paths. The kit prints everything on stdout; this reads its exit code
+# (0 found, 3 no browser, 4 found but the headless render failed) and its
+# BROWSER and VERSION lines. Any failure here only changes the inventory line.
+function Find-GitBash {
+    $cands = @()
+    if ($env:CLAUDE_CODE_GIT_BASH_PATH) { $cands += $env:CLAUDE_CODE_GIT_BASH_PATH }
+    if ($env:ProgramFiles) { $cands += (Join-Path $env:ProgramFiles 'Git\bin\bash.exe') }
+    if (${env:ProgramFiles(x86)}) { $cands += (Join-Path ${env:ProgramFiles(x86)} 'Git\bin\bash.exe') }
+    if ($env:LOCALAPPDATA) { $cands += (Join-Path $env:LOCALAPPDATA 'Programs\Git\bin\bash.exe') }
+    $git = Get-Command git.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($git) {
+        $gd = Split-Path (Split-Path $git.Source)
+        $cands += (Join-Path $gd 'bin\bash.exe')
+        $cands += (Join-Path (Split-Path $gd) 'bin\bash.exe')
+    }
+    foreach ($c in $cands) {
+        if ($c -and ($c -notmatch '\\System32\\') -and (Test-Path $c -PathType Leaf)) { return $c }
+    }
+    return $null
+}
+function Get-BrowserLine {
+    $eap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $bash = Find-GitBash
+        if ($null -eq $bash) { return 'browser (NOT CHECKED - no Git Bash found to run tools\scout-fetch.sh --check)' }
+        $kit = (Join-Path $target 'tools\scout-fetch.sh') -replace '\\', '/'
+        $out = @(& $bash $kit --check 2>$null)
+        $rc = $LASTEXITCODE
+        $path = ($out | Where-Object { $_ -like 'BROWSER: *' } | Select-Object -First 1)
+        $ver = ($out | Where-Object { $_ -like 'VERSION: *' } | Select-Object -First 1)
+        if ($path) { $path = $path.Substring(9) }
+        if ($ver) { $ver = $ver.Substring(9) }
+        if ($rc -eq 0) { return "browser ($path, $ver)" }
+        if ($rc -eq 3) { return "browser (NOT FOUND - the Scout's rendered reads report the gap)" }
+        if ($rc -eq 4) { return "browser (FOUND at $path, $ver, but its headless render returned nothing - the Scout's rendered reads report the gap)" }
+        return "browser (NOT CHECKED - the probe exited $rc)"
+    } catch {
+        return "browser (NOT CHECKED - the probe could not run: $($_.Exception.Message))"
+    } finally {
+        $ErrorActionPreference = $eap
+        # The probe's exit code (3 for no browser) must not become the deploy's:
+        # this script ends without an explicit exit, so the last native exit code
+        # is what a caller such as the cos dispatcher reads.
+        $global:LASTEXITCODE = 0
+    }
+}
+$browserLine = Get-BrowserLine
+
 Write-Host ""
 Write-Host "Deployed inventory (the staged set only):"
 # settings.json is annotated with what actually happened to it, as the .sh does:
@@ -451,7 +523,7 @@ if ($settingsMerged) {
 } else {
     $settingsLine = 'settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)'
 }
-$staged = @('CLAUDE.md', $settingsLine, '.mcp.json')
+$staged = @('CLAUDE.md', $settingsLine, '.mcp.json', $browserLine)
 $staged += Get-ChildItem (Join-Path $src 'always-on\rules') -Filter *.md | ForEach-Object { "rules\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'agents') -Filter *.md | ForEach-Object { "agents\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
@@ -464,6 +536,7 @@ $staged += Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
     $items
 }
 $staged += Get-ChildItem (Join-Path $src 'hooks') -Filter *.sh | ForEach-Object { "hooks\" + $_.Name }
+$staged += Get-ChildItem (Join-Path $src 'tools') -Filter *.sh | ForEach-Object { "tools\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'launch') -Filter *.ps1 | ForEach-Object { "launch\" + $_.Name }
 $staged | Sort-Object | ForEach-Object { Write-Host "  $_" }
 Write-Host ""

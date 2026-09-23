@@ -32,3 +32,11 @@ The third `additionalDirectories` entry (`C:\\Users\\<your-username>\\AppData\\L
 Where the harness advertises that scratchpad in 8.3 short form (a `<your-username>~1` segment, for example `C:\\Users\\<SHORT~1>\\AppData\\Local\\Temp\\claude`), add that short-form root as an additional entry too.
 
 On a Linux host the scratchpad root carries a per-uid segment, so the third entry is `/tmp/claude-<uid>`. That uid segment is inferred from the Windows form, not verified against the harness docs. On macOS it is the `TMPDIR`-based form `${TMPDIR}/claude-<uid>`, unlived: no macOS host has run this.
+
+## The browser: `env.ENSEMBLE_BROWSER` (optional)
+
+The Scout's retrieval kit (`tools/scout-fetch.sh`) renders script-filled pages in a Chromium-family browser the host already has. It looks for Chrome, Edge and Chromium at their standard install paths, then on `PATH`. Leave `ENSEMBLE_BROWSER` empty, as the example does, and that search runs.
+
+Set it only when the browser sits somewhere else, or to use Brave, which the search leaves out until its headless behaviour is settled (the kit's header says why). The value is the full path of the executable, for example `C:\\Program Files\\Vendor\\Browser\\browser.exe` in the escaped form this file uses. A non-empty value is the only browser the kit tries: if that path is not an executable file, the kit reports NO BROWSER rather than searching further. That is how the absent-browser case is tested.
+
+The settings `env` key sets variables "for every session and for the subprocesses Claude Code starts from it" (the Claude Code settings reference), which is how the value reaches the Scout's shell; that it does so for a dispatched Scout has not been observed yet. The merge treats it as one leaf path, so it touches no other `env` variable on the host. Like `additionalDirectories`, removing the key from this companion later leaves it stranded on the host until it is deleted from the deployed `settings.json` by hand.

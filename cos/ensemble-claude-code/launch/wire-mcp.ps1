@@ -102,7 +102,7 @@ try {
     claude mcp list
     Write-Host ""
     Write-Host "If playwright shows NOT connected, see footgun 3 in this script's header (cmd /c)."
-    Write-Host "Then start a session and confirm the playwright tools appear and prompt (the ask rule)."
+    Write-Host "Then start a session and confirm the playwright tools appear and prompt (in the main session every playwright call asks, through the live-reads guard)."
 }
 finally {
     $env:CLAUDE_CONFIG_DIR = $prev

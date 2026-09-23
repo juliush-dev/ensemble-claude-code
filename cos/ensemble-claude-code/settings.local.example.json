@@ -5,5 +5,8 @@
       "C:\\Users\\<your-username>\\Shared-External-Brain",
       "C:\\Users\\<your-username>\\AppData\\Local\\Temp\\claude"
     ]
+  },
+  "env": {
+    "ENSEMBLE_BROWSER": ""
   }
 }

@@ -31,6 +31,20 @@
 # first deploy, where there is no host file to protect, writes source wholesale
 # instead (a home with no settings file is useless).
 #
+# A CHROMIUM-FAMILY BROWSER IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE.
+# The Scout's retrieval kit (tools/scout-fetch.sh) renders script-filled pages
+# in a headless Chrome, Edge or Chromium the host already carries (Brave is
+# left out of the search until its headless behavior is settled; a Brave path
+# still works when named through env.ENSEMBLE_BROWSER); this COS ships no
+# browser. Once per run, after everything has landed, the script
+# runs the deployed kit's own probe (tools/scout-fetch.sh --check) and prints
+# the result as an inventory line: the browser's path and version, or
+# 'browser (NOT FOUND - the Scout's rendered reads report the gap)'. Never
+# fatal: without a browser everything else lands and the run ends with exit
+# code 0, and the Scout says so when a page needs rendering instead of
+# guessing. A browser off the standard install paths is named in the host
+# companion as env.ENSEMBLE_BROWSER (settings.local.example.md).
+#
 # It hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six always-on
 # copies excepted), asserts the deployed settings.json path by path against what
@@ -144,7 +158,7 @@ else
 fi
 
 mkdir -p "$target"
-for d in rules agents skills hooks launch; do
+for d in rules agents skills hooks tools launch; do
   mkdir -p "$target/$d"
 done
 
@@ -332,6 +346,11 @@ fi
 for f in "$src"/hooks/*.sh; do
   copy_verified "hooks/$(basename "$f")" "hooks/$(basename "$f")"
   chmod +x "$target/hooks/$(basename "$f")"   # the guard hooks must be executable
+done
+
+for f in "$src"/tools/*.sh; do
+  copy_verified "tools/$(basename "$f")" "tools/$(basename "$f")"
+  chmod +x "$target/tools/$(basename "$f")"   # the Scout's retrieval kit must be executable
 done
 
 for f in "$src"/launch/*.sh; do
@@ -534,10 +553,30 @@ fi
 echo ""
 echo "All $(( ${#verify_list[@]} + ${#verify_stripped_list[@]} )) files hash-verified (the agent cards against their guard-processed content; settings.json is verified separately, by the assertion above). Provenance guards ran clean: $always_on_stripped_count always-on comment line(s) and $fm_stripped_count agent card field(s) stripped - the source ships clean of factory provenance, so the guards act only if it ever creeps back."
 
+# --- The browser probe: a declared host requirement, reported, never fatal ----
+# Runs the DEPLOYED kit's own --check once and reads its exit code (0 found,
+# 3 no browser, 4 found but the headless render failed) and its BROWSER and
+# VERSION lines. Any failure here only changes the inventory line; set -e is
+# held off by the if-test.
+if probe_out="$("$target/tools/scout-fetch.sh" --check 2>/dev/null)"; then
+  probe_rc=0
+else
+  probe_rc=$?
+fi
+probe_path="$(printf '%s\n' "$probe_out" | sed -n 's/^BROWSER: //p' | head -n 1)"
+probe_ver="$(printf '%s\n' "$probe_out" | sed -n 's/^VERSION: //p' | head -n 1)"
+case "$probe_rc" in
+  0) browser_line="browser ($probe_path, $probe_ver)" ;;
+  3) browser_line="browser (NOT FOUND - the Scout's rendered reads report the gap)" ;;
+  4) browser_line="browser (FOUND at $probe_path, $probe_ver, but its headless render returned nothing - the Scout's rendered reads report the gap)" ;;
+  *) browser_line="browser (NOT CHECKED - the probe exited $probe_rc)" ;;
+esac
+
 echo ""
 echo "Deployed inventory (the staged set only):"
 {
   echo "CLAUDE.md"
+  echo "$browser_line"
   if [ "$settings_skipped" -eq 1 ]; then
     echo "settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)"
   elif [ "$settings_copied" -eq 1 ]; then
