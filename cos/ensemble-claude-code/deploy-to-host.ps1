@@ -218,6 +218,10 @@ Copy-Item (Join-Path $src 'tools\*.sh') (Join-Path $target 'tools')
 Copy-Item (Join-Path $src 'launch\*.ps1') (Join-Path $target 'launch')
 
 Copy-Item (Join-Path $src '.mcp.json') $target
+# HARNESS.md: the Claude Code version this COS was last weighed against (line 1)
+# and the fixes its guards rely on. Read by hooks\session-start-harness-marker.sh
+# at session start; never loaded into context.
+Copy-Item (Join-Path $src 'HARNESS.md') $target
 
 # --- settings.json: the preserving merge ------------------------------------
 # Host companion: settings.local.json beside this script (gitignored, never
@@ -350,7 +354,7 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 44 files hash-compare against source, byte-identical except the
+# Integrity: the 46 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
 # settings.json is NOT in this set and cannot be: the deployed file legitimately
@@ -358,10 +362,11 @@ if ($null -eq $python) {
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (21 core - the 19 that were here before, less settings.json, which the
+# (23 core - the 19 that were here before, less settings.json, which the
 # assertion now covers, plus the Scout's guard hooks\guard-scout-bash.sh,
-# its retrieval kit tools\scout-fetch.sh, and the Operator's live-reads guard
-# hooks\guard-live-reads.sh; + the 8
+# its retrieval kit tools\scout-fetch.sh, the Operator's live-reads guard
+# hooks\guard-live-reads.sh, and the harness-version pair HARNESS.md and
+# hooks\session-start-harness-marker.sh; + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 11
 # promoted formal-library files: six SKILL.md (cross-shell-command,
 # skill-frontmatter, decision-proposal, felt-intent-extraction,
@@ -374,9 +379,10 @@ $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
     'hooks\session-end-litter-flag.sh', 'hooks\guard-examiner-bash.sh', 'hooks\guard-archivist-paths.sh',
     'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh',
+    'hooks\session-start-harness-marker.sh',
     'tools\scout-fetch.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
-    '.mcp.json',
+    '.mcp.json', 'HARNESS.md',
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
     'skills\operational-lane-discipline\SKILL.md',
@@ -523,7 +529,7 @@ if ($settingsMerged) {
 } else {
     $settingsLine = 'settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)'
 }
-$staged = @('CLAUDE.md', $settingsLine, '.mcp.json', $browserLine)
+$staged = @('CLAUDE.md', 'HARNESS.md', $settingsLine, '.mcp.json', $browserLine)
 $staged += Get-ChildItem (Join-Path $src 'always-on\rules') -Filter *.md | ForEach-Object { "rules\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'agents') -Filter *.md | ForEach-Object { "agents\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {

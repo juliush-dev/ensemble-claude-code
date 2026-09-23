@@ -359,6 +359,10 @@ for f in "$src"/launch/*.sh; do
 done
 
 copy_verified '.mcp.json' '.mcp.json'
+# HARNESS.md: the Claude Code version this COS was last weighed against (line 1)
+# and the fixes its guards rely on. Read by hooks/session-start-harness-marker.sh
+# at session start; never loaded into context.
+copy_verified 'HARNESS.md' 'HARNESS.md'
 
 # --- settings.json: the preserving merge ------------------------------------
 # Host companion: settings.local.json beside this script (gitignored, never

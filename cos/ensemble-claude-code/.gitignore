@@ -3,3 +3,10 @@
 # would publish a path from whatever machine happened to build it.
 __pycache__/
 *.pyc
+
+# Host companion of the Ensemble's settings.json, carries machine paths
+# (permissions.additionalDirectories); deploy-to-host.{ps1,sh} replaces the
+# paths it declares in the host's settings.json. Never tracked; the tracked
+# counterpart is settings.local.example.json, and settings.local.example.md
+# describes it.
+/settings.local.json
