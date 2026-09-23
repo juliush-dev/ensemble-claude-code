@@ -1,7 +1,17 @@
 {
   "_provenance_playwright": "The mcp__playwright__* rule asks on every browser act. The two deny rules — the glob browser_run_code* and the exact browser_run_code_unsafe — block the RCE-class code-execution tool outright: the glob covers current and legacy tool names (nothing else shares the prefix), and the exact string guarantees a match for the pinned tool version (mid-name glob behavior is undocumented). Name-based denies re-verify against the enumerated tool inventory on every version move.",
   "_provenance_claude_ai_connectors": "The claude.ai account-connector rules are a layered set. Everything account-connector is ASK: the catch-all mcp__claude_ai_* floor gates current and future connector tools, and the per-tool exact-string Gmail/Drive ask entries are startup typo-check tripwires (glob rules are exempt from the startup check, exact strings are not — a mismatch surfaces a warning). The deny entries are TRIPWIRES, not boundaries: mcp__claude_ai_Google_Calendar__* and mcp__claude_ai_Supabase__* deny two un-curated connector classes wholesale; Gmail send*/delete* and Drive share*/delete* pre-empt name-prefixed destructive/exfil tools absent from the connector's toolset as enumerated at admission; the deny is a tripwire should upstream ever add them, and the drift shows when it bites. No allow rules by decision (everything stays ask). Name-based rules re-verify against the live inventory at every deploy and every re-enumeration. Operator confinement is doctrinal, not structural — the deny/ask layer is the structural carrier.",
-  "model": "fable",
+  "_provenance_model_and_remote_control": "Two settings pairs control the model default and Remote Control's startup behavior. 'model' is set to the 'opus' alias, so it always tracks whatever build the alias currently resolves to. 'modelSettings' sets effortLevel to 'medium' under two keys: 'opus' and 'claude-opus-5'. The alias key is what the harness's alias resolver actually applies, since modelSettings keys are normalized through that resolver; the full-model-ID key stays declared so a later deploy never prunes the value from a host that still carries it. If an effort level is later saved through '/effort' for a specific model, the harness stores it under that model's own canonical ID, and a canonical-ID key always takes precedence over an alias key, so a saved choice is never overridden by this file. 'remoteControlAtStartup' is false, so the Remote Control bridge does not start itself each session, while the in-session toggle, the claude.ai/code route, and the --remote-control flag all stay available. 'disableRemoteControl' is deliberately not set, since that key would remove those manual routes too. These are user-level settings: repo-scoped (project or local) settings cannot enable Remote Control, and both keys are read from the merged settings across all tiers, so this file's values take effect once deployed.",
+  "model": "opus",
+  "modelSettings": {
+    "opus": {
+      "effortLevel": "medium"
+    },
+    "claude-opus-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "remoteControlAtStartup": false,
   "autoMemoryEnabled": false,
   "permissions": {
     "defaultMode": "auto",

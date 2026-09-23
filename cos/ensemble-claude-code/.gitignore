@@ -1,0 +1,5 @@
+# Python bytecode from running merge-settings.py or its fixture. A .pyc embeds
+# the absolute path it was compiled from, so committing one under this subtree
+# would publish a path from whatever machine happened to build it.
+__pycache__/
+*.pyc

@@ -16,10 +16,26 @@
 # skills-shipped.txt (the append-only manifest of every skill this COS has ever
 # shipped) lists it AND the current source no longer carries it - a
 # shipped-then-retired skill; a host-added skill this COS never shipped is left
-# alone. It hash-verifies every file in the verified set (byte-identical against
+# alone.
+#
+# settings.json is not copied but MERGED, by merge-settings.py, the one merge
+# implementation both deploy scripts call: the paths source and the host
+# companion settings.local.json declare are replaced, the paths
+# settings-shipped.txt lists and source no longer declares are pruned, and every
+# other key the host carries is left exactly as it stands. A host's own settings
+# survive an update.
+#
+# PYTHON 3 IS A PREREQUISITE. Without it this script does not update
+# settings.json at all: an existing host file is left exactly as it stands and
+# the script says so, loudly, on every run until Python 3 is installed. Only a
+# first deploy, where there is no host file to protect, writes source wholesale
+# instead (a home with no settings file is useless).
+#
+# It hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six always-on
-# copies excepted), prints the inventory, and refuses to clobber an existing home
-# unless --update or --force.
+# copies excepted), asserts the deployed settings.json path by path against what
+# the factory declares, prints the inventory, and refuses to clobber an existing
+# home unless --update or --force.
 #
 # TARGET HOME - config-home semantics:
 #   ${CLAUDE_ENSEMBLE_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ensemble-claude-code}
@@ -32,6 +48,25 @@
 # DIVERGENCE FROM THE WINDOWS SCRIPT: only launch/*.sh is deployed here, never
 # launch/*.ps1 - the PowerShell launcher and wiring script are useless on
 # Linux/macOS. Everything else in the staged set is identical.
+#
+# SECOND DOCUMENTED DIVERGENCE: WHERE the no-Python warning is printed. The two
+# scripts word that block identically, line for line. The stream differs. This
+# script writes every line of it to stderr; the PowerShell script prints its
+# copy with Write-Host, which goes to the console through the host/information
+# stream and never to stderr. Measured by running the block on each side and
+# capturing both streams: on each side everything lands on one stream and
+# nothing at all on the other. What follows from it, on each side:
+# './deploy-to-host.sh --update 2>/dev/null' silences the whole warning here,
+# and a stdout-only log misses it, while on the PowerShell side neither of
+# those two redirections reaches the other copy: Write-Host writes the
+# information stream, so '> log.txt' captures none of the block and no stderr
+# redirection silences it. The information stream itself does reach it, with
+# '6>$null' to silence or '6>&1' to capture. Deliberate, not an oversight.
+# PowerShell 5.1 has no coloured write to stderr, and its Write-Error under a
+# stop-on-error preference would throw and abort the deploy partway through,
+# which is worse than a warning the ordinary redirections miss. Both scripts
+# keep the loudest block their shell affords; forcing one to match the other's
+# stream would buy symmetry with a quieter or a more fragile deploy.
 #
 # Why user-executed: an agent session cannot draw a trustworthy footprint
 # outside its shared workspace; the human runs the final hop and the script's
@@ -306,47 +341,145 @@ done
 
 copy_verified '.mcp.json' '.mcp.json'
 
+# --- settings.json: the preserving merge ------------------------------------
 # Host companion: settings.local.json beside this script (gitignored, never
 # tracked - publishable-clean) carries host-specific settings such as
-# permissions.additionalDirectories. When present it is deep-merged into the
-# deployed settings.json (objects merge key by key, arrays concatenate without
-# duplicates, companion scalars win); the tracked settings.json stays clean.
-# The launcher's --setting-sources user means only the deployed settings.json
-# governs a session, so this merge is the one door for host values. Tracked
-# example: settings.local.example.json. Mirrors deploy-to-host.ps1; needs
-# python3 only when a companion is present. The merged file is not in the
-# byte-identical list (it is derived, not copied).
+# permissions.additionalDirectories. The tracked settings.json stays clean, and
+# the launcher's --setting-sources user means only the deployed settings.json
+# governs a session, so the companion is the one door for host values. Tracked
+# example: settings.local.example.json, with settings.local.example.md beside it
+# carrying the guidance (JSON has no comments, and a _provenance key holding it
+# would itself be a companion-declared path landing on the host).
+#
+# merge-settings.py is the single merge implementation both deploy scripts call
+# (see its header for the model). It replaces the paths source-plus-companion
+# declares, prunes the paths settings-shipped.txt lists and source no longer
+# declares, and LEAVES EVERY OTHER HOST KEY ALONE - a plugin toggle, a
+# notification preference, a model entry the harness wrote survives an update
+# instead of being flattened. It names every host entry it is about to drop
+# before it writes. One implementation, so the two scripts cannot disagree about
+# a security-relevant file. The deployed file is not in the byte-identical list
+# (it is derived, and it legitimately carries host keys); the assertion below
+# verifies it instead.
+#
+# This block sits LAST, after every copy and after .mcp.json, so a failure here
+# cannot leave a half-deployed home with everything else stale. The .ps1 now
+# orders it the same way.
+#
+# PYTHON 3 IS PROBED BY RUNNING IT, never by asking whether the command
+# resolves. command -v / Get-Command answers yes for the Windows Store alias at
+# WindowsApps\python3.exe, which exists on machines with no Python at all and
+# opens the Store instead of running anything. The probe here is identical to
+# the .ps1's for that reason, and because python on some hosts is still
+# Python 2 - the version string is what decides.
+#
+# NO PYTHON 3. Python 3 is a stated prerequisite of this deploy, and the
+# mechanism does not engineer around its absence with a second merge
+# implementation. One merge in one language is what keeps parity risk out of a
+# security-relevant path. Two branches, both scripts alike:
+#
+#   * A host settings.json EXISTS. It is not written. Not merged, not copied,
+#     not touched. The script prints an unmissable block saying settings were
+#     not updated and Python 3 must be installed, and prints it again at the end
+#     of the run. It re-fires on every deploy while the condition holds, so the
+#     condition is raised by the machine rather than left to anyone's memory.
+#     Nothing is ever lost this way; the home simply keeps the settings it had.
+#   * NO host settings.json (a first deploy). Source is written wholesale and
+#     the script says plainly that the companion was not merged and Python 3 is
+#     needed. There is nothing to protect, and a home with no settings file is
+#     useless. That copy is hash-verified against source like any other copied
+#     file.
+#
+# (This also replaces the old exit 1, which under the preserving merge would
+# have aborted every update on a python3-less host rather than only the
+# companion case.)
+find_python3() {
+  local exe out
+  for exe in python3 python; do
+    out="$("$exe" --version 2>&1)" || continue
+    case "$out" in
+      "Python 3"*) echo "$exe"; return 0 ;;
+    esac
+  done
+  return 1
+}
 companion="$src/settings.local.json"
-if [ -f "$companion" ]; then
-  command -v python3 >/dev/null 2>&1 || { echo "ERROR: settings.local.json is present but python3 was not found; the merge needs it." >&2; exit 1; }
-  python3 - "$src/settings.json" "$companion" "$target/settings.json" <<'PY'
-import json, sys
-def merge(b, o):
-    for k, v in o.items():
-        if k in b and isinstance(b[k], dict) and isinstance(v, dict):
-            merge(b[k], v)
-        elif k in b and isinstance(b[k], list) and isinstance(v, list):
-            b[k] = b[k] + [x for x in v if x not in b[k]]
-        else:
-            b[k] = v
-    return b
-with open(sys.argv[1], encoding='utf-8') as f: base = json.load(f)
-# utf-8-sig: the host companion may be saved with a UTF-8 BOM (some Windows
-# editors add one); utf-8-sig strips a leading BOM if present and reads plain
-# UTF-8 otherwise, so a BOM'd settings.local.json does not crash the merge.
-with open(sys.argv[2], encoding='utf-8-sig') as f: over = json.load(f)
-with open(sys.argv[3], 'w', encoding='utf-8') as f:
-    json.dump(merge(base, over), f, indent=2, ensure_ascii=False); f.write('\n')
-PY
-  echo "settings.json: deployed as source merged with the host companion settings.local.json."
+merge_script="$src/merge-settings.py"
+settings_manifest="$src/settings-shipped.txt"
+python_exe="$(find_python3)" || python_exe=""
+settings_merged=0
+settings_copied=0
+settings_skipped=0
+merge_args=(--source "$src/settings.json" --target "$target/settings.json" --manifest "$settings_manifest")
+[ -f "$companion" ] && merge_args+=(--companion "$companion")
+
+# The block the no-Python branches print. One function, called at the moment it
+# happens and again at the end of the run, so both printings are the same text.
+no_python_block() {
+  echo "" >&2
+  echo "***************************************************************" >&2
+  if [ "$1" = "skipped" ]; then
+    echo "SETTINGS NOT UPDATED - PYTHON 3 IS MISSING" >&2
+    echo "" >&2
+    echo "No working Python 3 was found (tried running 'python3 --version' and" >&2
+    echo "'python --version'). Python 3 is a prerequisite of this deploy." >&2
+    echo "" >&2
+    echo "settings.json was LEFT EXACTLY AS IT WAS:" >&2
+    echo "  $target/settings.json" >&2
+    echo "Nothing of yours was lost - and nothing new landed there either. This home" >&2
+    echo "keeps running the settings it already had, including any older factory" >&2
+    echo "rules, until Python 3 is installed." >&2
+    echo "" >&2
+    echo "Install Python 3, then run this script again." >&2
+  else
+    echo "PYTHON 3 IS MISSING - settings.json written WITHOUT the companion merge" >&2
+    echo "" >&2
+    echo "No working Python 3 was found (tried running 'python3 --version' and" >&2
+    echo "'python --version'). Python 3 is a prerequisite of this deploy." >&2
+    echo "" >&2
+    echo "This is a first deploy: there was no settings.json in the target home, so" >&2
+    echo "there was nothing to protect and source was copied there wholesale. The" >&2
+    echo "host companion settings.local.json was NOT merged in, so" >&2
+    echo "permissions.additionalDirectories and anything else in it is missing from" >&2
+    echo "the deployed file." >&2
+    echo "" >&2
+    echo "Install Python 3, then run this script again to get the companion merged." >&2
+  fi
+  echo "***************************************************************" >&2
+  echo "" >&2
+}
+
+if [ -z "$python_exe" ]; then
+  if [ -f "$target/settings.json" ]; then
+    settings_skipped=1
+    no_python_block skipped
+  else
+    cp "$src/settings.json" "$target/settings.json"
+    settings_copied=1
+    no_python_block first-deploy
+  fi
 else
-  copy_verified 'settings.json' 'settings.json'
+  merge_rc=0
+  "$python_exe" "$merge_script" merge "${merge_args[@]}" || merge_rc=$?
+  if [ "$merge_rc" -eq 3 ]; then
+    echo "settings.json WRITTEN BUT NOT VERIFIED (merge-settings.py exited 3, a verification failure). The file was written and then failed its own path-by-path check; it is not trustworthy. See the lines above for which paths." >&2
+    exit 1
+  elif [ "$merge_rc" -ne 0 ]; then
+    echo "settings.json MERGE FAILED (merge-settings.py exited $merge_rc). The deployed settings.json is not trustworthy; everything else in this deploy landed." >&2
+    exit 1
+  fi
+  settings_merged=1
 fi
 
 # Integrity: every deployed file hash-compares against source - byte-identical,
 # except the agent cards (compared against their guard-processed content, which
 # equals source byte-for-byte while the source ships clean, as it now does).
 # (chmod above changes mode, not content, so it does not affect these hashes.)
+# settings.json is NOT in this set and cannot be: the deployed file legitimately
+# carries host keys the factory never declared, so no hash of source says
+# anything true about it. It gets the post-write assertion below instead, which
+# also closes an old asymmetry - when a companion was present this script used
+# to drop settings.json from verification entirely, while the .ps1 verified it.
 echo ""
 echo "Verifying deployed files against source (sha256)..."
 failed=()
@@ -373,14 +506,47 @@ if [ "${#failed[@]}" -gt 0 ]; then
   for p in "${failed[@]}"; do echo "  $p" >&2; done
   exit 1
 fi
+
+# settings.json's own verification: re-read the deployed file from disk, parse
+# it, and assert that every declared path equals source-plus-companion's value
+# and every retired path is gone. This is what the hash check used to be for,
+# done in the only way that still means something.
+if [ "$settings_merged" -eq 1 ]; then
+  if ! "$python_exe" "$merge_script" verify "${merge_args[@]}"; then
+    echo "SETTINGS VERIFICATION FAILED - the deployed settings.json does not carry what the factory declares (see the lines above)." >&2
+    exit 1
+  fi
+elif [ "$settings_copied" -eq 1 ]; then
+  # The first-deploy no-Python branch is a plain byte copy, so a hash is the
+  # right instrument for it - the one the merged file can no longer take. It was
+  # outside every check until now: out of the byte-identical list because the
+  # merged file cannot be hash-compared, and skipped by the assertion because no
+  # merge ran.
+  if [ "$(sha256 "$src/settings.json")" != "$(sha256 "$target/settings.json")" ]; then
+    echo "HASH MISMATCH on: settings.json (wholesale copy of source)" >&2
+    exit 1
+  fi
+  echo "settings.json: wholesale copy of source, hash-verified byte-identical against it (no merge ran, so the path-by-path assertion does not apply)."
+else
+  echo "settings.json: NOT WRITTEN this run - the existing host file was left untouched because Python 3 is missing. Nothing to verify; see the block above."
+fi
+
 echo ""
-echo "All $(( ${#verify_list[@]} + ${#verify_stripped_list[@]} )) files hash-verified (the agent cards against their guard-processed content). Provenance guards ran clean: $always_on_stripped_count always-on comment line(s) and $fm_stripped_count agent card field(s) stripped - the source ships clean of factory provenance, so the guards act only if it ever creeps back."
+echo "All $(( ${#verify_list[@]} + ${#verify_stripped_list[@]} )) files hash-verified (the agent cards against their guard-processed content; settings.json is verified separately, by the assertion above). Provenance guards ran clean: $always_on_stripped_count always-on comment line(s) and $fm_stripped_count agent card field(s) stripped - the source ships clean of factory provenance, so the guards act only if it ever creeps back."
 
 echo ""
 echo "Deployed inventory (the staged set only):"
 {
   echo "CLAUDE.md"
-  [ -f "$companion" ] && echo "settings.json (merged with the host companion)"
+  if [ "$settings_skipped" -eq 1 ]; then
+    echo "settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)"
+  elif [ "$settings_copied" -eq 1 ]; then
+    echo "settings.json (WHOLESALE COPY of source - no Python 3, first deploy, companion not merged)"
+  elif [ -f "$companion" ]; then
+    echo "settings.json (source merged with the host companion, over the host's own keys)"
+  else
+    echo "settings.json (source merged over the host's own keys)"
+  fi
   for f in "$src"/always-on/rules/*.md; do echo "rules/$(basename "$f")"; done
   for pair in "${verify_list[@]}"; do echo "${pair##*|}"; done
   for pair in "${verify_stripped_list[@]}"; do echo "${pair##*|}"; done
@@ -397,3 +563,10 @@ echo ""
 echo "Next step (one-time): launch it and run /login once."
 echo ""
 echo "IMPORTANT: restart any Ensemble session that is already open - config (settings, permission rules, MCP wiring) is read at session start, so a running session keeps its old instructions until you relaunch it."
+
+# The no-Python block again, last, so the run cannot end without it having been
+# the final thing on screen. It re-fires on every deploy while Python 3 is
+# missing; the condition is raised by the script, never left to memory.
+[ "$settings_skipped" -eq 1 ] && no_python_block skipped
+[ "$settings_copied" -eq 1 ] && no_python_block first-deploy
+exit 0

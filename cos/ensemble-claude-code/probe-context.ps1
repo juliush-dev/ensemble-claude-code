@@ -75,7 +75,7 @@ $ErrorActionPreference = 'Stop'
 # Match is case-insensitive substring against the model id reported by the stream.
 # The first tier with any matching substring wins.
 $tierTable = @(
-    @{ Tier = '1M (Sonnet 5 / Opus 4.8 / Fable 5)'; Window = 1000000; Match = @('sonnet-5', 'opus-4-8', 'fable-5', 'fable', '[1m]') },
+    @{ Tier = '1M (Sonnet 5 / Opus 4.8 / Opus 5 / Opus 5.5 / Fable 5)'; Window = 1000000; Match = @('sonnet-5', 'opus-4-8', 'opus-5', 'fable-5', 'fable', '[1m]') },
     @{ Tier = '200K (Haiku 4.5 / legacy Sonnet 4.5 / Opus 4.5 / Opus 4.1 / gateway / disabled-1M)'; Window = 200000; Match = @('haiku', 'sonnet-4-5', 'opus-4-5', 'opus-4-1') }
 )
 $defaultWindow = 1000000

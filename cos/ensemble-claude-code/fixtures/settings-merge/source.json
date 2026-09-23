@@ -1,0 +1,38 @@
+{
+  "model": "opus",
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": "medium"
+    }
+  },
+  "remoteControlAtStartup": false,
+  "permissions": {
+    "defaultMode": "auto",
+    "deny": [
+      "Edit(/agent-memory/**)",
+      "mcp__playwright__browser_run_code*"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "guard-push-gate.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "guard-archivist-paths.sh main-session"
+          }
+        ]
+      }
+    ]
+  }
+}

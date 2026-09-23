@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(/agent-memory/**)",
+      "HostAdded(**)"
+    ],
+    "defaultMode": "auto",
+    "additionalDirectories": [
+      "C:\\Users\\example\\Projects",
+      "C:\\Users\\example\\Shared-External-Brain",
+      "C:\\Users\\example\\Removed-From-Companion"
+    ],
+    "allow": [
+      "Bash(ls)"
+    ]
+  },
+  "model": "fable",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "guard-push-gate.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "host-own-hook.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "_provenance_retired": "declared by an earlier release, retired since",
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  },
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "medium"
+    },
+    "claude-opus-5": {
+      "effortLevel": "high"
+    }
+  },
+  "agentPushNotifEnabled": true
+}

@@ -1,7 +1,7 @@
 {
   "counts": {
-    "exclude": 346,
-    "publish": 58,
+    "exclude": 364,
+    "publish": 68,
     "transform": 0
   },
   "executables": [
@@ -13,13 +13,13 @@
     "cos/ensemble-claude-code/launch/start-ensemble.sh",
     "cos/ensemble-claude-code/launch/wire-mcp.sh"
   ],
-  "generated_at": "2026-09-02T13:04:00.189620+00:00",
+  "generated_at": "2026-09-23T08:16:07.312526+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
-  "profile_content_sha256": "e6512da76bf305b2e8516cf3a108e61d1aee3a0d1d4b9099d83c8c99ae49ed37",
+  "profile_content_sha256": "1350d5962d19e95ca78e9fe0fc7d3c4b1b5724f0428c99a25b701f050a0a1c43",
   "profile_name": "worldview-edition",
   "profile_version": "3",
-  "source_commit": "39b32b12a39c72594b279902b337cd3a3333d2cc",
+  "source_commit": "e0c35382c2d1ca155e17b9e45df2fb2a3556169c",
   "tool_versions": {
     "git": "git version 2.55.0.windows.5",
     "python": "3.14.3"

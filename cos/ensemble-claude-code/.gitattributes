@@ -7,3 +7,18 @@
 # publication-profile change; it also closes the latent hooks/*.sh exposure in
 # the source repo.
 *.sh text eol=lf
+
+# The manifests (skills-shipped.txt, settings-shipped.txt) and the settings-merge
+# fixture's JSON files each claim LF endings in their own header or in the
+# fixture runner's. Without these lines a Windows clone under core.autocrlf=true
+# would check them out with CRLF and make those claims false; the fixture
+# compares its output byte for byte, so its inputs must be what they say.
+*.txt text eol=lf
+fixtures/**/*.json text eol=lf
+
+# merge-settings.py is the one merge implementation both deploy scripts call,
+# and its header pins it ASCII-only with LF endings like the scripts themselves.
+# Without this line a Windows clone under core.autocrlf=true would check it out
+# with CRLF and make that claim false. Python runs either way; the pin keeps the
+# file what it says it is.
+*.py text eol=lf
