@@ -6,10 +6,11 @@
 # which lands a foreign source in the session scratchpad. This guard is an
 # ALLOWLIST: one command shape passes, everything else is blocked (exit 2,
 # never an ask - a background Scout cannot answer one). The block message
-# prints the one accepted form. The Examiner's guard is the opposite form, a
-# blocklist, because its shell is open by purpose (it runs whatever tests a
-# check needs); a shell with one purpose takes an allowlist, where conforming
-# to the printed form is the only move and nothing unmatched ever runs.
+# prints the one accepted form. A shell open by purpose, like the Examiner's (it
+# runs whatever tests a check needs), could only take a blocklist, which
+# under-blocks by construction; the Examiner's shell carries no such guard. A
+# shell with one purpose takes an allowlist, where conforming to the printed
+# form is the only move and nothing unmatched ever runs.
 #
 # The accepted form (single or repeated spaces between the words):
 #   "$CLAUDE_CONFIG_DIR/tools/scout-fetch.sh" [--render|--check] "<https URL>" <PATH>
@@ -70,8 +71,8 @@ block() {
 }
 
 input="$(cat 2>/dev/null || true)"
-# Key-scoped, non-greedy capture of the command value (the Examiner guard's
-# extraction): stop at the value's own closing quote, a backslash-escaped quote
+# Key-scoped, non-greedy capture of the command value (the extraction the
+# retired Examiner guard used): stop at the value's own closing quote, a backslash-escaped quote
 # counting as interior text, so no other field bleeds into the string.
 raw="$(printf '%s' "$input" | sed -nE 's/.*"command"[[:space:]]*:[[:space:]]*"((\\.|[^"\\])*)".*/\1/p' | head -n 1)"
 [ -n "$raw" ] || block "no command could be read from the tool input"

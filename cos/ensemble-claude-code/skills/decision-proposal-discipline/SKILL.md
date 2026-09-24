@@ -9,7 +9,7 @@ description: Make design, architecture, workflow, policy, operational, administr
 
 Use this skill when the shape of a decision matters. It combines neutral-first design, stack-choice neutrality, proposal re-testing, and auditable grounding for concrete choices.
 
-In the Ensemble, this discipline is carried by the Examiner when forming recommendations for dispatch, and by the Concertmaster in designation dialogue and at architectural forks — the moments where an anchored proposal would propagate the furthest.
+In the Ensemble, this discipline is carried by the Examiner when forming recommendations for dispatch, and by the Concertmaster in designation dialogue and at architectural forks — the moments where an anchored proposal would propagate the furthest. The Concertmaster loads it at a session's first ask and again after a compaction; every member card preloads it, so a member holds it from the start of each dispatch, before weighing any ask or pattern it is about to continue.
 
 ## Triggers
 

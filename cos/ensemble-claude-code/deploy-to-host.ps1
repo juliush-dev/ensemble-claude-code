@@ -368,7 +368,7 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 46 files hash-compare against source, byte-identical except the
+# Integrity: the 45 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
 # settings.json is NOT in this set and cannot be: the deployed file legitimately
@@ -377,23 +377,28 @@ if ($null -eq $python) {
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
 # (23 core - the 19 that were here before, less settings.json, which the
-# assertion now covers, plus the Scout's guard hooks\guard-scout-bash.sh,
+# assertion now covers, and less the Examiner's guard
+# hooks\guard-examiner-bash.sh, plus the Scout's guard
+# hooks\guard-scout-bash.sh,
 # its retrieval kit tools\scout-fetch.sh, the Operator's live-reads guard
 # hooks\guard-live-reads.sh, and the harness-version pair HARNESS.md and
-# hooks\session-start-harness-marker.sh; + the 8
-# curated obsidian skill files: three SKILL.md plus five references; + the 11
-# promoted formal-library files: six SKILL.md (cross-shell-command,
-# skill-frontmatter, decision-proposal, felt-intent-extraction,
-# ubiquitous-language, mermaid-multiview) plus felt-intent's one reference
+# hooks\session-start-harness-marker.sh, and the main session's session cue
+# hooks\session-start-cue.sh; + the 8
+# curated obsidian skill files: three SKILL.md plus five references; + the 10
+# promoted formal-library files: five SKILL.md (cross-shell-command,
+# decision-proposal, felt-intent-extraction, ubiquitous-language,
+# mermaid-multiview; the sixth, skill-frontmatter-discipline; the prune below
+# removes it from the host) plus felt-intent's
+# one reference
 # (ontological-audit.md) and mermaid's four references (REFERENCE,
 # QUALITY_CHECKLIST, and two flattened templates); + 3 native skills
 # (operational-lane-discipline, health-check, wrap); + 1 curated skill
 # (writing-and-talking-style, one SKILL.md, no references/).)
 $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
-    'hooks\session-end-litter-flag.sh', 'hooks\guard-examiner-bash.sh', 'hooks\guard-archivist-paths.sh',
+    'hooks\session-end-litter-flag.sh', 'hooks\guard-archivist-paths.sh',
     'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh',
-    'hooks\session-start-harness-marker.sh',
+    'hooks\session-start-harness-marker.sh', 'hooks\session-start-cue.sh',
     'tools\scout-fetch.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
     '.mcp.json', 'HARNESS.md',
@@ -404,7 +409,6 @@ $same = @(
     'skills\wrap\SKILL.md',
     'skills\writing-and-talking-style\SKILL.md',
     'skills\cross-shell-command-discipline\SKILL.md',
-    'skills\skill-frontmatter-discipline\SKILL.md',
     'skills\decision-proposal-discipline\SKILL.md',
     'skills\felt-intent-extraction\SKILL.md',
     'skills\felt-intent-extraction\references\ontological-audit.md',

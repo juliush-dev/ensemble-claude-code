@@ -1,29 +1,29 @@
 {
   "counts": {
-    "exclude": 385,
-    "publish": 75,
+    "exclude": 421,
+    "publish": 74,
     "transform": 0
   },
   "executables": [
     "cos/ensemble-claude-code/deploy-to-host.sh",
     "cos/ensemble-claude-code/hooks/guard-archivist-paths.sh",
-    "cos/ensemble-claude-code/hooks/guard-examiner-bash.sh",
     "cos/ensemble-claude-code/hooks/guard-live-reads.sh",
     "cos/ensemble-claude-code/hooks/guard-push-gate.sh",
     "cos/ensemble-claude-code/hooks/guard-scout-bash.sh",
     "cos/ensemble-claude-code/hooks/session-end-litter-flag.sh",
+    "cos/ensemble-claude-code/hooks/session-start-cue.sh",
     "cos/ensemble-claude-code/hooks/session-start-harness-marker.sh",
     "cos/ensemble-claude-code/launch/start-ensemble.sh",
     "cos/ensemble-claude-code/launch/wire-mcp.sh",
     "cos/ensemble-claude-code/tools/scout-fetch.sh"
   ],
-  "generated_at": "2026-09-23T21:24:04.787792+00:00",
+  "generated_at": "2026-09-24T22:46:50.469088+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
-  "profile_content_sha256": "1350d5962d19e95ca78e9fe0fc7d3c4b1b5724f0428c99a25b701f050a0a1c43",
+  "profile_content_sha256": "55430ad66af402413e3b9bb8a90c60bf0679c98816e1989de984cb0c4779d914",
   "profile_name": "worldview-edition",
   "profile_version": "3",
-  "source_commit": "48268832d8d701d0782fa14af15246e8e8442090",
+  "source_commit": "ea47f57f8ed4b8f9323788ad3d09e0feb86ce2b0",
   "tool_versions": {
     "git": "git version 2.55.0.windows.5",
     "python": "3.14.3"

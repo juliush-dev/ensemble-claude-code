@@ -120,7 +120,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"[compaction-marker] This session's context was just compacted into a summary. Retrieval rule: reground the load-bearing facts the current work rests on against their surfaces before relying on them. The writing skill's load did not survive the summary: load writing-and-talking-style again before the next thing the human reads.\""
+            "command": "echo \"[compaction-marker] This session's context was just compacted into a summary. Retrieval rule: reground the load-bearing facts the current work rests on against their surfaces before relying on them. The skills' load did not survive the summary: load writing-and-talking-style and decision-proposal-discipline again before the next thing the human reads.\""
           }
         ]
       },
@@ -130,6 +130,17 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-start-harness-marker.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "_provenance_session_cue": "Wires the session cue on matchers startup, resume, clear and fork; the compaction marker keeps compact. A runbook whose moment is only observable in the work, joining a project above all, is easy to miss without a prompt at that moment, so the hook names the load right there. It walks up from the session's cwd: a project face (notebook/Constitution.md or a root Constitution.md) prints 'load onboard before working'; the shared external brain, recognized by its root manifesto note, prints no face line; anything else prints 'ask the human before working (wrap offer)'. Every run adds 'load decision-proposal-discipline before the first ask'. It prints nothing when the input carries an agent_id, so a member inside a subagent never reads the main session's cue. Bash builtins only; the 5-second timeout bounds a stat on an unreachable network path. It exits 0 on every path, and a failure before the output prints nothing.",
+        "matcher": "startup|resume|clear|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-start-cue.sh\"",
             "timeout": 5
           }
         ]

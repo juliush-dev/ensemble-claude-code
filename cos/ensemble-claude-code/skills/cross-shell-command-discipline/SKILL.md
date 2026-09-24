@@ -1,6 +1,6 @@
 ---
 name: cross-shell-command-discipline
-description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, or verifying target state through a different shell than the one that will execute the command.
+description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, or verifying target state through a different shell than the one that will execute the command.
 ---
 
 # Cross-Shell Command Discipline
@@ -11,12 +11,16 @@ Use this skill when the shell boundary is part of the problem. A shell boundary 
 
 The aim is to avoid false evidence. A command that failed because PowerShell, Bash, WSL, Git Bash, `cmd`, SSH, or Docker parsed it differently than intended tells you more about the command string than about the target system.
 
+The always-on retrieval rule makes this a served kind: before a command crosses a shell boundary, read this skill first.
+
 ## Triggers
 
 Invoke this skill when a command or verification step includes:
 
 - `wsl.exe`, `bash -lc`, `powershell -Command`, `pwsh -Command`, `cmd /c`, `ssh`, `docker exec`, or another nested interpreter.
+- A subprocess that starts bash (a script's shebang, a tool's `sh -c` call, a task runner invoking a shell) rather than a command typed directly at a bash prompt.
 - A path with spaces, backslashes, drive letters, `$HOME`, `%USERPROFILE%`, `~`, `/mnt/c`, or `/c`.
+- A path-like environment variable (`PATH`, `PYTHONPATH`, `NODE_PATH`) whose separator or path form differs between the shells involved.
 - Quoting inside quoting, especially single quotes inside double quotes or Bash snippets embedded in PowerShell strings.
 - Globs, redirection, command substitution, pipelines, variable expansion, or `for` loops crossing from one shell into another.
 - A verification command whose result will decide whether deployment, file sync, or cleanup succeeded.
@@ -68,6 +72,13 @@ MSYS2_ARG_CONV_EXCL='*' wsl.exe bash /mnt/c/Users/<user>/script.sh
 ```
 
 `'*'` excludes every argument from conversion for that one invocation. Use it whenever a Git Bash command launches `wsl.exe`, `cmd`, or another Windows program with Unix-style path arguments and the path comes back not-found.
+
+Environment variables are converted too, and `MSYS2_ARG_CONV_EXCL` does not stop it. A Unix-looking value in a variable a Windows program reads (a target directory set to `/tmp/out`) arrives as a Windows path, so a deploy meant for a Linux path lands in a stray folder instead of failing. Exclude variables with `MSYS2_ENV_CONV_EXCL`, either `'*'` or a `;`-separated list of variable-name prefixes:
+
+```bash
+TARGET_DIR=/tmp/out cmd //c "echo %TARGET_DIR%"                              # C:/Users/<user>/AppData/Local/Temp/out
+MSYS2_ENV_CONV_EXCL='TARGET_DIR' TARGET_DIR=/tmp/out cmd //c "echo %TARGET_DIR%"  # /tmp/out
+```
 
 ### When nested quoting keeps mangling, hoist the body into a script
 
@@ -145,6 +156,17 @@ app/venv/Scripts/python -c "import yaml; d=yaml.safe_load(open(r'C:\Users\me\con
 ```
 
 Rule of thumb for the whole session: bash builtins get `/c/...` paths; a Windows-native interpreter's `-c` snippet gets `C:\...` raw-string paths. Mixing the two is the most common silent failure in this configuration — a `FileNotFoundError` here is a path-form mismatch, not a missing file (do not let it harden into a "the file is gone" conclusion).
+
+### A Windows program that starts `bash` by bare name gets WSL's
+
+On Windows, `subprocess.run(['bash', ...])` from Python, like any Windows-native program starting `bash` by bare name, runs `C:\Windows\System32\bash.exe`, the WSL launcher, even when Git Bash is first on PATH: the process search reads the system directory before PATH. `shutil.which('bash')` reads PATH only, so it names Git's bash while the call runs Linux. Under WSL's bash:
+
+- only the variables `WSLENV` names cross from the parent, so the others arrive unset;
+- the launcher adds a parse layer, so a `-c` body like `X=1; echo $X` prints empty, the pre-expansion trap above.
+
+Pass the full path of the bash you mean (the `shutil.which` result, or Git's `bin\bash.exe`), and probe it with `uname -s` before trusting a run: `Linux` means you got WSL's, `MINGW64_NT-...` Git's. A test harness can refuse any bash under `System32`.
+
+Even with the right bash, set the variables a script needs inside the call, through `env=` or an `export` at the head of the `-c` string, never trusting the caller's environment to arrive unchanged. Check them with `${VAR-unset}`, not `${VAR:-default}`: the colon form treats set-but-empty as unset and falls back silently, which is how an empty `TMPDIR` becomes `/tmp` and a fixture's expected direction inverts.
 
 When you need a PowerShell boolean expression, wrap command calls before combining them:
 

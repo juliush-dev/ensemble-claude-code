@@ -1,4 +1,4 @@
-weighed: 2.1.281
+weighed: 2.1.282
 
 # The Claude Code fixes this COS relies on
 
