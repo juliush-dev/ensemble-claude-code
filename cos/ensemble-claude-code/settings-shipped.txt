@@ -5,12 +5,19 @@
 # array, null, or an empty object. permissions.deny is one path, and so is
 # modelSettings.claude-opus-5.effortLevel.
 #
-# It is merge-settings.py's PRUNE GATE. On a deploy, a path is removed from the
-# host's settings.json only when it is listed here AND source settings.json (plus
-# the host companion settings.local.json) no longer declares it - a path this COS
-# shipped in an earlier release and has since retired. A host key that is NOT
-# listed here is one this COS never declared, and the deploy leaves it alone.
-# That is the whole point: a host's own keys survive an update.
+# It is merge-settings.py's PATH-LEVEL PRUNE GATE. On a deploy, a path is
+# removed from the host's settings.json when it is listed here AND source
+# settings.json no longer declares it: a path this COS shipped in an earlier
+# release and has since retired. A host key that is NOT listed here is one this
+# COS never declared, and the deploy leaves it alone. That is the whole point: a
+# host's own keys survive an update. A retired path that holds a list loses only
+# the factory's own items, and only when the config home's snapshot of the last
+# deploy says which they were; the host's items stay.
+#
+# The snapshot (factory-settings.last-deploy.json, in the config home) also
+# retires paths, and it retires list items, which this file never lists. This
+# file is what still catches a retired path on a home that has no snapshot yet:
+# a home last deployed before snapshots existed.
 #
 # Maintain it at the moment a path is added - the same moment a new key lands in
 # settings.json. Never remove a line: a retired path must stay listed so a future
@@ -37,13 +44,6 @@
 # have been deployed to a host and removed again without ever being committed.
 # Such a path would linger on that host rather than be pruned. The failure mode
 # is a leftover key, never a deleted host key.
-#
-# COMPANION PATHS ARE NOT LISTED. settings.local.json is host-side and
-# gitignored; this is a tracked file. A path only the companion ever declares
-# (permissions.additionalDirectories today) is replaced from the companion while
-# the companion declares it, and lingers on the host if it is ever dropped from
-# the companion entirely. Removing an ENTRY from a companion-declared array does
-# take effect: declared paths are replaced whole, never unioned.
 #
 # Seeded with 14 paths, in the order each was first declared - the append-only
 # order a new line continues. One path has ever been retired:

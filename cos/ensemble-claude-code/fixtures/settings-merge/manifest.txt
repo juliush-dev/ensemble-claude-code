@@ -1,10 +1,14 @@
-# Fixture manifest - the ever-declared path list this fixture's source is judged
-# against. _provenance_retired is the retired path: listed here, absent from the
-# fixture source, present on the fixture host, so the merge must prune it.
+# Fixture manifest: the ever-declared path list this fixture's source is judged
+# against. It lists paths only, never list items. _provenance_retired and
+# hooks.Notification are retired paths: listed here, absent from the fixture
+# source, present on the fixture host.
 model
 modelSettings.claude-opus-5.effortLevel
 remoteControlAtStartup
 permissions.defaultMode
+permissions.ask
 permissions.deny
 hooks.PreToolUse
+hooks.SessionStart
+hooks.Notification
 _provenance_retired

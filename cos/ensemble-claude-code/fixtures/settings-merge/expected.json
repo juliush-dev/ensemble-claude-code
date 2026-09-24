@@ -2,7 +2,7 @@
   "model": "opus",
   "modelSettings": {
     "claude-opus-5": {
-      "effortLevel": "medium"
+      "effortLevel": "high"
     },
     "claude-fable-5-1": {
       "effortLevel": "medium"
@@ -11,7 +11,13 @@
   "remoteControlAtStartup": false,
   "permissions": {
     "defaultMode": "auto",
+    "ask": [
+      "Bash(git push)",
+      "Host(ask)"
+    ],
     "deny": [
+      "HostAdded(**)",
+      "edit(/agent-memory/**)",
       "Edit(/agent-memory/**)",
       "mcp__playwright__browser_run_code*"
     ],
@@ -26,13 +32,13 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash|PowerShell",
         "hooks": [
           {
-            "type": "command",
-            "command": "guard-push-gate.sh"
+            "command": "guard-push-gate.sh",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "Bash|PowerShell"
       },
       {
         "matcher": "Edit|Write",
@@ -44,12 +50,41 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "host-session-start.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo compaction-marker-v2"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "host-own-hook.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "host-notify.sh"
           }
         ]
       }

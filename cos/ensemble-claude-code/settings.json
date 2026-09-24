@@ -125,7 +125,7 @@
         ]
       },
       {
-        "_provenance_harness_marker": "Wires the harness-version marker on every session start (no matcher: startup, resume, clear, compact and fork). The hook compares the installed Claude Code version with the weighed line of the home's HARNESS.md and stays silent when they match or either is unknown. An older installed version prints one update line in any project; a newer one prints one line only where the session's cwd carries charters/harness-evolution/charter.md, the charter of the tending that weighs each new version. Its stdout joins the session's context. The 5-second timeout bounds a hung claude --version, since a command hook otherwise waits up to 600 seconds. It exits 0 on every path and never blocks a session start.",
+        "_provenance_harness_marker": "Wires the harness-version marker on every session start (no matcher: startup, resume, clear, compact and fork). The hook compares the installed Claude Code version with the weighed line of the home's HARNESS.md and stays silent when they match or either is unknown. An older installed version prints one update line in any project; a newer one prints one line only where the session's cwd carries the charter of the tending that weighs each new version, at charters/harness-evolution/charter.md or notebook/tendings/harness-evolution/charter.md. Its stdout joins the session's context. The 5-second timeout bounds a hung claude --version, since a command hook otherwise waits up to 600 seconds. It exits 0 on every path and never blocks a session start.",
         "hooks": [
           {
             "type": "command",

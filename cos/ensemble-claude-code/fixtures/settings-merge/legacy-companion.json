@@ -1,0 +1,34 @@
+{
+  "model": "sonnet",
+  "permissions": {
+    "additionalDirectories": [
+      "C:\\Users\\example\\Projects",
+      "C:\\Users\\example\\Shared-External-Brain",
+      "C:\\Users\\example\\Only-In-Companion"
+    ]
+  },
+  "env": {
+    "ENSEMBLE_BROWSER": "C:\\Program Files\\Vendor\\Browser\\browser.exe"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo compaction-marker-v2"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "host-session-start.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

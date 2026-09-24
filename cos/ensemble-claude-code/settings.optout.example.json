@@ -1,0 +1,16 @@
+{
+  "model": true,
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-start-harness-marker.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

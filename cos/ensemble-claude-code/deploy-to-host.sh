@@ -19,10 +19,12 @@
 # alone.
 #
 # settings.json is not copied but MERGED, by merge-settings.py, the one merge
-# implementation both deploy scripts call: the paths source and the host
-# companion settings.local.json declare are replaced, the paths
-# settings-shipped.txt lists and source no longer declares are pruned, and every
-# other key the host carries is left exactly as it stands. A host's own settings
+# implementation both deploy scripts call. The home's own settings.json is the
+# base. A single value the factory defines is written from the factory; a list
+# gains the factory items it lacks and loses the ones the factory has retired
+# since the last deploy; every other key the host carries is left exactly as it
+# stands. settings.optout.json in the home names the factory items the host
+# keeps out and the single values it keeps as its own. A host's own settings
 # survive an update.
 #
 # PYTHON 3 IS A PREREQUISITE. Without it this script does not update
@@ -42,8 +44,9 @@
 # 'browser (NOT FOUND - the Scout's rendered reads report the gap)'. Never
 # fatal: without a browser everything else lands and the run ends with exit
 # code 0, and the Scout says so when a page needs rendering instead of
-# guessing. A browser off the standard install paths is named in the host
-# companion as env.ENSEMBLE_BROWSER (settings.local.example.md).
+# guessing. A browser off the standard install paths is named as
+# env.ENSEMBLE_BROWSER in the home's own settings.json
+# (settings.optout.example.md).
 #
 # It hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six always-on
@@ -365,25 +368,30 @@ copy_verified '.mcp.json' '.mcp.json'
 copy_verified 'HARNESS.md' 'HARNESS.md'
 
 # --- settings.json: the preserving merge ------------------------------------
-# Host companion: settings.local.json beside this script (gitignored, never
-# tracked - publishable-clean) carries host-specific settings such as
-# permissions.additionalDirectories. The tracked settings.json stays clean, and
-# the launcher's --setting-sources user means only the deployed settings.json
-# governs a session, so the companion is the one door for host values. Tracked
-# example: settings.local.example.json, with settings.local.example.md beside it
-# carrying the guidance (JSON has no comments, and a _provenance key holding it
-# would itself be a companion-declared path landing on the host).
+# The home's own settings.json is where host values live: the user edits it
+# directly, and the launcher's --setting-sources user makes it the only settings
+# file a session reads. Two files beside it in the home serve the merge, and
+# Claude Code reads neither. settings.optout.json is the user's list of factory
+# items to keep out and single values to keep as their own (tracked example
+# settings.optout.example.json, guidance in settings.optout.example.md).
+# factory-settings.last-deploy.json is the snapshot of the factory settings a
+# deploy applied; the next deploy reads it to tell which list items the factory
+# has retired since.
+#
+# A settings.local.json beside this script is the retired companion an earlier
+# design read host values from. When one is found, merge-settings.py moves its
+# values into the home's settings.json once and renames it to
+# settings.local.json.retired-<timestamp>. Nothing of it is deleted.
 #
 # merge-settings.py is the single merge implementation both deploy scripts call
-# (see its header for the model). It replaces the paths source-plus-companion
-# declares, prunes the paths settings-shipped.txt lists and source no longer
-# declares, and LEAVES EVERY OTHER HOST KEY ALONE - a plugin toggle, a
-# notification preference, a model entry the harness wrote survives an update
-# instead of being flattened. It names every host entry it is about to drop
-# before it writes. One implementation, so the two scripts cannot disagree about
-# a security-relevant file. The deployed file is not in the byte-identical list
-# (it is derived, and it legitimately carries host keys); the assertion below
-# verifies it instead.
+# (see its header for the model). It LEAVES EVERY HOST KEY THE FACTORY DOES NOT
+# SET ALONE: a plugin toggle, a notification preference, a model entry the
+# harness wrote, a deny rule added by hand all survive an update. Before it
+# writes it prints one line per list item added, removed as retired, or skipped
+# by opt-out, and names every host value it replaces. One implementation, so the
+# two scripts cannot disagree about a security-relevant file. The deployed file
+# is not in the byte-identical list (it is derived, and it legitimately carries
+# host keys); the assertion below verifies it instead.
 #
 # This block sits LAST, after every copy and after .mcp.json, so a failure here
 # cannot leave a half-deployed home with everything else stale. The .ps1 now
@@ -408,14 +416,12 @@ copy_verified 'HARNESS.md' 'HARNESS.md'
 #     condition is raised by the machine rather than left to anyone's memory.
 #     Nothing is ever lost this way; the home simply keeps the settings it had.
 #   * NO host settings.json (a first deploy). Source is written wholesale and
-#     the script says plainly that the companion was not merged and Python 3 is
-#     needed. There is nothing to protect, and a home with no settings file is
-#     useless. That copy is hash-verified against source like any other copied
-#     file.
+#     the script says plainly that nothing was merged and Python 3 is needed.
+#     There is nothing to protect, and a home with no settings file is useless.
+#     That copy is hash-verified against source like any other copied file.
 #
 # (This also replaces the old exit 1, which under the preserving merge would
-# have aborted every update on a python3-less host rather than only the
-# companion case.)
+# have aborted every update on a python3-less host.)
 find_python3() {
   local exe out
   for exe in python3 python; do
@@ -426,15 +432,22 @@ find_python3() {
   done
   return 1
 }
-companion="$src/settings.local.json"
+legacy_companion="$src/settings.local.json"
 merge_script="$src/merge-settings.py"
 settings_manifest="$src/settings-shipped.txt"
 python_exe="$(find_python3)" || python_exe=""
 settings_merged=0
 settings_copied=0
 settings_skipped=0
-merge_args=(--source "$src/settings.json" --target "$target/settings.json" --manifest "$settings_manifest")
-[ -f "$companion" ] && merge_args+=(--companion "$companion")
+had_legacy_companion=0
+[ -f "$legacy_companion" ] && had_legacy_companion=1
+# The arguments merge and verify share; the legacy companion is merge's alone.
+settings_args=(--source "$src/settings.json" --target "$target/settings.json"
+               --manifest "$settings_manifest"
+               --optout "$target/settings.optout.json"
+               --snapshot "$target/factory-settings.last-deploy.json")
+merge_args=("${settings_args[@]}")
+[ "$had_legacy_companion" -eq 1 ] && merge_args+=(--legacy-companion "$legacy_companion")
 
 # The block the no-Python branches print. One function, called at the moment it
 # happens and again at the end of the run, so both printings are the same text.
@@ -455,18 +468,17 @@ no_python_block() {
     echo "" >&2
     echo "Install Python 3, then run this script again." >&2
   else
-    echo "PYTHON 3 IS MISSING - settings.json written WITHOUT the companion merge" >&2
+    echo "PYTHON 3 IS MISSING - settings.json written as a WHOLESALE COPY of source" >&2
     echo "" >&2
     echo "No working Python 3 was found (tried running 'python3 --version' and" >&2
     echo "'python --version'). Python 3 is a prerequisite of this deploy." >&2
     echo "" >&2
     echo "This is a first deploy: there was no settings.json in the target home, so" >&2
-    echo "there was nothing to protect and source was copied there wholesale. The" >&2
-    echo "host companion settings.local.json was NOT merged in, so" >&2
-    echo "permissions.additionalDirectories and anything else in it is missing from" >&2
-    echo "the deployed file." >&2
+    echo "there was nothing to protect and source was copied there wholesale." >&2
+    echo "Nothing was merged. A settings.local.json beside this script, if there is" >&2
+    echo "one, was NOT moved into the deployed file." >&2
     echo "" >&2
-    echo "Install Python 3, then run this script again to get the companion merged." >&2
+    echo "Install Python 3, then run this script again." >&2
   fi
   echo "***************************************************************" >&2
   echo "" >&2
@@ -485,10 +497,13 @@ else
   merge_rc=0
   "$python_exe" "$merge_script" merge "${merge_args[@]}" || merge_rc=$?
   if [ "$merge_rc" -eq 3 ]; then
-    echo "settings.json WRITTEN BUT NOT VERIFIED (merge-settings.py exited 3, a verification failure). The file was written and then failed its own path-by-path check; it is not trustworthy. See the lines above for which paths." >&2
+    echo "settings.json WRITTEN BUT NOT VERIFIED (merge-settings.py exited 3, a verification failure). The file was written and then failed its own path-by-path check; it is not trustworthy. See the lines above for which paths. The snapshot was not replaced, and a settings.local.json beside this script was not retired. The deploy stops here: every other file was copied before this step, but none was hash-verified and no inventory is printed. A clean run verifies them all." >&2
+    exit 1
+  elif [ "$merge_rc" -eq 5 ]; then
+    echo "settings.json NOT UPDATED: $target/settings.optout.json could not be read, so the merge stopped before writing anything. The home's settings.json is exactly as it was. Fix or remove that file and run this script again. The deploy stops here: every other file was copied before this step, but none was hash-verified and no inventory is printed. A clean run verifies them all." >&2
     exit 1
   elif [ "$merge_rc" -ne 0 ]; then
-    echo "settings.json MERGE FAILED (merge-settings.py exited $merge_rc). The deployed settings.json is not trustworthy; everything else in this deploy landed." >&2
+    echo "settings.json MERGE FAILED (merge-settings.py exited $merge_rc). The home's settings.json may not carry this deploy's settings; see the lines above. The deploy stops here: every other file was copied before this step, but none was hash-verified and no inventory is printed. A clean run verifies them all." >&2
     exit 1
   fi
   settings_merged=1
@@ -531,11 +546,13 @@ if [ "${#failed[@]}" -gt 0 ]; then
 fi
 
 # settings.json's own verification: re-read the deployed file from disk, parse
-# it, and assert that every declared path equals source-plus-companion's value
-# and every retired path is gone. This is what the hash check used to be for,
-# done in the only way that still means something.
+# it, and assert that every factory value and list item not opted out is in
+# place and no retired path remains. This is what the hash check used to be
+# for, done in the only way that still means something. The removal of retired
+# list items is checked inside the merge run, before the snapshot is replaced;
+# here the snapshot already equals source, so there are none left to look for.
 if [ "$settings_merged" -eq 1 ]; then
-  if ! "$python_exe" "$merge_script" verify "${merge_args[@]}"; then
+  if ! "$python_exe" "$merge_script" verify "${settings_args[@]}"; then
     echo "SETTINGS VERIFICATION FAILED - the deployed settings.json does not carry what the factory declares (see the lines above)." >&2
     exit 1
   fi
@@ -584,11 +601,11 @@ echo "Deployed inventory (the staged set only):"
   if [ "$settings_skipped" -eq 1 ]; then
     echo "settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)"
   elif [ "$settings_copied" -eq 1 ]; then
-    echo "settings.json (WHOLESALE COPY of source - no Python 3, first deploy, companion not merged)"
-  elif [ -f "$companion" ]; then
-    echo "settings.json (source merged with the host companion, over the host's own keys)"
+    echo "settings.json (WHOLESALE COPY of source - no Python 3, first deploy, nothing merged)"
+  elif [ "$had_legacy_companion" -eq 1 ]; then
+    echo "settings.json (factory settings merged into the host's own, the legacy settings.local.json moved into it; see the lines above)"
   else
-    echo "settings.json (source merged over the host's own keys)"
+    echo "settings.json (factory settings merged into the host's own)"
   fi
   for f in "$src"/always-on/rules/*.md; do echo "rules/$(basename "$f")"; done
   for pair in "${verify_list[@]}"; do echo "${pair##*|}"; done

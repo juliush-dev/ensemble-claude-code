@@ -1,0 +1,16 @@
+{
+  "modelSettings": {
+    "claude-opus-5": {
+      "effortLevel": true
+    }
+  },
+  "permissions": {
+    "ask": [
+      "Bash(git push *)",
+      "Stale(entry)"
+    ]
+  },
+  "env": {
+    "NOT_A_FACTORY_KEY": true
+  }
+}

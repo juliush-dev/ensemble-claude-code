@@ -9,11 +9,12 @@
 #   equal, or either version unknown   -> silent
 #   installed OLDER than weighed        -> one line in any project: update
 #   installed NEWER than weighed        -> one line only where the cwd
-#                                          carries
-#                                          charters/harness-evolution/charter.md,
-#                                          the charter of the tending that
-#                                          weighs each new version; silent
-#                                          everywhere else
+#                                          carries the charter of the tending
+#                                          that weighs each new version;
+#                                          silent everywhere else
+#
+# The charter counts in either layout: charters/harness-evolution/charter.md
+# or notebook/tendings/harness-evolution/charter.md.
 #
 # Wired with no matcher, so it runs on every session start (startup, resume,
 # clear, compact, fork), with a short per-hook timeout in settings.json so a
@@ -79,7 +80,9 @@ cwd=""
 re='"cwd"[[:space:]]*:[[:space:]]*"([^"]*)"'
 [[ "$input" =~ $re ]] && cwd="${BASH_REMATCH[1]}"
 cwd="${cwd//\\\\/\\}"
-[ -n "$cwd" ] && [ -f "$cwd/charters/harness-evolution/charter.md" ] || exit 0
+[ -n "$cwd" ] || exit 0
+[ -f "$cwd/charters/harness-evolution/charter.md" ] ||
+  [ -f "$cwd/notebook/tendings/harness-evolution/charter.md" ] || exit 0
 
 echo "[harness-marker] Claude Code $installed is installed; this COS was last weighed against $weighed (HARNESS.md in this COS home). The harness-evolution beat is owed. Run it before COS work that might build by hand what the new version offers."
 exit 0

@@ -1,14 +1,15 @@
 {
+  "_provenance_retired": "declared by an earlier release, retired since",
   "model": "opus",
   "modelSettings": {
     "claude-opus-5": {
       "effortLevel": "medium"
     }
   },
-  "remoteControlAtStartup": false,
   "permissions": {
     "defaultMode": "auto",
     "ask": [
+      "mcp__claude_ai_*",
       "Bash(git push)",
       "Bash(git push *)"
     ],
@@ -29,7 +30,6 @@
         ]
       },
       {
-        "_provenance_note": "factory narration; changes no behavior",
         "matcher": "Edit|Write",
         "hooks": [
           {
@@ -45,7 +45,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo compaction-marker-v2"
+            "command": "echo compaction-marker-v1"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "factory-notify.sh"
           }
         ]
       }

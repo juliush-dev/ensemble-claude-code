@@ -20,8 +20,8 @@
 #   cos help      -> this dispatcher (no delegation)
 # Deployed-side targets live under %LOCALAPPDATA%\ensemble-claude-code and need no
 # anchor. Repo-side targets (update, probe) are located via the $env:OSCC_WORKBENCH
-# anchor - the workbench repo root - which the user sets in the gitignored host-local
-# companion. No host path is ever tracked in source (publishable-clean).
+# anchor - the workbench repo root - a user-scope environment variable the user sets
+# once on the host. No host path is ever tracked in source (publishable-clean).
 #
 # `cos release` is deliberately ABSENT: the release-hop keeps its
 # own gating; no shortcut around it lives here, not even as a stub.
@@ -47,7 +47,7 @@ function cos {
         $anchor = $env:OSCC_WORKBENCH
         if ([string]::IsNullOrWhiteSpace($anchor)) {
             Write-Host ("cos: `$env:OSCC_WORKBENCH is not set. Point it at your oscc-workbench repo root " +
-                "(set it in the gitignored host-local companion), then reopen the shell. " +
+                "(a user-scope environment variable: [Environment]::SetEnvironmentVariable('OSCC_WORKBENCH', '<repo root>', 'User')), then reopen the shell. " +
                 "Repo-side commands (update, probe) cannot be located without it.") -ForegroundColor Red
             return $null
         }
