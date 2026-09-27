@@ -8,7 +8,7 @@ The deploy (`deploy-to-host.ps1` or `deploy-to-host.sh`) merges this folder's `s
 
 - A single value the factory sets, such as the default model or an effort level, is written from the factory on every update. A single value the factory does not set is left alone.
 - A list, such as `permissions.deny`, `permissions.ask` or `hooks.SessionStart`, merges by adding. The installed items stay, in their order, and each factory item the list lacks is added at the end. An item the factory shipped at the last deploy and has since retired is removed.
-- Every other key stays as it is: `permissions.allow`, `permissions.additionalDirectories`, `env`, a plugin toggle.
+- Every other key stays as it is: `permissions.allow`, `permissions.additionalDirectories`, a plugin toggle, and every `env` variable but the one the factory sets, `env.PYTHONUTF8` (Python's UTF-8 mode). `{"env": {"PYTHONUTF8": true}}` in the opt-out file keeps the host's own value of it.
 
 Two list items are the same item when they are equal as parsed JSON. Key order and spacing do not matter and `_provenance*` note keys are ignored, but case counts: `Edit(x)` and `edit(x)` are two items.
 

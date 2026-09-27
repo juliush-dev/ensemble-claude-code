@@ -64,3 +64,5 @@ _provenance_model_and_remote_control
 modelSettings.claude-opus-5.effortLevel
 remoteControlAtStartup
 modelSettings.opus.effortLevel
+_provenance_env
+env.PYTHONUTF8

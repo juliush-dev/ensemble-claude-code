@@ -6,6 +6,9 @@
     }
   },
   "remoteControlAtStartup": false,
+  "env": {
+    "PYTHONUTF8": "1"
+  },
   "permissions": {
     "defaultMode": "auto",
     "ask": [

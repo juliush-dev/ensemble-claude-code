@@ -1,6 +1,6 @@
 ---
 name: cross-shell-command-discipline
-description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, or verifying target state through a different shell than the one that will execute the command.
+description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, verifying target state through a different shell than the one that will execute the command, or proving a tool is present on Windows.
 ---
 
 # Cross-Shell Command Discipline
@@ -11,7 +11,7 @@ Use this skill when the shell boundary is part of the problem. A shell boundary 
 
 The aim is to avoid false evidence. A command that failed because PowerShell, Bash, WSL, Git Bash, `cmd`, SSH, or Docker parsed it differently than intended tells you more about the command string than about the target system.
 
-The always-on retrieval rule makes this a served kind: before a command crosses a shell boundary, read this skill first.
+Before a command crosses a shell boundary, a subprocess that starts a shell included, read this skill first. The cross-shell nudge hook repeats this pointer at an agent's first crossing, but its note arrives after that command has run, so it serves the next crossing, not the first.
 
 ## Triggers
 
@@ -39,7 +39,7 @@ Do not invoke for simple single-shell commands with no quoting, path translation
    - Git Bash touching Windows: verify whether the environment uses `/c/...` or `/mnt/c/...` before assuming.
    - Remote SSH: use paths valid on the remote host, not the local host.
 5. Avoid mixed quoting when possible. Prefer separate simple commands, scripts already present on disk, or native shell constructs over one dense nested command.
-6. Treat parser errors, empty output, and surprising no-match results as command failures, not system facts. Fix the command and rerun before drawing conclusions.
+6. Treat parser errors, empty output, and surprising no-match results as command failures, not the target answering. Each is pushback to retrieve on (this skill's patterns and case studies, the team's records), never a quick retry: find why the command failed, then fix it and rerun before drawing conclusions.
 7. For verification, use direct existence/count checks in the target environment. Verify files with `Test-Path` in PowerShell, `[ -f ... ]` or `find` in Bash, and explicit exit codes when the output may be empty.
 8. If a command must cross shells and the syntax is nontrivial, first run a harmless probe that prints the current shell, working directory, and one known path. Use that probe to confirm the boundary behaves as expected.
 
@@ -109,11 +109,13 @@ Inside the script, normalize `/mnt/c` source files with `tr -d '\r'` if they may
 
 ### When authoring a script for another shell, hand off via a file — not stdin or inline — and keep the source ASCII
 
-Authoring a script *for* one shell from *inside* another (for example writing a PowerShell `.ps1` from a Bash heredoc on a Windows host) crosses an encoding-and-parse boundary at write time, before any command runs. Two concrete traps live here, both observed during a real deploy.
+Authoring a script *for* one shell from *inside* another (for example writing a PowerShell `.ps1` from a Bash heredoc on a Windows host) crosses an encoding-and-parse boundary at write time, before any command runs. Three concrete traps live here, all observed in real work.
 
 1. **`powershell -Command -` (script fed to PowerShell over stdin) silently truncates after the first statement.** A multi-line script piped into `powershell -Command -` runs only its first statement; the rest is dropped with no error, so the deploy looks like it ran but did half the work. **Write the script to a file and run it with `powershell -NoProfile -File <path>`** (the `-File` reader consumes the whole file; `-NoProfile` keeps the run deterministic). This is the **opposite** of the `Get-Content deploy.py -Raw | wsl.exe -- python3 -` pattern above: piping a script to `python3 -` over stdin works, but stdin tolerance is per-interpreter — `powershell -Command -` does not have it. The general rule is the positive form of "prefer one shell end to end": keep one shell from authoring through execution, and when you genuinely must cross, hand the body off as a **file** run with one parse layer, never as an inline/stdin string the receiving interpreter may re-tokenize or truncate.
 
 2. **Non-ASCII characters silently mangle across the authoring boundary and break the target shell's parse.** When the script you write contains em-dashes (`—`), arrows (`→`), or smart quotes — often pasted in from prose or a plan — those multi-byte characters can corrupt as the bytes cross the shell/encoding boundary, producing a *parse-time* failure in the target shell rather than a clean runtime error. **Author any cross-shell script ASCII-only** (`-`/`--` for em-dashes, `->` for arrows, straight quotes), and verify zero non-ASCII bytes before running it. The Windows-PowerShell-specific mechanism behind this: Windows PowerShell 5.x reads a no-BOM UTF-8 `.ps1` through the machine's ANSI code page, so a multi-byte UTF-8 character (em-dash, arrow, smart quote) is misdecoded into stray bytes that break the target shell's *parse* rather than throwing a clean runtime error. When non-ASCII is genuinely unavoidable, the two escape hatches are (a) write the file with a UTF-8 BOM, which forces WPS 5.x to decode it as UTF-8, or (b) construct the character in-script instead of writing it as a literal (`[char]0x2014` for an em-dash). The ASCII-only authoring rule here is the provider-independent form that holds across any author-in-one-shell, run-in-another boundary.
+
+3. **The Bash tool halves backslash pairs.** A `\\` typed in a Bash-tool command reaches bash as one `\`, in single quotes and in a quoted heredoc alike, so a heredoc-written script or regex silently loses half its backslashes. The Write tool keeps both. **Write backslash-bearing content with the Write tool**, and check the bytes on disk before running it.
 
 ### Watch variable pre-expansion when PowerShell wraps a Bash command
 
@@ -124,6 +126,15 @@ wsl.exe -- bash -lc 'echo "$HOME"; ls "$d"'
 ```
 
 Two signatures of this trap: a `HOME` that reads like a Windows path with its separators stripped, and a `cp` or `ls` that errors on a path missing the segment a shell variable should have supplied. The attribution is boundary-agnostic — even single-quoted, a multi-statement Bash body with `var=...; ...$var...` assignments can come back empty **through Git Bash / MSYS → `wsl.exe` → `bash -lc` exactly as through PowerShell → `wsl.exe`**. A body like `C=/home/<user>/.config/app; ... "$C/skills"` resolved `$C` to empty, so the paths degraded to `/skills`, `/settings.json`, and read as not-found. The fix that worked: fully literal absolute paths, no assign-then-reuse variable across the boundary. When literal paths are impractical, switch to the write-a-script route above rather than fighting the one-liner.
+
+### PowerShell 5.1 splits a native argument holding quotes and spaces
+
+Windows PowerShell 5.1 hands a native program an argument that holds both a double quote and a space unwrapped, so it splits at the space even when the PowerShell side quoted it; JSON is the usual victim. Put the value in an environment variable, its double quotes escaped for the target's parser, and pass it after the stop-parsing token `--%`, where PowerShell substitutes `%VAR%` and passes the rest verbatim:
+
+```powershell
+$env:ARG_JSON = $json -replace '"', '\"'
+prog --% add-json "%ARG_JSON%"
+```
 
 ### Running a PowerShell-authored plan through Git Bash / MSYS
 
@@ -143,6 +154,10 @@ For `.md` / config edits the plan expresses as inline blocks, prefer the editor/
 ### Git pathspecs are case-sensitive even on a case-insensitive filesystem
 
 On Windows the filesystem is case-insensitive, but `git add` matches its pathspec **case-sensitively**. `git add Charter.md` when the tracked path is `charter.md` matches nothing and stages nothing — with no error — so an edit-then-add-then-commit chain can silently drop a file. This is the same false-evidence class as the shell traps above: the command "succeeded" (exit 0) while doing nothing. When the case of a path is uncertain, verify the staged state with a separate probe — `git status --short` after the add — rather than trusting the add's silent success.
+
+### Git Bash `sed -i` rewrites a CRLF file to LF
+
+On a CRLF working file (`git ls-files --eol` shows `w/crlf`), Git Bash's `sed` matches no `\r$` pattern, and `sed -i` writes the whole file back with LF endings whatever its pattern matched. Every line changes: a corruption, not a no-op. Edit such files with the Edit tool; if `sed -i` already ran on a file with no other uncommitted edits, restore it with `git checkout -- <file>`.
 
 ### Bundled / Windows-native Python invoked from MSYS: path-form split
 
@@ -175,6 +190,16 @@ Where-Object { (Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md')) -and 
 ```
 
 Do not write the `-and` as if it were an argument to `Test-Path`.
+
+### Proving a tool is present on Windows
+
+A name lookup says what a shell would start, not that it works. Prove presence with a version or other working call on the name that resolved, in the shell that will run it, and read an empty or failing lookup as the check failing, not the tool missing.
+
+- Windows PowerShell 5.1 aliases `where` to `Where-Object`, which returns nothing, and `curl` to `Invoke-WebRequest`, which throws. Spell `where.exe` and `curl.exe`.
+- Git Bash does not resolve a `.cmd` shim by bare name, so `command -v ok` finds nothing where `ok.cmd` exists. Call `ok.cmd --version`.
+- PowerShell may resolve a bare name to a `.ps1` that prints nothing and exits 0, as `ok --version` did. Call the `.cmd` or `.exe` by its full name.
+- A path under `WindowsApps` alone does not mean a Store stub; the Python install manager puts real launchers there. Run the call and read its answer.
+- `bash` on PATH may be the WSL launcher (the section above). Probe `uname -s`.
 
 ## Guardrails
 

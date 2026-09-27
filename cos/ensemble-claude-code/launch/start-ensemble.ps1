@@ -20,12 +20,28 @@ if (-not (Test-Path (Join-Path $ensembleHome 'CLAUDE.md'))) {
     exit 1
 }
 
+# The main-session rules: the home's CONCERTMASTER.md, the Concertmaster's own
+# rules, which no member loads. They reach the main session's system prompt
+# through --append-system-prompt-file (members never receive that prompt), and
+# ENSEMBLE_CONCERTMASTER_APPENDED=1 tells the session cue hook
+# (hooks\session-start-cue.sh) not to print them again as its fallback. A home
+# without the file launches without either, and the hook finds no file to print.
+$mainRules = Join-Path $ensembleHome 'CONCERTMASTER.md'
+$mainArgs = @()
+if (Test-Path $mainRules) {
+    $mainArgs = @('--append-system-prompt-file', $mainRules)
+} else {
+    Write-Host "Ensemble home has no CONCERTMASTER.md at $ensembleHome - the main-session rules are missing; run deploy-to-host.ps1 -Update."
+}
+
 $prev = $env:CLAUDE_CONFIG_DIR
 $prevNoFlicker = $env:CLAUDE_CODE_NO_FLICKER
 $prevRepaint = $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT
+$prevAppended = $env:ENSEMBLE_CONCERTMASTER_APPENDED
 $code = 0
 try {
     $env:CLAUDE_CONFIG_DIR = $ensembleHome
+    if ($mainArgs.Count -gt 0) { $env:ENSEMBLE_CONCERTMASTER_APPENDED = '1' } else { $env:ENSEMBLE_CONCERTMASTER_APPENDED = $null }
     # Fullscreen TUI rendering (a research-preview harness feature; no CLI flag)
     # as an ensemble-launch default: CLAUDE_CODE_NO_FLICKER=1 turns on the
     # fullscreen/alt-screen rendering, and CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT=1
@@ -36,12 +52,13 @@ try {
     if (-not (Test-Path Env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT)) { $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT = '1' }
     # --setting-sources user: only the home's own settings govern the session
     # (no project or local settings files) - the whole-shape consistency lever.
-    claude --setting-sources user @args
+    claude --setting-sources user @mainArgs @args
     $code = $LASTEXITCODE
 }
 finally {
     $env:CLAUDE_CONFIG_DIR = $prev
     $env:CLAUDE_CODE_NO_FLICKER = $prevNoFlicker
     $env:CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT = $prevRepaint
+    $env:ENSEMBLE_CONCERTMASTER_APPENDED = $prevAppended
 }
 exit $code

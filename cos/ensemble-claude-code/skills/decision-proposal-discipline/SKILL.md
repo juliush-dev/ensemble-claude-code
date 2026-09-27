@@ -9,7 +9,7 @@ description: Make design, architecture, workflow, policy, operational, administr
 
 Use this skill when the shape of a decision matters. It combines neutral-first design, stack-choice neutrality, proposal re-testing, and auditable grounding for concrete choices.
 
-In the Ensemble, this discipline is carried by the Examiner when forming recommendations for dispatch, and by the Concertmaster in designation dialogue and at architectural forks — the moments where an anchored proposal would propagate the furthest. The Concertmaster loads it at a session's first ask and again after a compaction; every member card preloads it, so a member holds it from the start of each dispatch, before weighing any ask or pattern it is about to continue.
+In the Ensemble, this discipline is carried by the Examiner when forming recommendations for dispatch, and by the Concertmaster in designation dialogue and at architectural forks — the moments where an anchored proposal would propagate the furthest.
 
 ## Triggers
 
@@ -26,10 +26,10 @@ Invoke this skill when:
 1. Name the decision or proposal explicitly.
 2. Run a neutral pass first: describe the right solution if the current structure, workflow, document set, notebook geography, process, institution, implementation, or prior proposal did not exist.
 3. Run the current-state pass: compare the ideal with the actual system, process, artifact, institution, constraints, commitments, and cost of change.
-4. If the ideal and incremental paths differ, present both with the compromise named.
+4. If the ideal and incremental paths differ, present both with the compromise named, leading with the one you recommend; that is the recommendation, not a survey.
 5. For stack, provider, vendor, tool, or process choices, compare candidates against the task's actual requirements. Treat familiarity and consistency as factors, not as automatic winners.
 6. For concrete values or rule choices, record why the value is defensible. Use a traceable check, source, host or context probe, official requirement, or user-stated convention.
-7. If a proposal has propagated, re-test it against actual commitments before propagating further.
+7. If a proposal has propagated, re-test it against actual commitments before propagating further. Re-testing, like retrieving the decision behind a failing path and stating the call, is surfaced to the user, never silently overriding the user's decision.
 8. Separate facts, assumptions, user preferences, and recommendations.
 
 ## Guardrails

@@ -10,33 +10,11 @@ Provenance: tailored third-party OSCC realization, admitted through the curation
   File last touched: 99559f2f52047978602ef365589275831e76af07 (2026-08-02, pstack 0.14.0)
   Plugin version: 0.14.3
   Author: Lauren Tan (poteto)
-  License: MIT (pstack/LICENSE, (c) 2026 Lauren Tan); full notice below. The repo
-    root carries no LICENSE; the plugin-level notice is the licensing basis.
-This file is a tailored copy. Renamed from the upstream name unslop. The
-deploy loop carries SKILL.md and references/ only, so the sibling LICENSE file
-does not reach the host; this in-file notice is the license that travels.
-
-MIT License
-
-Copyright (c) 2026 Lauren Tan
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+  License: MIT (pstack/LICENSE, (c) 2026 Lauren Tan). The full notice is
+    references/LICENSE.md, beside this file; the deploy carries references/
+    with SKILL.md, so the notice travels with every copy. The repo root
+    carries no LICENSE; the plugin-level notice is the licensing basis.
+This file is a tailored copy. Renamed from the upstream name unslop.
 -->
 
 # Writing and talking style
@@ -45,7 +23,7 @@ Write and clean prose so it reads as a human wrote it, with voice and with no wo
 
 ## Reach and precedence
 
-This is how every member writes anything a human may read: the Concertmaster's answers to the human operator first, then member reports, public artifacts, body documents, the notebooks and rules themselves. It governs new and edited text going forward; nothing already written is rewritten just to comply.
+This is how every member writes anything a human may read: the Concertmaster's answers to the human operator first, then member reports, public artifacts, body documents, the notebooks and rules themselves. It governs new and edited text going forward; nothing already written is rewritten just to comply, except the link form below, which existing live notes take on the human's word.
 
 It yields on two things.
 
@@ -57,6 +35,32 @@ Every member applies it while writing and again at a cleanup pass. The always-on
 ## Fewest words, no loss
 
 Compress until precision, understanding or depth would suffer, then stop. Cut what a reader would not miss. Never cut a distinction, a number, a name, or a step someone will act on. Brevity that drops a load-bearing detail is not brevity, it is a defect.
+
+## Links between Markdown documents
+
+When one Markdown document names another, link it with a relative standard Markdown link: the `.md` extension kept, spaces written as `%20`, no leading `./`. OpenKnowledge and Obsidian both read this form, and OpenKnowledge builds its link graph from it. A backticked path is plain text to both; it names a document without connecting to it.
+
+```markdown
+See the [contract](../contract.md) and the [Skills Index](Skills%20Index.md).
+The [bounds](Constitution.md#bounds) settle it.
+```
+
+Link a section only where its heading is letters, digits and single spaces, with hyphens only inside words; OpenKnowledge and GitHub slug such a heading the same. Any other character (an apostrophe, dash, slash, dot, underscore, parenthesis or accent) can set the two apart, so link the document instead. Where a section link is wanted on such a heading anyway, take OpenKnowledge's slug: lowercase, accents dropped, each run of characters that are not letters or digits one hyphen, hyphens trimmed at both ends; GitHub then opens the page top. Obsidian's own heading reader expects the raw heading text and may not follow a slug at all. Both gaps are accepted, on the human's word.
+
+Code format stays for:
+
+- paths inside commands;
+- files that are not Markdown, such as `settings.json`;
+- host paths, and a file mentioned as it sits on the host, whatever path names it: the live home's `rules/50-dispatch.md`, a deployed copy hash-checked against its source, a `/context` reading of the memory files;
+- a reference from a document a deploy copies into another layout to a file the copy no longer sits beside, such as a COS skill or card naming a rule, or a formal skill naming a template; it is named by its target's place where the copy lands, because a relative link written for the source dies there. A skill's own `references/` travel with it and stay links;
+- a generic surface name that points at no one document, such as a route's `Handoff.md`;
+- a name used as an identifier: a skill, a tool, a setting key.
+
+A line of a Markdown document is cited as a link with the line kept in the text, `[Constitution.md:34](Constitution.md)`; `path:line` in code is for code files.
+
+Frontmatter properties and embeds keep the syntax the reading tool requires; the form covers prose.
+
+A chat answer or a member's return is not a document; paths there follow the harness's own convention.
 
 ## Process
 

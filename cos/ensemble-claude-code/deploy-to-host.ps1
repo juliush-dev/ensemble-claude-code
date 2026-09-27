@@ -54,6 +54,36 @@
 # env.ENSEMBLE_BROWSER in the home's own settings.json
 # (settings.optout.example.md).
 #
+# OPENKNOWLEDGE IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE. Members
+# reach markdown through OpenKnowledge's MCP server where the host carries it;
+# this COS ships no OpenKnowledge. Once per run, after the browser probe, the
+# script prints a host-requirements block into the inventory, one line each:
+# the ok command, run for its version and compared with the version the COS
+# enumerated OpenKnowledge's tools at (OK_ENUMERATED, read from
+# launch\wire-mcp.ps1 - the script warns when that line is missing); git, which
+# OpenKnowledge keeps its timeline in; node, needed only when the wiring falls
+# back to npx; and whether this home's .claude.json registers the
+# open-knowledge server with the enumerated version (read only - this script
+# never writes .claude.json; launch\wire-mcp.ps1 does). A different ok version
+# is reported, never refused: NEWER means the guard asks on any tool or field
+# it does not know until the tool list is re-enumerated, OLDER means a tool the
+# cards name may be absent. Never fatal: a missing requirement is one inventory
+# line naming it, the run still ends with exit code 0, and the members report
+# the gap when they meet it. A later requirement adds one probe line to the
+# same block.
+#
+# HERE.NOW IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE. The Operator
+# publishes through its kit (tools\herenow.sh), which hands a publish to the
+# here-now skill the host already carries; curl, file and jq on the hooks'
+# shell and the account's API key (~/.herenow/credentials or HERENOW_API_KEY)
+# are the host's too, and this COS ships none of them. Once per run the script
+# runs the deployed kit's own offline probe (tools\herenow.sh check, through
+# Git Bash) and prints one line in the host-requirements block: the skill's
+# version and folder, the binaries' versions and which key carrier is present,
+# never the key; what is missing, by name; 'herenow (NOT FOUND - ...)' when
+# there is no skill. Never fatal: the run still ends with exit code 0, and the
+# Operator says so instead of publishing.
+#
 # DOCUMENTED DIVERGENCE FROM deploy-to-host.sh - WHERE the no-Python warning is
 # printed. The two scripts word that block identically, line for line. The
 # stream differs. This script prints it with Write-Host, so it goes to the
@@ -73,8 +103,10 @@
 #
 # Then it hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six
-# always-on copies excepted), asserts the deployed settings.json path by path
-# against what the factory declares, and prints the inventory.
+# always-on copies excepted, though the main-session rules file
+# CONCERTMASTER.md, also from always-on\, is verified), asserts the deployed
+# settings.json path by path against what the factory declares, and prints the
+# inventory.
 # It refuses to overwrite an existing target unless -Force (which moves the
 # existing directory to a timestamped backup first; that backup is the
 # rollback baseline).
@@ -171,9 +203,11 @@ Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
     $d = Join-Path $target ("skills\" + $_.Name)
     New-Item -ItemType Directory -Force -Path $d | Out-Null
     Copy-Item (Join-Path $_.FullName 'SKILL.md') $d
-    # Carry a skill's references\ folder if it has one (five skills ship
-    # references - the curated obsidian trio plus felt-intent-extraction and
-    # mermaid-multiview-learning-document; the seven native runbooks do not).
+    # Carry a skill's references\ folder if it has one (six skills ship
+    # references - the curated obsidian trio, felt-intent-extraction,
+    # mermaid-multiview-learning-document, and writing-and-talking-style, whose
+    # references\LICENSE.md is the MIT notice that must travel with it; the
+    # seven native runbooks do not).
     $refs = Join-Path $_.FullName 'references'
     if (Test-Path $refs) {
         $rd = Join-Path $d 'references'
@@ -225,6 +259,12 @@ Copy-Item (Join-Path $src '.mcp.json') $target
 # and the fixes its guards rely on. Read by hooks\session-start-harness-marker.sh
 # at session start; never loaded into context.
 Copy-Item (Join-Path $src 'HARNESS.md') $target
+# CONCERTMASTER.md: the main session's own rules, from always-on\ to the home's
+# root, where Claude Code never loads it on its own (it is not under rules\ and
+# not named CLAUDE.md), so no member receives it. launch\start-ensemble.ps1
+# appends it to the main session's system prompt; hooks\session-start-cue.sh
+# prints it when a session starts without the launcher. Hash-verified below.
+Copy-Item (Join-Path $src 'always-on\CONCERTMASTER.md') (Join-Path $target 'CONCERTMASTER.md')
 
 # --- settings.json: the preserving merge ------------------------------------
 # The home's own settings.json is where host values live: the user edits it
@@ -368,22 +408,28 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 45 files hash-compare against source, byte-identical except the
+# Integrity: the 51 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
+# CONCERTMASTER.md is compared with its source in always-on\, the one entry
+# whose source path differs from its home path ($sourceOf below).
 # settings.json is NOT in this set and cannot be: the deployed file legitimately
 # carries host keys the factory never declared, so no hash of source, and no
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (23 core - the 19 that were here before, less settings.json, which the
+# (28 core - the 19 that were here before, less settings.json, which the
 # assertion now covers, and less the Examiner's guard
 # hooks\guard-examiner-bash.sh, plus the Scout's guard
 # hooks\guard-scout-bash.sh,
 # its retrieval kit tools\scout-fetch.sh, the Operator's live-reads guard
 # hooks\guard-live-reads.sh, and the harness-version pair HARNESS.md and
 # hooks\session-start-harness-marker.sh, and the main session's session cue
-# hooks\session-start-cue.sh; + the 8
+# hooks\session-start-cue.sh, and the OpenKnowledge guard
+# hooks\guard-openknowledge.sh, and the Operator's here.now kit
+# tools\herenow.sh and its gate hooks\guard-herenow.sh, and the cross-shell
+# nudge hooks\nudge-cross-shell.sh, and the main-session rules
+# CONCERTMASTER.md; + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 10
 # promoted formal-library files: five SKILL.md (cross-shell-command,
 # decision-proposal, felt-intent-extraction, ubiquitous-language,
@@ -393,21 +439,24 @@ if ($null -eq $python) {
 # (ontological-audit.md) and mermaid's four references (REFERENCE,
 # QUALITY_CHECKLIST, and two flattened templates); + 3 native skills
 # (operational-lane-discipline, health-check, wrap); + 1 curated skill
-# (writing-and-talking-style, one SKILL.md, no references/).)
+# (writing-and-talking-style: one SKILL.md plus references\LICENSE.md, its MIT
+# notice).)
 $same = @(
     'agents\scout.md', 'agents\builder.md', 'agents\examiner.md', 'agents\archivist.md', 'agents\operator.md',
     'hooks\session-end-litter-flag.sh', 'hooks\guard-archivist-paths.sh',
-    'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh',
+    'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh', 'hooks\guard-openknowledge.sh',
+    'hooks\guard-herenow.sh', 'hooks\nudge-cross-shell.sh',
     'hooks\session-start-harness-marker.sh', 'hooks\session-start-cue.sh',
-    'tools\scout-fetch.sh',
+    'tools\scout-fetch.sh', 'tools\herenow.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
-    '.mcp.json', 'HARNESS.md',
+    '.mcp.json', 'HARNESS.md', 'CONCERTMASTER.md',
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
     'skills\operational-lane-discipline\SKILL.md',
     'skills\health-check\SKILL.md',
     'skills\wrap\SKILL.md',
     'skills\writing-and-talking-style\SKILL.md',
+    'skills\writing-and-talking-style\references\LICENSE.md',
     'skills\cross-shell-command-discipline\SKILL.md',
     'skills\decision-proposal-discipline\SKILL.md',
     'skills\felt-intent-extraction\SKILL.md',
@@ -427,6 +476,7 @@ $same = @(
     'skills\json-canvas\SKILL.md',
     'skills\json-canvas\references\EXAMPLES.md'
 )
+$sourceOf = @{ 'CONCERTMASTER.md' = 'always-on\CONCERTMASTER.md' }
 $failed = @()
 foreach ($p in $same) {
     if ($strippedExpected.ContainsKey($p)) {
@@ -434,7 +484,9 @@ foreach ($p in $same) {
         if ($strippedExpected[$p] -ne $b) { $failed += $p }
         continue
     }
-    $a = (Get-FileHash (Join-Path $src $p) -Algorithm SHA256).Hash
+    $srcRel = $p
+    if ($sourceOf.ContainsKey($p)) { $srcRel = $sourceOf[$p] }
+    $a = (Get-FileHash (Join-Path $src $srcRel) -Algorithm SHA256).Hash
     $b = (Get-FileHash (Join-Path $target $p) -Algorithm SHA256).Hash
     if ($a -ne $b) { $failed += $p }
 }
@@ -535,6 +587,182 @@ function Get-BrowserLine {
 }
 $browserLine = Get-BrowserLine
 
+# --- Host requirements: declared, probed by running them, reported, never fatal
+# One probe per requirement, each returning one inventory line. A later
+# requirement adds one probe call to $hostRequirementLines below, not a
+# mechanism, as here.now's did. Invoke-RequirementProbe holds every probe to the browser
+# block's rules: errors only change the line, and the probe's exit code never
+# becomes the deploy's.
+#
+# The enumerated OpenKnowledge version is read from this script's sibling
+# launch\wire-mcp.ps1 (its OK_ENUMERATED= line), the one place the Windows side
+# keeps it. The ok command is probed as ok.cmd: in PowerShell a bare 'ok'
+# resolves to ok.ps1 first, which an execution policy can block, and the wired
+# launcher runs ok.cmd too.
+$okEnumerated = $null
+$wireScript = Join-Path $src 'launch\wire-mcp.ps1'
+if (Test-Path $wireScript) {
+    $m = Select-String -LiteralPath $wireScript -Pattern "^\s*\`$?OK_ENUMERATED='([^']+)'" | Select-Object -First 1
+    if ($m) { $okEnumerated = $m.Matches[0].Groups[1].Value }
+}
+if (-not $okEnumerated) {
+    Write-Warning "launch\wire-mcp.ps1 carries no OK_ENUMERATED= line - the openknowledge inventory line cannot compare this host's ok with the version its tools were enumerated at. Restore the line (see wire-mcp.ps1's header)."
+}
+
+function Invoke-RequirementProbe([string]$name, [scriptblock]$probe) {
+    $eap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        return (& $probe)
+    } catch {
+        return "$name (NOT CHECKED - the probe could not run: $($_.Exception.Message))"
+    } finally {
+        $ErrorActionPreference = $eap
+        $global:LASTEXITCODE = 0
+    }
+}
+
+# major.minor.patch from a version string; a leading v and any prerelease or
+# build suffix are dropped (0.78.0-beta.6 reads as 0.78.0).
+function Get-VersionTriple([string]$s) {
+    if ($s -match '^\s*v?(\d+)\.(\d+)\.(\d+)') { return [version]("{0}.{1}.{2}" -f $Matches[1], $Matches[2], $Matches[3]) }
+    return $null
+}
+
+function Get-OpenKnowledgeLine {
+    $okCmd = @(Get-Command ok.cmd -CommandType Application -ErrorAction SilentlyContinue)
+    if ($okCmd.Count -eq 0) {
+        return 'openknowledge (NOT FOUND - install the OpenKnowledge app, or npm i -g @inkeep/open-knowledge on Node 24 or later; the members report the gap)'
+    }
+    $okPath = $okCmd[0].Source
+    $first = [string](@(& $okPath --version 2>$null) | Select-Object -First 1)
+    $first = $first.Trim()
+    $have = Get-VersionTriple $first
+    if ($null -eq $have) {
+        return "openknowledge (ok at $okPath gave no readable version ('$first') - NOT COMPARED with the enumerated version)"
+    }
+    if (-not $okEnumerated) {
+        return "openknowledge (ok $first at $okPath; NOT COMPARED - launch\wire-mcp.ps1 carries no OK_ENUMERATED line)"
+    }
+    $want = Get-VersionTriple $okEnumerated
+    if ($null -eq $want) {
+        return "openknowledge (ok $first at $okPath; NOT COMPARED - OK_ENUMERATED '$okEnumerated' is not a version)"
+    }
+    if ($have -eq $want) { return "openknowledge (ok $first at $okPath; enumerated at $okEnumerated)" }
+    if ($have -gt $want) { return "openknowledge (ok $first at $okPath; NEWER than the enumerated $okEnumerated - the guard asks on any tool or field it does not know until the tool list is re-enumerated)" }
+    return "openknowledge (ok $first at $okPath; OLDER than the enumerated $okEnumerated - a tool the cards name may be absent; the member says so)"
+}
+
+function Get-GitLine {
+    $g = @(Get-Command git.exe -CommandType Application -ErrorAction SilentlyContinue)
+    if ($g.Count -eq 0) { return 'git (NOT FOUND - OpenKnowledge needs it for its timeline)' }
+    $first = [string](@(& $g[0].Source --version 2>$null) | Select-Object -First 1)
+    if ($first -match '^git version (\S+)') { return "git ($($Matches[1]))" }
+    return "git (NOT CHECKED - git --version gave '$($first.Trim())')"
+}
+
+function Get-NodeLine {
+    $n = @(Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue)
+    if ($n.Count -eq 0) { return 'node (NOT FOUND - needed only for the npx fallback of the wiring)' }
+    $first = ([string](@(& $n[0].Source --version 2>$null) | Select-Object -First 1)).Trim()
+    $v = Get-VersionTriple $first
+    if ($null -eq $v) { return "node (NOT CHECKED - node --version gave '$first')" }
+    if ($v.Major -ge 24) { return "node ($first)" }
+    return "node ($first - older than the 24 OpenKnowledge's npm package needs; only the npx fallback of the wiring is affected)"
+}
+
+# The wiring line READS the home's .claude.json and never writes it. PS 5.1's
+# ConvertFrom-Json refuses keys that differ only in case, which a harness-written
+# .claude.json can carry; then the same two facts are read from the text instead,
+# and the line says so.
+function Get-OpenKnowledgeWiringLine {
+    $cfgPath = Join-Path $target '.claude.json'
+    if (-not (Test-Path $cfgPath)) {
+        return 'openknowledge wiring (NOT WIRED - this home has no .claude.json yet; run launch\wire-mcp.ps1 after this deploy)'
+    }
+    $raw = [IO.File]::ReadAllText($cfgPath)
+    $how = ''
+    try {
+        $cfg = $raw | ConvertFrom-Json
+        $entry = $null
+        if ($cfg.mcpServers) { $entry = $cfg.mcpServers.PSObject.Properties['open-knowledge'] }
+        $registered = ($null -ne $entry)
+        $argsText = ''
+        if ($registered) { $argsText = ($entry.Value.args -join ' ') }
+    } catch {
+        $how = ', text check'
+        $registered = ($raw -match '"open-knowledge"\s*:')
+        $argsText = $raw
+    }
+    if (-not $registered) { return "openknowledge wiring (NOT WIRED$how - run launch\wire-mcp.ps1 after this deploy)" }
+    if (-not $okEnumerated) { return "openknowledge wiring (registered at user scope$how; NOT COMPARED - launch\wire-mcp.ps1 carries no OK_ENUMERATED line)" }
+    $want = "@inkeep/open-knowledge@$okEnumerated"
+    if ($argsText.Contains($want)) { return "openknowledge wiring (registered at user scope$how, its npx fallback at the enumerated $want)" }
+    return "openknowledge wiring (registered$how, but its npx fallback does not run the enumerated $want - run launch\wire-mcp.ps1 to re-wire)"
+}
+
+# here.now: the DEPLOYED kit's own offline probe (tools\herenow.sh check),
+# through Git Bash like the browser probe, with CLAUDE_CONFIG_DIR set to this
+# home for the call so the kit looks in this home's skills\here-now first. The
+# kit prints SKILL, VERSION, BINARY or MISSING, KEY and KEYFILE-MODE lines and
+# exits 0 ready, 3 no skill, 4 a binary or the key missing; it never reads the
+# key.
+function Get-HereNowLine {
+    $bash = Find-GitBash
+    if ($null -eq $bash) { return 'herenow (NOT CHECKED - no Git Bash found to run tools\herenow.sh check)' }
+    $kit = (Join-Path $target 'tools\herenow.sh') -replace '\\', '/'
+    $prevCfg = $env:CLAUDE_CONFIG_DIR
+    try {
+        $env:CLAUDE_CONFIG_DIR = $target
+        $out = @(& $bash $kit check 2>$null)
+        $rc = $LASTEXITCODE
+    } finally {
+        $env:CLAUDE_CONFIG_DIR = $prevCfg
+    }
+    if ($rc -eq 3) {
+        return 'herenow (NOT FOUND - install the here.now skill where its scripts can be found: this home''s skills\here-now, ~\.claude\skills\here-now or ~\.agents\skills\here-now; the Operator reports the gap)'
+    }
+    if ($rc -ne 0 -and $rc -ne 4) { return "herenow (NOT CHECKED - the probe exited $rc)" }
+    $skill = ($out | Where-Object { $_ -like 'SKILL: *' } | Select-Object -First 1)
+    $ver = ($out | Where-Object { $_ -like 'VERSION: *' } | Select-Object -First 1)
+    $key = ($out | Where-Object { $_ -like 'KEY: *' } | Select-Object -First 1)
+    $mode = ($out | Where-Object { $_ -like 'KEYFILE-MODE: *' } | Select-Object -First 1)
+    if ($skill) { $skill = $skill.Substring(7) }
+    if ($ver) { $ver = $ver.Substring(9) }
+    if ($key) { $key = $key.Substring(5) }
+    if ($mode) { $mode = $mode.Substring(14) }
+    $bins = @($out | Where-Object { $_ -like 'BINARY: *' } | ForEach-Object { $_.Substring(8) })
+    $missing = @($out | Where-Object { $_ -like 'MISSING: *' } | ForEach-Object { $_.Substring(9) })
+    $head = "skill $ver at $skill"
+    if ($missing.Count -gt 0) {
+        $present = @($bins | ForEach-Object { ($_ -split ' ')[0] })
+        $hint = 'install them where Git Bash resolves them'
+        if (($missing -contains 'jq') -and $missing.Count -eq 1) { $hint = 'Git for Windows carries curl and file, not jq; install jq and make Git Bash resolve it' }
+        $line = "$head; "
+        if ($present.Count -gt 0) { $line += ($present -join ', ') + ' present, ' }
+        $line += ($missing -join ', ') + " NOT FOUND - $hint"
+        if ($key -eq 'NONE') { $line += '; NO KEY' }
+        return "herenow ($line; the Operator reports the gap)"
+    }
+    $binText = $bins -join ', '
+    if ($key -eq 'NONE') {
+        $names = @($bins | ForEach-Object { ($_ -split ' ')[0] }) -join ', '
+        return "herenow ($head; $names present; NO KEY - write the account's API key to ~/.herenow/credentials, mode 600, or set HERENOW_API_KEY; the Operator refuses to publish until then)"
+    }
+    if ($key -eq 'env') { return "herenow ($head; $binText; key in HERENOW_API_KEY)" }
+    $keyText = 'key in ~/.herenow/credentials'
+    if ($mode -and $mode -ne '600') { $keyText += ", mode $mode - the skill expects 600" }
+    return "herenow ($head; $binText; $keyText)"
+}
+
+$hostRequirementLines = @(
+    (Invoke-RequirementProbe 'openknowledge' ${function:Get-OpenKnowledgeLine}),
+    (Invoke-RequirementProbe 'openknowledge wiring' ${function:Get-OpenKnowledgeWiringLine}),
+    (Invoke-RequirementProbe 'git' ${function:Get-GitLine}),
+    (Invoke-RequirementProbe 'node' ${function:Get-NodeLine}),
+    (Invoke-RequirementProbe 'herenow' ${function:Get-HereNowLine})
+)
+
 Write-Host ""
 Write-Host "Deployed inventory (the staged set only):"
 # settings.json is annotated with what actually happened to it, as the .sh does:
@@ -550,7 +778,8 @@ if ($settingsMerged) {
 } else {
     $settingsLine = 'settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)'
 }
-$staged = @('CLAUDE.md', 'HARNESS.md', $settingsLine, '.mcp.json', $browserLine)
+$staged = @('CLAUDE.md', 'CONCERTMASTER.md', 'HARNESS.md', $settingsLine, '.mcp.json', $browserLine)
+$staged += $hostRequirementLines
 $staged += Get-ChildItem (Join-Path $src 'always-on\rules') -Filter *.md | ForEach-Object { "rules\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'agents') -Filter *.md | ForEach-Object { "agents\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {

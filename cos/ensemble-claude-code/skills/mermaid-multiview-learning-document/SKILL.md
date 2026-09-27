@@ -118,7 +118,7 @@ When the destination vault declares its own conventions — frontmatter fields, 
 - Use native Obsidian callout syntax, for example `> [!abstract]`, `> [!important]`, `> [!warning]`, and `> [!summary]`. Every continuation line belonging to a callout must remain blockquoted.
 - Fence every diagram with an exact `mermaid` code fence. All fences must be balanced, and the contained grammar must be supported by Obsidian’s Mermaid renderer.
 - Use valid Markdown pipe tables. Keep each table row on one physical line and escape literal pipe characters that belong inside cells.
-- Use ordinary Markdown links for external sources. Use Obsidian wikilinks or embeds only when the target note or attachment is supplied, known to exist, or explicitly requested. Never invent unresolved vault links.
+- Use ordinary Markdown links for external sources and for other notes, a note linked by relative path with the `.md` extension kept and spaces as `%20`. Link a note, or embed a note or attachment, only when the target is supplied, known to exist, or explicitly requested. Never invent unresolved vault links.
 - Use Markdown footnotes only in syntax supported by Obsidian. Do not emit chat-native citation markers, content references, UI widgets, `sandbox:` links, or other constructs that cease to work when the note is copied into a vault.
 - Avoid raw HTML except where Obsidian and Mermaid require or reliably support it, such as a restrained `<br/>` inside a Mermaid label.
 - Keep filenames and suggested attachment paths portable across common Obsidian platforms. Avoid characters that are invalid on Windows: `\\ / : * ? " < > |`.
@@ -363,7 +363,7 @@ Apply the quality checklist. At minimum verify:
 
 ## Relationship to other skills
 
-- The **Obsidian-compliance contract** above is the same target the curated obsidian trio serves: reach for `obsidian-markdown` (callouts, properties, embeds, wikilink and footnote syntax), `obsidian-bases`, and `json-canvas` when a construct in the note needs their exact syntax. This skill's compliance validation and their reference material are the same craft applied to one deliverable.
+- The **Obsidian-compliance contract** above is the same target the curated obsidian trio serves: reach for `obsidian-markdown` (callouts, properties, embeds, link and footnote syntax), `obsidian-bases`, and `json-canvas` when a construct in the note needs their exact syntax. This skill's compliance validation and their reference material are the same craft applied to one deliverable.
 - The **ontological audit** governs the drafting here as everywhere: it applies to every entity, relation, and attribution placed in a view, and this skill's rule against personifying software artifacts is that audit applied to diagram labels. The audit's questions battery lives at `../felt-intent-extraction/references/ontological-audit.md`.
 - The **amnesia doctrine** (`rules/40-amnesia.md`) is this skill's epistemic contract in shape form: recall never settles a load-bearing claim; live sources do. When a claim in the document is high-risk or version-sensitive, that grounding and its verification are the **Scout's**, returned before the Builder writes it into a view.
 - `knowledge-digestion` (library-side, HOLD in the map — the Archivist's expected but not-yet-chartered digest duty) and `visual-presentation-stewardship` (library-side, stance-thin) are not promoted; a delivered learning document remains a candidate input for a future digestion pass once that duty is chartered.

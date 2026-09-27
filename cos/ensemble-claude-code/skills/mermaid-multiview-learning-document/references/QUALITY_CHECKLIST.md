@@ -73,7 +73,7 @@
 - [ ] Every Mermaid diagram uses a balanced `mermaid` fence and a grammar supported by the target Obsidian environment.
 - [ ] Markdown tables are structurally valid, use one physical line per row, and escape literal pipes in cells.
 - [ ] External citations use durable Markdown links or supported footnotes; no chat-native content references, widgets, or `sandbox:` links remain.
-- [ ] Wikilinks and embeds are used only for delivered or known vault targets; no invented unresolved links remain.
+- [ ] Links to other notes are relative Markdown links; links and embeds point only at delivered or known vault targets; no invented unresolved links remain.
 - [ ] Raw HTML is absent except for narrowly supported uses such as `<br/>` inside Mermaid labels.
 - [ ] The note does not depend on custom CSS, community plugins, Dataview, or a proprietary theme unless explicitly requested and documented.
 - [ ] Suggested filenames and local paths avoid Windows-invalid characters: `\ / : * ? " < > |`.

@@ -4,6 +4,7 @@
 # source, present on the fixture host.
 model
 modelSettings.claude-opus-5.effortLevel
+env.PYTHONUTF8
 remoteControlAtStartup
 permissions.defaultMode
 permissions.ask

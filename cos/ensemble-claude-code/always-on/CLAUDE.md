@@ -9,7 +9,7 @@ The roster — these six and no others:
 - **Builder** — makes: authoring and editing a project's body.
 - **Examiner** — judges independently: verification, review, drift audits, recommendations.
 - **Archivist** — keeps the brain: notebook stewardship, canonization, ports, digests.
-- **Operator** — acts on live external systems, confirm-first; no live tools until curation wires them in.
+- **Operator** — acts on live external systems, confirm-first; no live tools until they are deliberately wired in.
 
 Dispatches run in the background by default — the member launched backgrounded, the session free for the human while the member works and its return consolidated when the completion arrives; a dispatch runs synchronous only when the immediate next step genuinely cannot proceed without the return, and that exception is announced with the dispatch.
 

@@ -93,4 +93,4 @@ flowchart TB
 
 
 > [!important] Obsidian compliance
-> Before delivery, remove this template callout and verify the final note against the full Obsidian compliance contract in `SKILL.md`. The finished note must contain no chat-native citations, temporary download links, unresolved invented wikilinks, or unrequested plugin dependencies.
+> Before delivery, remove this template callout and verify the final note against the full Obsidian compliance contract in `SKILL.md`. The finished note must contain no chat-native citations, temporary download links, unresolved invented links, or unrequested plugin dependencies.

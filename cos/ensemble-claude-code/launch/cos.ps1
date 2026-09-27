@@ -13,7 +13,7 @@
 #
 # WHAT DELEGATES WHERE:
 #   cos launch    -> DEPLOYED  launch\start-ensemble.ps1   (post-deploy session start)
-#   cos wire-mcp  -> DEPLOYED  launch\wire-mcp.ps1         (post-deploy MCP wiring)
+#   cos wire-mcp  -> DEPLOYED  launch\wire-mcp.ps1         (post-deploy MCP wiring: playwright, open-knowledge)
 #   cos update    -> REPO      deploy-to-host.ps1 -Update  (source-side; the deploy
 #                                                           script never deploys itself)
 #   cos probe     -> REPO      probe-context.ps1           (source-side; never deploys)
@@ -101,7 +101,7 @@ function cos {
             Write-Host "                          -> REPO      deploy-to-host.ps1   (needs `$env:OSCC_WORKBENCH)"
             Write-Host "  cos probe  [args]     read the startup-context anchor headlessly"
             Write-Host "                          -> REPO      probe-context.ps1    (needs `$env:OSCC_WORKBENCH)"
-            Write-Host "  cos wire-mcp [args]   wire curated MCP servers into the deployed home"
+            Write-Host "  cos wire-mcp [args]   wire the MCP servers (playwright, open-knowledge) into the deployed home"
             Write-Host "                          -> DEPLOYED  launch\wire-mcp.ps1"
             Write-Host "  cos help              this list"
             Write-Host ""

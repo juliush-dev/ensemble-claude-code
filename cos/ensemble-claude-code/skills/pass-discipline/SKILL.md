@@ -5,7 +5,7 @@ description: Use at both ends of a pass — when starting work on a route (picku
 
 # Pass discipline — the two ends of a pass
 
-An iteration is one pickup-to-stop push along a route, and its record file is the pass's own notebook: born at pickup, frozen at the stop. This runbook carries both ends. (Capture during the pass needs no runbook — the menu scan in the always-on rules carries it.)
+An iteration is one pickup-to-stop push along a route, and its record file is the pass's own notebook: born at pickup, frozen at the stop. The route's notebook is its folder at `routes/<route-name>/`, holding `Handoff.md` with the thin designation at its head, `Gaps.md`, and `iterations/`. Small notebooks collapse their geography into their own structure; never manufacture extra index or registry files inside route folders. This runbook carries both ends. (Capture during the pass needs no runbook — the menu scan in the always-on rules carries it.)
 
 ## At pickup
 

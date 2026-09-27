@@ -19,8 +19,9 @@
 #
 #   * Host keys the factory never declares survive: agentPushNotifEnabled,
 #     enabledPlugins, permissions.allow, additionalDirectories, the host's own
-#     hooks.SessionEnd, and modelSettings.claude-fable-5-1, which lives INSIDE a
-#     factory-declared object.
+#     hooks.SessionEnd, and modelSettings.claude-fable-5-1 and
+#     env.ENSEMBLE_BROWSER, which live INSIDE a factory-declared object; the
+#     factory's env.PYTHONUTF8 is added beside the host's env key.
 #   * Lists merge by adding, installed items first in their order, new factory
 #     items at the end: the host's own deny and ask entries stay.
 #   * A retired factory item (in the snapshot, not in source) goes:

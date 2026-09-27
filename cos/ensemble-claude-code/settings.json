@@ -13,6 +13,10 @@
   },
   "remoteControlAtStartup": false,
   "autoMemoryEnabled": false,
+  "_provenance_env": "env sets PYTHONUTF8=1 for every session and its subprocesses, so Python runs in UTF-8 mode: open() without an encoding reads and writes UTF-8 rather than the Windows ANSI code page (cp1252 on Western European systems), which raises UnicodeEncodeError on any character outside it, an arrow for one. It changes nothing where the locale is already UTF-8. It is one single value: the merge writes it from the factory, leaves every other env key the host sets (ENSEMBLE_BROWSER among them) alone, and a host that wants its own value names env.PYTHONUTF8 in settings.optout.json.",
+  "env": {
+    "PYTHONUTF8": "1"
+  },
   "permissions": {
     "defaultMode": "auto",
     "ask": [
@@ -54,7 +58,9 @@
       "mcp__claude_ai_Google_Drive__copy_file",
       "mcp__claude_ai_Google_Drive__create_file",
       "mcp__claude_ai_Google_Drive__trash_file",
-      "mcp__claude_ai_Google_Drive__update_file"
+      "mcp__claude_ai_Google_Drive__update_file",
+      "mcp__open-knowledge__import",
+      "mcp__open-knowledge__install"
     ],
     "deny": [
       "Edit(/projects/**/memory/**)",
@@ -83,7 +89,29 @@
         ]
       },
       {
-        "_provenance_main_session_path_guard": "Wires the shared path guard onto the main session's Edit|Write in main-session mode: it asks ONLY on a proven foreign-root write (another lane's worktree, a stray external path), auto-passing everything own-root so the Concertmaster's own-root notebook closure writes (Aim, Registry, Lanes, contract/charter surfaces) and its legitimate non-notebook writes in arbitrary projects stay frictionless. This main-session wiring is the guard file's only wiring: the Archivist carries no path guard, its notebook-and-inbox-only boundary being doctrine on its card.",
+        "_provenance_herenow_gate": "Wires the here.now gate onto every Bash and PowerShell call, for every caller. A here.now publish is a live external write to a world-readable URL, a hard human gate. For the Operator (top-level agent_type 'operator') the gate is an allowlist: its shell runs the kit tools/herenow.sh and nothing else; check and manifest pass on to the classifier, publish asks with the target, new site or slug, and a note when the target lies outside the session's root (judged by guard-archivist-paths.sh main-session), and every other command, a PowerShell call included, is blocked with the accepted forms printed. For every other caller a command carrying a here.now publish or key shape (publish.sh, here.now/api, HERENOW_API_KEY, .herenow/credentials, herenow.sh publish) asks, and everything else passes; drive.sh reads are not matched. Never a pass on an unfinished check: an EXIT trap and position guards turn every internal failure into a block for the Operator and an ask for everyone else, and the 30-second timeout is set explicitly (one path-guard run at most; a check call measured about 1.3 s on the host it was built on). What that cannot cover: a hook that cannot start at all still fails open. No permissions.ask entry backs this gate: the design kept one only where a scratch probe showed a Bash rule carrying quotes and $CLAUDE_CONFIG_DIR matching the command text, and the probe could not run (a scratch config home has no login, and a probe through the live home would write into it), so the gate is the sole mechanical carrier and the Operator card's confirm-first the doctrinal one.",
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-herenow.sh\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "_provenance_cross_shell_nudge": "Wires the cross-shell nudge onto every Bash and PowerShell call, for every caller. The first time an agent's command crosses a shell boundary (a nested interpreter: wsl, bash or sh -c, powershell or pwsh, cmd /c, ssh, docker exec or run; or, on Git Bash, a Windows python, py or node started from a Bash call), the hook adds one note beside the tool result: on Git Bash the host's two traps, the Bash tool halving backslash pairs and Windows Python failing on /c/ paths, then the pointer to load cross-shell-command-discipline before the next nontrivial crossing. A PreToolUse note lands after the command has run, so it serves the next crossing, not this one. Once per agent: an empty marker named for session_id plus agent_id (main when absent) in the temp folder, removed by the SessionEnd litter-flag hook. Quoted text and which, type, command -v and where lookups are dropped before matching, so an echo string or a grep pattern does not fire it. It never denies or asks and exits 0 on every path, a marker it cannot write meaning no note. Bash builtins only; the 5-second timeout bounds a hung start, since a command hook otherwise waits up to 600 seconds. Hooks on one matcher run in parallel, so it adds no wait beside the push gate and the here.now gate.",
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/nudge-cross-shell.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "_provenance_main_session_path_guard": "Wires the shared path guard onto the main session's Edit|Write in main-session mode: it asks ONLY on a proven foreign-root write (another lane's worktree, a stray external path), auto-passing everything own-root so the Concertmaster's own-root notebook closure writes (Aim, Registry, Lanes, contract/charter surfaces) and its legitimate non-notebook writes in arbitrary projects stay frictionless. This main-session wiring is the guard file's only wiring, though the OpenKnowledge guard delegates each of its path targets to this file: the Archivist carries no path guard, its notebook-and-inbox-only boundary being doctrine on its card.",
         "matcher": "Edit|Write",
         "hooks": [
           {
@@ -99,6 +127,17 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-live-reads.sh\""
+          }
+        ]
+      },
+      {
+        "_provenance_openknowledge_guard": "Wires the OpenKnowledge guard onto every open-knowledge tool, for every caller. Read tools pass; exec asks when a pipeline runs find with -delete or sort with -o. resolve_conflict, import, install, every skill variant and every folder delete ask for everyone. Every path a write, edit, delete, move, restore_version, checkpoint or fixing lint names is resolved through the call's own cwd, the nearest .ok/config.yml and its content.dir, then handed to guard-archivist-paths.sh main-session, so an OpenKnowledge write outside the session's root asks exactly as an Edit or Write there does, and the session grants and the Archivist's silent exit carry over. A write's asset.source outside the session's root asks, for every caller. A tool or key outside the table enumerated at OpenKnowledge 0.77.7 asks, as do a write without cwd, a write with no .ok root, a .. segment, a batch over 100 targets and unparseable input. Never a deny. A command hook that times out, crashes or exits without a decision does not block: the call goes on through the ordinary permission flow (hooks reference, current through Claude Code 2.1.282). So the guard turns every internal failure into an ask through an EXIT trap, and the 600-second timeout is set explicitly rather than left to the default: a 100-target batch measured 142 s on the host it was built on, and the timeout sits about four times above that so a slow host's full batch still ends in a verdict. What neither covers: a hook that cannot start at all (bash missing) still fails open. The exact-name asks on import and install in permissions.ask are the second layer for those two tools only.",
+        "matcher": "mcp__open-knowledge__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/guard-openknowledge.sh\"",
+            "timeout": 600
           }
         ]
       }
@@ -135,8 +174,8 @@
         ]
       },
       {
-        "_provenance_session_cue": "Wires the session cue on matchers startup, resume, clear and fork; the compaction marker keeps compact. A runbook whose moment is only observable in the work, joining a project above all, is easy to miss without a prompt at that moment, so the hook names the load right there. It walks up from the session's cwd: a project face (notebook/Constitution.md or a root Constitution.md) prints 'load onboard before working'; the shared external brain, recognized by its root manifesto note, prints no face line; anything else prints 'ask the human before working (wrap offer)'. Every run adds 'load decision-proposal-discipline before the first ask'. It prints nothing when the input carries an agent_id, so a member inside a subagent never reads the main session's cue. Bash builtins only; the 5-second timeout bounds a stat on an unreachable network path. It exits 0 on every path, and a failure before the output prints nothing.",
-        "matcher": "startup|resume|clear|fork",
+        "_provenance_session_cue": "Wires the session cue on matchers startup, resume, clear, compact and fork. A runbook whose moment is only observable in the work, joining a project above all, is easy to miss without a prompt at that moment, so the hook names the load right there. It walks up from the session's cwd: a project face (notebook/Constitution.md or a root Constitution.md) prints 'load onboard before working'; the shared external brain, recognized by its root manifesto note, prints no face line; anything else prints 'ask the human before working (wrap offer)'. Every run adds 'load decision-proposal-discipline before the first ask'. On compact it skips those lines. It also carries the main-session rules when the launcher did not: without the launcher's ENSEMBLE_CONCERTMASTER_APPENDED marker it prints the home's CONCERTMASTER.md after one header line, on every source compact included, since hook-added text does not survive a compaction; fixtures/session-cue keeps that print under the 10,000-character hook output cap. It prints nothing when the input carries an agent_id, so a member inside a subagent never reads the main session's cue. Bash builtins only; the 5-second timeout bounds a stat on an unreachable network path. It exits 0 on every path, and a failure before the output prints nothing.",
+        "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {
             "type": "command",

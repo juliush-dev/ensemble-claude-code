@@ -16,7 +16,7 @@ A wrap has two doors, and the quiet one is the point.
 
 ## The anatomy a wrap produces
 
-A project is wrapped when it holds the anatomy of `10-work-object-model.md` — read it before wrapping: a folder with three repositories, `notebook/` (the face, then `pursuits/` and `tendings/` as the nurseries, each unit's instrument in its own folder), `body/`, `inbox/`. Beside the single project sits the multi-body kind: a pure grouping folder with no notebook, body, or face of its own, each sub-project inside carrying the full shape. Groupings recurse into higher groupings, their members projects or groupings in any mix, per `10-work-object-model.md`.
+A project is wrapped when it holds the anatomy of `10-work-object-model.md` — read it before wrapping: a folder with three repositories, `notebook/` (the face, then `pursuits/` and `tendings/` as the nurseries, each unit's instrument in its own folder), `body/`, `inbox/`. Beside the single project sits the multi-body kind: a pure grouping folder with no notebook, body, or face of its own, each sub-project inside carrying the full shape. Groupings nest at whatever depth the estate has, every level the same faceless primitive holding projects or groupings in any mix; why they are grouped is deduced from the group's content, never recorded.
 
 ## The moves and the terms
 

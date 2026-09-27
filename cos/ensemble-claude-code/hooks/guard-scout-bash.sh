@@ -5,8 +5,10 @@
 # The Scout's shell runs one thing: the retrieval kit, tools/scout-fetch.sh,
 # which lands a foreign source in the session scratchpad. This guard is an
 # ALLOWLIST: one command shape passes, everything else is blocked (exit 2,
-# never an ask - a background Scout cannot answer one). The block message
-# prints the one accepted form. A shell open by purpose, like the Examiner's (it
+# never an ask: a background member's ask does reach the human, but a yes
+# would run a command outside the one shape, and the allowlist exists so that
+# nothing unmatched runs). The block message prints the one accepted form.
+# A shell open by purpose, like the Examiner's (it
 # runs whatever tests a check needs), could only take a blocklist, which
 # under-blocks by construction; the Examiner's shell carries no such guard. A
 # shell with one purpose takes an allowlist, where conforming to the printed
@@ -110,7 +112,8 @@ win_host=0
 
 # --- the kit word ---------------------------------------------------------------
 # The two variable forms match case-sensitively everywhere; the expanded path
-# forms case-insensitively on Windows.
+# forms case-insensitively on Windows. hooks/guard-herenow.sh carries a copy of
+# this block for the Operator's kit, the kit's name aside; change both together.
 literal_words='"$CLAUDE_CONFIG_DIR/tools/scout-fetch.sh"
 $CLAUDE_CONFIG_DIR/tools/scout-fetch.sh'
 kit_words=""

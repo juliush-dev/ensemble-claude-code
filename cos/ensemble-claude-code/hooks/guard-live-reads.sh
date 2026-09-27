@@ -24,8 +24,12 @@
 # that tracks nesting and string state, so an "agent_type" or "tool_name" key
 # inside tool_input (arguments the model writes, which injected content can
 # shape) is never mistaken for the harness's own field. The harness supplies
-# agent_type for subagent calls (the agent file's name) and omits it in the
-# main conversation.
+# agent_type for subagent calls (the agent file's name), and omits it in the
+# ordinary main conversation; it is ALSO present on the main thread of a
+# session started with --agent (without agent_id) - agent_id, not agent_type
+# alone, is what tells a subagent call from a main-thread call. Benign here:
+# a `claude --agent operator` main thread IS the Operator, so the read lift
+# still fits it, and this COS never launches with --agent.
 #
 # The read list re-verifies against the enumerated tool inventory on every
 # version move and every re-enumeration, together with the ask rules.

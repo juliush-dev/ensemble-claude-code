@@ -19,12 +19,12 @@ Create and edit valid Obsidian Flavored Markdown. Obsidian extends CommonMark an
 
 1. **Add frontmatter** with properties (title, tags, aliases) at the top of the file. See [PROPERTIES.md](references/PROPERTIES.md) for all property types.
 2. **Write content** using standard Markdown for structure, plus Obsidian-specific syntax below.
-3. **Link related notes** using wikilinks (`[[Note]]`) for internal vault connections, or standard Markdown links for external URLs.
+3. **Link related notes** with relative Markdown links (`[Note](Note.md)`), the same `[text](url)` form external URLs take.
 4. **Embed content** from other notes, images, or PDFs using the `![[embed]]` syntax. See [EMBEDS.md](references/EMBEDS.md) for all embed types.
 5. **Add callouts** for highlighted information using `> [!type]` syntax. See [CALLOUTS.md](references/CALLOUTS.md) for all callout types.
-6. **Validate** the note's syntax against this skill's references (frontmatter forms in PROPERTIES.md, wikilink and embed forms below, callout forms in CALLOUTS.md). Rendering in Obsidian's reading view cannot be checked from here — report the note's rendering as **unverified**, for a human to confirm in Obsidian.
+6. **Validate** the note's syntax against this skill's references (frontmatter forms in PROPERTIES.md, link and embed forms below, callout forms in CALLOUTS.md). Rendering in Obsidian's reading view cannot be checked from here — report the note's rendering as **unverified**, for a human to confirm in Obsidian.
 
-> When choosing between wikilinks and Markdown links: use `[[wikilinks]]` for notes within the vault (Obsidian tracks renames automatically) and `[text](url)` for external URLs only.
+> Links between notes use the relative Markdown form: the `.md` extension kept, spaces as `%20`, no leading `./`, as in `[Decisions](Meeting%20Notes.md#decisions)`. Obsidian and OpenKnowledge both read it, and OpenKnowledge builds its link graph from it. Link a section only where its heading is letters, digits and single spaces, with hyphens only inside words, which OpenKnowledge and GitHub slug alike; otherwise link the note, or take OpenKnowledge's slug as `writing-and-talking-style` spells it out. Obsidian may not follow a slug to its heading; that gap is accepted. The wikilink syntax below is for reading and editing notes that already carry it.
 
 ## Internal Links (Wikilinks)
 
@@ -176,7 +176,7 @@ status: in-progress
 
 # Project Alpha
 
-This project aims to [[improve workflow]] using modern techniques.
+This project aims to [improve workflow](improve%20workflow.md) using modern techniques.
 
 > [!important] Key Deadline
 > The first milestone is due on ==January 30th==.
@@ -190,11 +190,11 @@ This project aims to [[improve workflow]] using modern techniques.
 
 ## Notes
 
-The algorithm uses $O(n \log n)$ sorting. See [[Algorithm Notes#Sorting]] for details.
+The algorithm uses $O(n \log n)$ sorting. See [Algorithm Notes](Algorithm%20Notes.md#sorting) for details.
 
 ![[Architecture Diagram.png|600]]
 
-Reviewed in [[Meeting Notes 2024-01-10#Decisions]].
+Reviewed in [Meeting Notes 2024-01-10](Meeting%20Notes%202024-01-10.md#decisions).
 ````
 
 ## References

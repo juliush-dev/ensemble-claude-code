@@ -9,6 +9,10 @@
     }
   },
   "remoteControlAtStartup": false,
+  "env": {
+    "PYTHONUTF8": "1",
+    "ENSEMBLE_BROWSER": "host-browser-path"
+  },
   "permissions": {
     "defaultMode": "auto",
     "ask": [

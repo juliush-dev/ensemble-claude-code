@@ -16,9 +16,14 @@
 #
 # HOW IT MIRRORS THE LIVE LAUNCH (grounded against launch/start-ensemble.ps1)
 #   An interactive session launches as:  CLAUDE_CONFIG_DIR = <home>;
-#   claude --setting-sources user ...    This probe sets the SAME CLAUDE_CONFIG_DIR
-#   and passes the SAME --setting-sources user, so the same deployed always-on
-#   layer (home CLAUDE.md + rules + skill listing + members) loads. It adds
+#   ENSEMBLE_CONCERTMASTER_APPENDED = 1; claude --setting-sources user
+#   --append-system-prompt-file <home>\CONCERTMASTER.md ...   This probe sets the
+#   SAME CLAUDE_CONFIG_DIR and marker and passes the SAME --setting-sources user
+#   and the same appended main-session rules file, so the same deployed layer
+#   (home CLAUDE.md + rules + the main-session rules + skill listing + members)
+#   loads, and the session cue prints no fallback copy of the rules on top. A
+#   home without CONCERTMASTER.md is probed without the flag or the marker, as
+#   the launcher would start it. It adds
 #   -p (headless) with a trivial prompt and --output-format stream-json --verbose,
 #   and it deliberately does NOT pass --bare (--bare skips CLAUDE.md/skills/hooks/
 #   MCP/auto-memory, which would defeat the reading). Run both this probe and an
@@ -57,9 +62,14 @@
 #
 # BEHAVIOR NOTE
 #   Under headless runs the SessionEnd litter-flag hook may report
-#   "failed: Hook cancelled" - this is cosmetic (the -p process exits before the
-#   hook completes) and does NOT affect the startup usage reading this probe
-#   captures from the first assistant message.
+#   "failed: Hook cancelled" on stderr - this is cosmetic (the -p process exits
+#   before the hook completes) and does NOT affect the startup usage reading
+#   this probe captures from the first assistant message. On PS 5.1, that
+#   stderr line used to turn into a terminating NativeCommandError under this
+#   script's own 'Stop' preference and kill the probe before it could read
+#   anything; the live claude call below now runs under 'Continue' for itself
+#   only (mirrors the wire-mcp.ps1 fix, commit 6478bed), so the noise stays
+#   cosmetic in practice too.
 
 param(
     [string]$EnsembleHome = (Join-Path $env:LOCALAPPDATA 'ensemble-claude-code'),
@@ -173,16 +183,20 @@ function Show-Report {
 }
 
 # --- Build the launch shape (mirrors launch/start-ensemble.ps1) ----------------
-$claudeArgs = @(
-    '--setting-sources', 'user',
+$mainRules = Join-Path $EnsembleHome 'CONCERTMASTER.md'
+$mainArgs = @()
+if (Test-Path $mainRules) { $mainArgs = @('--append-system-prompt-file', $mainRules) }
+$claudeArgs = @('--setting-sources', 'user') + $mainArgs + @(
     '-p', $Prompt,
     '--output-format', 'stream-json',
     '--verbose'
 )
+$markerLine = 'ENSEMBLE_CONCERTMASTER_APPENDED=<unset>'
+if ($mainArgs.Count -gt 0) { $markerLine = 'ENSEMBLE_CONCERTMASTER_APPENDED=1' }
 
 Write-Host ("Ensemble home     : {0}" -f $EnsembleHome)
 Write-Host ("Working directory : {0}" -f $WorkingDirectory)
-Write-Host ("Planned command   : CLAUDE_CONFIG_DIR=<home> claude {0}" -f ($claudeArgs -join ' '))
+Write-Host ("Planned command   : CLAUDE_CONFIG_DIR=<home> {0} claude {1}" -f $markerLine, ($claudeArgs -join ' '))
 
 if ($DryRun) {
     Write-Host ""
@@ -208,21 +222,34 @@ if (-not (Test-Path (Join-Path $EnsembleHome 'CLAUDE.md'))) {
 }
 
 $prevConfig = $env:CLAUDE_CONFIG_DIR
+$prevAppended = $env:ENSEMBLE_CONCERTMASTER_APPENDED
 $prevLocation = (Get-Location).Path
+$prevEap = $ErrorActionPreference
 $rawLines = $null
 try {
     $env:CLAUDE_CONFIG_DIR = $EnsembleHome
+    if ($mainArgs.Count -gt 0) { $env:ENSEMBLE_CONCERTMASTER_APPENDED = '1' } else { $env:ENSEMBLE_CONCERTMASTER_APPENDED = $null }
     Set-Location -LiteralPath $WorkingDirectory
     Write-Host ""
     Write-Host "Launching headless probe against the deployed home..."
+    # The nested claude's own SessionEnd hook can print noise on stderr as the
+    # -p process exits (see BEHAVIOR NOTE above). Under 'Stop', PS 5.1 turns
+    # that stderr line into a terminating NativeCommandError, killing the probe
+    # before Show-Report ever runs. This one call runs under 'Continue' so
+    # stderr becomes a non-terminating, displayed-but-uncaptured error record
+    # instead: $rawLines still gets only stdout, unchanged from before.
+    $ErrorActionPreference = 'Continue'
     $rawLines = & claude @claudeArgs
+    $ErrorActionPreference = $prevEap
     $exitCode = $LASTEXITCODE
     if ($exitCode -ne 0) {
         Write-Host ("WARNING: claude exited with code {0}; parsing whatever streamed." -f $exitCode) -ForegroundColor Yellow
     }
 }
 finally {
+    $ErrorActionPreference = $prevEap
     $env:CLAUDE_CONFIG_DIR = $prevConfig
+    $env:ENSEMBLE_CONCERTMASTER_APPENDED = $prevAppended
     Set-Location -LiteralPath $prevLocation
 }
 

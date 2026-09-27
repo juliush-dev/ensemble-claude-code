@@ -42,6 +42,21 @@ fi
 : "${CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT:=1}"
 export CLAUDE_CODE_NO_FLICKER CLAUDE_CODE_ALT_SCREEN_FULL_REPAINT
 
+# The main-session rules: the home's CONCERTMASTER.md, the Concertmaster's own
+# rules, which no member loads. They reach the main session's system prompt
+# through --append-system-prompt-file (members never receive that prompt), and
+# ENSEMBLE_CONCERTMASTER_APPENDED=1 tells the session cue hook
+# (hooks/session-start-cue.sh) not to print them again as its fallback. A home
+# without the file launches without either, and the hook finds no file to print.
+main_args=()
+unset ENSEMBLE_CONCERTMASTER_APPENDED
+if [ -f "$home/CONCERTMASTER.md" ]; then
+  main_args=(--append-system-prompt-file "$home/CONCERTMASTER.md")
+  export ENSEMBLE_CONCERTMASTER_APPENDED=1
+else
+  echo "Ensemble home has no CONCERTMASTER.md at $home - the main-session rules are missing; run deploy-to-host.sh --update." >&2
+fi
+
 # --setting-sources user: only the home's own settings govern the session (no
 # project or local settings files) - the whole-shape consistency lever.
-CLAUDE_CONFIG_DIR="$home" exec claude --setting-sources user "$@"
+CLAUDE_CONFIG_DIR="$home" exec claude --setting-sources user ${main_args[@]+"${main_args[@]}"} "$@"

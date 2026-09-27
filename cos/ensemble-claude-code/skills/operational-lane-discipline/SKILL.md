@@ -41,10 +41,11 @@ The transaction, in order:
 
 1. Establish the clean source state.
 2. Create the lane (`git worktree add` from that named source state).
-3. Write the lane's **lightweight declaration** in the lane's own state — identity, source lane, source state/commit, declared focus, reason isolation was chosen, isolation mechanism, bounds/focus guard, status, anticipated convergence target when known. (No notebook slot — lane-hood is not unit-hood.)
-4. Write the **topology-registry line** in the main lane (see below).
-5. Commit both initiation records in their respective lanes.
-6. Only then begin the first lane work iteration.
+3. Where the source checkout carries `.ok/config.yml` and the host carries OpenKnowledge, give the lane its OpenKnowledge project by copy, in the new worktree: `mkdir .ok`, `cp <source>/.ok/config.yml .ok/`, and `cp <source>/.okignore .` where the source has one. The session initiating the lane runs it beside step 2; members' cards keep their own hands off `.ok/` and `.okignore`. Not `ok init`: even with `--no-mcp --no-skills` it rewrites the tracked `.gitignore`, writes OpenKnowledge's project skill into the worktree's editor folders and records the lane under `~/.ok/`. The copies stay ignored through the common `.git/info/exclude`, which every worktree shares, never committed from the lane; `git status` shows nothing new.
+4. Write the lane's **lightweight declaration** in the lane's own state — identity, source lane, source state/commit, declared focus, reason isolation was chosen, isolation mechanism, bounds/focus guard, status, anticipated convergence target when known. (No notebook slot — lane-hood is not unit-hood.)
+5. Write the **topology-registry line** in the main lane (see below).
+6. Commit both initiation records in their respective lanes.
+7. Only then begin the first lane work iteration.
 
 This closes both failure windows: a lane advancing while main's topology map is still uncommitted, and main claiming a lane whose own declaration is not yet durable.
 
@@ -65,6 +66,8 @@ All work-unit truth born in-lane — designations, registry lines, captures, han
 ## Endings — lanes never "discharge"
 
 "Discharge" is pursuit vocabulary. A lane-ending request, and equally the discharge of the initiating focus, surface the **same four-way choice**: converge to a named target / remain live for consequential work / suspend-preserve / close without integration (reason recorded). Lifecycle working names (first-realization candidates): **proposed, initiated, live, convergence-ready, converged, suspended-preserved, closed-without-integration**.
+
+Before a lane's worktree is removed, stop its OpenKnowledge server if one ran there: `ok.cmd stop <worktree> --force` on Windows (`ok` elsewhere), since an agent's connection keeps it alive and `ok ps` does not list it. The ignored `.ok/` does not block `git worktree remove`.
 
 ## The lane-topology registry — main-lane face
 

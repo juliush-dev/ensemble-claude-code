@@ -48,9 +48,40 @@
 # env.ENSEMBLE_BROWSER in the home's own settings.json
 # (settings.optout.example.md).
 #
+# OPENKNOWLEDGE IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE. Members
+# reach markdown through OpenKnowledge's MCP server where the host carries it;
+# this COS ships no OpenKnowledge. Once per run, after the browser probe, the
+# script prints a host-requirements block into the inventory, one line each:
+# the ok command, run for its version and compared with the version the COS
+# enumerated OpenKnowledge's tools at (OK_ENUMERATED, read from
+# launch/wire-mcp.sh - the script warns when that line is missing); git, which
+# OpenKnowledge keeps its timeline in; node, needed only when the wiring falls
+# back to npx; and whether this home's .claude.json registers the
+# open-knowledge server with the enumerated version (read only - this script
+# never writes .claude.json; launch/wire-mcp.sh does). A different ok version
+# is reported, never refused: NEWER means the guard asks on any tool or field
+# it does not know until the tool list is re-enumerated, OLDER means a tool the
+# cards name may be absent. Never fatal: a missing requirement is one inventory
+# line naming it, the run still ends with exit code 0, and the members report
+# the gap when they meet it. A later requirement adds one probe line to the
+# same block.
+#
+# HERE.NOW IS A DECLARED HOST REQUIREMENT, NOT AN ENFORCED ONE. The Operator
+# publishes through its kit (tools/herenow.sh), which hands a publish to the
+# here-now skill the host already carries; curl, file and jq on the hooks'
+# shell and the account's API key (~/.herenow/credentials or HERENOW_API_KEY)
+# are the host's too, and this COS ships none of them. Once per run the script
+# runs the deployed kit's own offline probe (tools/herenow.sh check) and prints
+# one line in the host-requirements block: the skill's version and folder, the
+# binaries' versions and which key carrier is present, never the key; what is
+# missing, by name; 'herenow (NOT FOUND - ...)' when there is no skill. Never
+# fatal: the run still ends with exit code 0, and the Operator says so instead
+# of publishing.
+#
 # It hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six always-on
-# copies excepted), asserts the deployed settings.json path by path against what
+# copies excepted, though the main-session rules file CONCERTMASTER.md, also
+# from always-on/, is verified), asserts the deployed settings.json path by path against what
 # the factory declares, prints the inventory, and refuses to clobber an existing
 # home unless --update or --force.
 #
@@ -353,7 +384,7 @@ done
 
 for f in "$src"/tools/*.sh; do
   copy_verified "tools/$(basename "$f")" "tools/$(basename "$f")"
-  chmod +x "$target/tools/$(basename "$f")"   # the Scout's retrieval kit must be executable
+  chmod +x "$target/tools/$(basename "$f")"   # the kits (the Scout's retrieval kit, the Operator's here.now kit) must be executable
 done
 
 for f in "$src"/launch/*.sh; do
@@ -366,6 +397,12 @@ copy_verified '.mcp.json' '.mcp.json'
 # and the fixes its guards rely on. Read by hooks/session-start-harness-marker.sh
 # at session start; never loaded into context.
 copy_verified 'HARNESS.md' 'HARNESS.md'
+# CONCERTMASTER.md: the main session's own rules, from always-on/ to the home's
+# root, where Claude Code never loads it on its own (it is not under rules/ and
+# not named CLAUDE.md), so no member receives it. launch/start-ensemble.sh
+# appends it to the main session's system prompt; hooks/session-start-cue.sh
+# prints it when a session starts without the launcher. Hash-verified below.
+copy_verified 'always-on/CONCERTMASTER.md' 'CONCERTMASTER.md'
 
 # --- settings.json: the preserving merge ------------------------------------
 # The home's own settings.json is where host values live: the user edits it
@@ -593,11 +630,199 @@ case "$probe_rc" in
   *) browser_line="browser (NOT CHECKED - the probe exited $probe_rc)" ;;
 esac
 
+# --- Host requirements: declared, probed by running them, reported, never fatal
+# One probe function per requirement, each printing one inventory line. A later
+# requirement adds one probe call to requirement_lines below, not a mechanism,
+# as here.now's did. Each probe runs inside a command substitution, where set -e does
+# not reach, and a failed probe only changes its line; nothing here changes the
+# deploy's exit code.
+#
+# The enumerated OpenKnowledge version is read from this script's sibling
+# launch/wire-mcp.sh (its OK_ENUMERATED= line), the one place the POSIX side
+# keeps it.
+ok_enumerated="$(sed -n "s/^[[:space:]]*OK_ENUMERATED='\([^']*\)'.*/\1/p" "$src/launch/wire-mcp.sh" 2>/dev/null | head -n 1)" || ok_enumerated=""
+if [ -z "$ok_enumerated" ]; then
+  echo "WARNING: launch/wire-mcp.sh carries no OK_ENUMERATED= line - the openknowledge inventory line cannot compare this host's ok with the version its tools were enumerated at. Restore the line (see wire-mcp.sh's header)." >&2
+fi
+
+# version_triple <string>: "major minor patch", a leading v and any prerelease
+# or build suffix dropped (0.78.0-beta.6 reads as 0 78 0); empty when none.
+version_triple() {
+  printf '%s\n' "$1" | sed -n 's/^[[:space:]]*v\{0,1\}\([0-9][0-9]*\)\.\([0-9][0-9]*\)\.\([0-9][0-9]*\).*/\1 \2 \3/p' | head -n 1
+}
+
+# version_cmp <triple> <triple>: prints lt, eq or gt (numeric, per component).
+version_cmp() {
+  local a1 a2 a3 b1 b2 b3
+  read -r a1 a2 a3 <<< "$1"
+  read -r b1 b2 b3 <<< "$2"
+  if [ "$a1" -ne "$b1" ]; then [ "$a1" -lt "$b1" ] && echo lt || echo gt; return 0; fi
+  if [ "$a2" -ne "$b2" ]; then [ "$a2" -lt "$b2" ] && echo lt || echo gt; return 0; fi
+  if [ "$a3" -ne "$b3" ]; then [ "$a3" -lt "$b3" ] && echo lt || echo gt; return 0; fi
+  echo eq
+}
+
+probe_openknowledge() {
+  local ok_path ok_out first have want
+  if ! ok_path="$(command -v ok 2>/dev/null)" || [ -z "$ok_path" ]; then
+    echo "openknowledge (NOT FOUND - install the OpenKnowledge app, or npm i -g @inkeep/open-knowledge on Node 24 or later; the members report the gap)"
+    return 0
+  fi
+  ok_out="$(ok --version 2>/dev/null)" || true
+  first="${ok_out%%$'\n'*}"
+  have="$(version_triple "$first")"
+  if [ -z "$have" ]; then
+    echo "openknowledge (ok at $ok_path gave no readable version ('$first') - NOT COMPARED with the enumerated version)"
+    return 0
+  fi
+  if [ -z "$ok_enumerated" ]; then
+    echo "openknowledge (ok $first at $ok_path; NOT COMPARED - launch/wire-mcp.sh carries no OK_ENUMERATED line)"
+    return 0
+  fi
+  want="$(version_triple "$ok_enumerated")"
+  if [ -z "$want" ]; then
+    echo "openknowledge (ok $first at $ok_path; NOT COMPARED - OK_ENUMERATED '$ok_enumerated' is not a version)"
+    return 0
+  fi
+  case "$(version_cmp "$have" "$want")" in
+    eq) echo "openknowledge (ok $first at $ok_path; enumerated at $ok_enumerated)" ;;
+    gt) echo "openknowledge (ok $first at $ok_path; NEWER than the enumerated $ok_enumerated - the guard asks on any tool or field it does not know until the tool list is re-enumerated)" ;;
+    *)  echo "openknowledge (ok $first at $ok_path; OLDER than the enumerated $ok_enumerated - a tool the cards name may be absent; the member says so)" ;;
+  esac
+}
+
+probe_git() {
+  local out first
+  if ! command -v git >/dev/null 2>&1; then
+    echo "git (NOT FOUND - OpenKnowledge needs it for its timeline)"
+    return 0
+  fi
+  out="$(git --version 2>/dev/null)" || true
+  first="${out%%$'\n'*}"
+  case "$first" in
+    "git version "*) first="${first#git version }"; echo "git (${first%% *})" ;;
+    *) echo "git (NOT CHECKED - git --version gave '$first')" ;;
+  esac
+}
+
+probe_node() {
+  local out first have major
+  if ! command -v node >/dev/null 2>&1; then
+    echo "node (NOT FOUND - needed only for the npx fallback of the wiring)"
+    return 0
+  fi
+  out="$(node --version 2>/dev/null)" || true
+  first="${out%%$'\n'*}"
+  have="$(version_triple "$first")"
+  if [ -z "$have" ]; then
+    echo "node (NOT CHECKED - node --version gave '$first')"
+    return 0
+  fi
+  major="${have%% *}"
+  if [ "$major" -ge 24 ]; then
+    echo "node ($first)"
+  else
+    echo "node ($first - older than the 24 OpenKnowledge's npm package needs; only the npx fallback of the wiring is affected)"
+  fi
+}
+
+# The wiring line READS the home's .claude.json and never writes it: jq when
+# present, else the same grep fallback launch/wire-mcp.sh uses, and the line
+# says which.
+probe_openknowledge_wiring() {
+  local cfg="$target/.claude.json" how="" registered=0 args_text="" want
+  if [ ! -f "$cfg" ]; then
+    echo "openknowledge wiring (NOT WIRED - this home has no .claude.json yet; run launch/wire-mcp.sh after this deploy)"
+    return 0
+  fi
+  if command -v jq >/dev/null 2>&1 && jq -e '.' "$cfg" >/dev/null 2>&1; then
+    if jq -e '.mcpServers["open-knowledge"]' "$cfg" >/dev/null 2>&1; then
+      registered=1
+      args_text="$(jq -r '.mcpServers["open-knowledge"].args | join(" ")' "$cfg" 2>/dev/null)" || args_text=""
+    fi
+  else
+    how=", text check"
+    if grep -q '"open-knowledge"[[:space:]]*:' "$cfg" 2>/dev/null; then registered=1; fi
+    args_text="$(cat "$cfg" 2>/dev/null)" || args_text=""
+  fi
+  if [ "$registered" -ne 1 ]; then
+    echo "openknowledge wiring (NOT WIRED$how - run launch/wire-mcp.sh after this deploy)"
+    return 0
+  fi
+  if [ -z "$ok_enumerated" ]; then
+    echo "openknowledge wiring (registered at user scope$how; NOT COMPARED - launch/wire-mcp.sh carries no OK_ENUMERATED line)"
+    return 0
+  fi
+  want="@inkeep/open-knowledge@$ok_enumerated"
+  case "$args_text" in
+    *"$want"*) echo "openknowledge wiring (registered at user scope$how, its npx fallback at the enumerated $want)" ;;
+    *) echo "openknowledge wiring (registered$how, but its npx fallback does not run the enumerated $want - run launch/wire-mcp.sh to re-wire)" ;;
+  esac
+}
+
+# here.now: the DEPLOYED kit's own offline probe (tools/herenow.sh check), with
+# CLAUDE_CONFIG_DIR set to this home for the call so the kit looks in this
+# home's skills/here-now first. The kit prints SKILL, VERSION, BINARY or
+# MISSING, KEY and KEYFILE-MODE lines and exits 0 ready, 3 no skill, 4 a binary
+# or the key missing; it never reads the key.
+probe_herenow() {
+  local out rc skill ver key mode bins missing present names hint line
+  if out="$(CLAUDE_CONFIG_DIR="$target" "$target/tools/herenow.sh" check 2>/dev/null)"; then
+    rc=0
+  else
+    rc=$?
+  fi
+  if [ "$rc" -eq 3 ]; then
+    echo "herenow (NOT FOUND - install the here.now skill where its scripts can be found: this home's skills/here-now, ~/.claude/skills/here-now or ~/.agents/skills/here-now; the Operator reports the gap)"
+    return 0
+  fi
+  if [ "$rc" -ne 0 ] && [ "$rc" -ne 4 ]; then
+    echo "herenow (NOT CHECKED - the probe exited $rc)"
+    return 0
+  fi
+  skill="$(printf '%s\n' "$out" | sed -n 's/^SKILL: //p' | head -n 1)"
+  ver="$(printf '%s\n' "$out" | sed -n 's/^VERSION: //p' | head -n 1)"
+  key="$(printf '%s\n' "$out" | sed -n 's/^KEY: //p' | head -n 1)"
+  mode="$(printf '%s\n' "$out" | sed -n 's/^KEYFILE-MODE: //p' | head -n 1)"
+  bins="$(printf '%s\n' "$out" | sed -n 's/^BINARY: //p' | paste -sd, - | sed 's/,/, /g')"
+  names="$(printf '%s\n' "$out" | sed -n 's/^BINARY: \([^ ]*\).*/\1/p' | paste -sd, - | sed 's/,/, /g')"
+  missing="$(printf '%s\n' "$out" | sed -n 's/^MISSING: //p' | paste -sd, - | sed 's/,/, /g')"
+  if [ -n "$missing" ]; then
+    hint="install them where the hooks' shell resolves them"
+    line="skill $ver at $skill; "
+    [ -n "$names" ] && line="$line$names present, "
+    line="$line$missing NOT FOUND - $hint"
+    [ "$key" = "NONE" ] && line="$line; NO KEY"
+    echo "herenow ($line; the Operator reports the gap)"
+    return 0
+  fi
+  if [ "$key" = "NONE" ]; then
+    echo "herenow (skill $ver at $skill; $names present; NO KEY - write the account's API key to ~/.herenow/credentials, mode 600, or set HERENOW_API_KEY; the Operator refuses to publish until then)"
+    return 0
+  fi
+  if [ "$key" = "env" ]; then
+    echo "herenow (skill $ver at $skill; $bins; key in HERENOW_API_KEY)"
+    return 0
+  fi
+  line="key in ~/.herenow/credentials"
+  [ -n "$mode" ] && [ "$mode" != "600" ] && line="$line, mode $mode - the skill expects 600"
+  echo "herenow (skill $ver at $skill; $bins; $line)"
+}
+
+requirement_lines=()
+for probe in probe_openknowledge probe_openknowledge_wiring probe_git probe_node probe_herenow; do
+  line="$("$probe")" || line=""
+  name="${probe#probe_}"
+  [ -n "$line" ] || line="${name//_/ } (NOT CHECKED - the probe printed nothing)"
+  requirement_lines+=("$line")
+done
+
 echo ""
 echo "Deployed inventory (the staged set only):"
 {
   echo "CLAUDE.md"
   echo "$browser_line"
+  for line in "${requirement_lines[@]}"; do echo "$line"; done
   if [ "$settings_skipped" -eq 1 ]; then
     echo "settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)"
   elif [ "$settings_copied" -eq 1 ]; then

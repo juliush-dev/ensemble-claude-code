@@ -24,6 +24,10 @@ case "$session_id" in
   ''|*[!0-9A-Za-z-]*) session_id="" ;;
 esac
 [ -n "$session_id" ] && rm -f "$(dirname "$0")/session-roots/$session_id.txt"
+# The cross-shell nudge's once-per-agent markers (hooks/nudge-cross-shell.sh,
+# <session_id>.<agent> under the same temp folder that hook resolves) are
+# scoped to the session too, and go with it.
+[ -n "$session_id" ] && rm -f "${TMPDIR:-/tmp}/ensemble-cross-shell-nudge/$session_id".*
 
 [ -n "$cwd" ] && [ -d "$cwd" ] || exit 0
 cd "$cwd" || exit 0
