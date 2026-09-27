@@ -52,20 +52,41 @@
 # remove. The re-enumeration duty (launch/wire-mcp.ps1's header) updates this
 # table, KEY_TABLE_ENUMERATED and fixtures/openknowledge-guard/ together.
 #
-# Fail direction: ask, never deny. A deny would strip import and install from
-# the Operator too, permission rules being session-wide; every uncertain
-# branch below ends in an ask the human may approve. A command hook that
+# Fail direction: ask where the guard is uncertain; deny only a cwd the caller
+# can correct. An ask's reason goes to the human and never to the caller, so a
+# caller that sent a malformed cwd learned nothing from it, and the human met
+# a prompt for a slip rather than a decision. A deny's reason reaches the
+# caller, main session and member alike, and no permission mode overrides a
+# hook's deny (hooks reference and guide). So two shapes
+# are refused with the correction to resend, for every caller whose call would
+# otherwise ask:
+#   - a write-class call without tool_input.cwd: the server needs cwd for a
+#     user-scope registration, and the guard does not guess the project;
+#   - a cwd naming the session's own root, or a root in this session's grant
+#     file, in another spelling (letter case, or the Git Bash /c/ form against
+#     C:/), where the same target spelled the root's way passes the path guard.
+#     The two spellings must reach the same folder on disk ([ A -ef B ], a
+#     bash builtin): a case variant on a case-sensitive file system (Linux, a
+#     case-sensitive macOS volume, a Windows folder flagged case-sensitive) is
+#     another folder, so it asks as any foreign root does. The deny names the
+#     spelling to resend, which is the root's or grant line's own spelling as
+#     written, not the disk's. The session's additional working
+#     directories are not among these roots: hook input does not carry them
+#     (hooks reference, common input fields), so a cwd inside one
+#     asks as any foreign root does, however it is spelled.
+# A deny judges only the spelling; the resent call meets every check again.
+# Every other uncertain branch ends in an ask the human may approve, import
+# and install included: a permission deny rule would strip them from the
+# Operator too, permission rules being session-wide. A command hook that
 # crashes, exits without a decision, or outruns its timeout does not block:
 # the call goes on through the ordinary permission flow and this guard's ask
 # never fires (hooks reference, current through Claude Code 2.1.282). So the
-# guard reaches a verdict only through ask or pass below; an EXIT trap turns
-# every other way out (an unbound variable, a signal, an exit nobody meant)
-# into an ask, and a delegate that fails asks too. What no trap can cover: a
-# hook that never starts (bash missing), and a run the harness kills at its
-# timeout. Asks: unparseable input;
-# a duplicated key at a level the guard reads; a write-class call without
-# tool_input.cwd (the server needs it for a user-scope registration, and the
-# guard will not guess the project); a cwd, path or content.dir carrying a ..
+# guard reaches a verdict only through ask, deny or pass below; an EXIT trap
+# turns every other way out (an unbound variable, a signal, an exit nobody
+# meant) into an ask, and a delegate that fails asks too. What no trap can
+# cover: a hook that never starts (bash missing), and a run the harness kills
+# at its timeout. Asks: unparseable input;
+# a duplicated key at a level the guard reads; a cwd, path or content.dir carrying a ..
 # segment, or a path given absolute (paths in a call are content-relative - a
 # .. that stays inside is asked too, the price of keeping canonicalization in
 # the one path guard); no .ok/config.yml at or above the cwd for a write-class
@@ -84,12 +105,20 @@ set -uf
 
 KEY_TABLE_ENUMERATED='0.77.7'
 
-# DECIDED is set only by ask and pass, the guard's two verdicts.
+# DECIDED is set only by ask, deny and pass, the guard's three verdicts.
 DECIDED=0
 ask() {
   DECIDED=1
   _r="$(printf '%s' "$1" | tr '\\"' "/'" | tr -d '\000-\037')"
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"OpenKnowledge guard: %s Not auto-accepted; the human may still approve explicitly."}}\n' "$_r"
+  exit 0
+}
+# deny is kept for a cwd the caller can correct (the header's fail direction);
+# its reason reaches the caller, so it says what to resend.
+deny() {
+  DECIDED=1
+  _r="$(printf '%s' "$1" | tr '\\"' "/'" | tr -d '\000-\037')"
+  printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"OpenKnowledge guard: %s"}}\n' "$_r"
   exit 0
 }
 pass() { DECIDED=1; exit 0; }
@@ -502,7 +531,10 @@ esac
 
 # --- The project: cwd, the .ok root, content.dir ------------------------------------
 count "$TI.cwd"
-[ "$N" -eq 1 ] || ask "$tool carries no tool_input.cwd, so the guard cannot tell which OpenKnowledge project it writes; pass cwd, an absolute path inside the project."
+[ "$N" -ne 0 ] || deny "$tool carries no tool_input.cwd, so the guard cannot tell which OpenKnowledge project it writes, and it does not guess. Resend the same call with cwd set to an absolute path inside the OpenKnowledge project you mean to write, in exact letter case and in the session's own path form (on Windows the drive-letter form C:/..., never the Git Bash form /c/...)."
+# Defensive: strict above already asks on a duplicated tool_input key, cwd
+# included; this stays in case the key table's order ever changes.
+[ "$N" -eq 1 ] || ask "$tool carries tool_input.cwd more than once."
 first "$TI.cwd"
 [ "$T" = "s" ] || ask "tool_input.cwd is not a string."
 decode_path "$V" || ask "tool_input.cwd carries an escape the guard does not read."
@@ -515,6 +547,9 @@ esac
 case "/$okcwd/" in */../*) ask "tool_input.cwd carries a .. segment." ;; esac
 
 okroot=""
+# content_rel: 1 while every target is built on okroot, so a resend with the
+# cwd respelled respells the targets too; an absolute content.dir clears it.
+content_rel=1
 _d="$okcwd"
 while :; do
   if [ -f "$_d/.ok/config.yml" ]; then okroot="$_d"; break; fi
@@ -565,7 +600,7 @@ else
   content_dir="${content_dir//\\//}"
   case "/$content_dir/" in */../*) ask "the project's content.dir carries a .. segment." ;; esac
   case "$content_dir" in
-    [A-Za-z]:/*|/*) content="$content_dir" ;;
+    [A-Za-z]:/*|/*) content="$content_dir"; content_rel=0 ;;
     *) content="$okroot/$content_dir" ;;
   esac
   content="${content%/}"
@@ -619,16 +654,96 @@ case "$0" in */*) _hooks="${0%/*}" ;; *) _hooks=. ;; esac
 delegate="$_hooks/guard-archivist-paths.sh"
 [ -f "$delegate" ] || ask "the path guard it delegates to, guard-archivist-paths.sh, is not beside it."
 
-# judge <absolute path> <harness fields> <what the call does with it>: one run
-# of the path guard. Its ask wins; a run that fails, or answers in any other
-# shape, asks too, since a crashed delegate prints nothing, which reads as a
-# pass.
+# fold_path <path>: sets X to the path in one spelling, for comparison only:
+# a Git Bash /c/... drive prefix read as c:/..., then letter case folded. The
+# length never changes, so an offset into X is an offset into the path. A fold
+# match only nominates a root: on a case-sensitive file system two paths that
+# fold alike are two folders, so respell's -ef test settles it on disk.
+fold_path() {
+  X="$1"
+  case "$X" in /[A-Za-z]|/[A-Za-z]/*) X="${X:1:1}:${X:2}" ;; esac
+  X="${X,,}"
+}
+
+# respell <target the path guard asked on>: when the call's cwd names the
+# session's own root, or a root in this session's grant file, in another
+# spelling that reaches the same folder on disk, and the target spelled that
+# root's way passes the path guard, deny with the cwd to resend. Otherwise it
+# returns and the caller asks as before, so only an ask ever becomes a deny.
+# The roots are the path guard's own: CLAUDE_PROJECT_DIR, else the hook
+# input's cwd, then the grant lines, normalized as it normalizes them. Every
+# line is a candidate, one the path guard refuses (under its floor, say)
+# included: its run on the respelled target, without agent_type, settles
+# whether a line counts. Hook input carries no additional working
+# directories, so they are never candidates.
+respell() {
+  [ "${#okcwd}" -le 2000 ] || return 0
+  _own="${CLAUDE_PROJECT_DIR:-}"
+  if [ -z "$_own" ]; then first cwd; [ "$T" = "s" ] && _own="$V"; fi
+  _grants=""
+  first session_id
+  if [ "$T" = "s" ]; then
+    case "$V" in
+      ''|*[!0-9A-Za-z-]*) : ;;
+      *) [ -f "$_hooks/session-roots/$V.txt" ] && _grants="$(cat "$_hooks/session-roots/$V.txt" 2>/dev/null)" ;;
+    esac
+  fi
+  # One line per candidate, tagged o (the own root) or g (a grant line):
+  # trimmed, \\ collapsed, then every backslash turned to a slash, trailing
+  # slashes dropped. This copies the path guard's normalization of its root
+  # and its grant lines (guard-archivist-paths.sh, the root block near its
+  # top and the grant-file loop); change both together.
+  _cands="$({ printf 'o%s\n' "$_own"; printf '%s\n' "$_grants" | sed 's/^/g/'; } \
+    | sed 's/\r$//; s/^\([og]\)[[:space:]]*/\1/; s/[[:space:]]*$//; s/\\\\/\\/g' | tr '\\' '/')"
+  fold_path "$okcwd"; _fc="$X"
+  fold_path "$1"; _ft="$X"
+  # The word list is split once, here; nothing in the body splits words.
+  _cifs="$IFS"; IFS="$NL"
+  for _c in $_cands; do
+    _k="${_c:0:1}"; _c="${_c:1}"
+    while :; do case "$_c" in */) _c="${_c%/}" ;; *) break ;; esac; done
+    case "$_c" in *'"'*) continue ;; [A-Za-z]:/*|/*) : ;; *) continue ;; esac
+    fold_path "$_c"; _fr="$X"
+    case "$_fc/" in "$_fr"/*) : ;; *) continue ;; esac
+    case "$_ft/" in "$_fr"/*) : ;; *) continue ;; esac
+    _cwdroot="${okcwd:0:${#_c}}"
+    # Spelled exactly already: this root's spelling is not what the path
+    # guard asked on.
+    [ "$_cwdroot" != "$_c" ] || continue
+    # The resend must carry the target with it: a target built on okroot, with
+    # okroot at or below this root, has the cwd's own root part, so the resent
+    # call's target is exactly _fixt. An absolute content.dir, or a project
+    # root above this root, leaves the target as sent, and the deny would teach
+    # nothing.
+    [ "$content_rel" = 1 ] && [ "${#okroot}" -ge "${#_c}" ] || continue
+    # One folder on disk, not only one folded string.
+    [ "$_cwdroot" -ef "$_c" ] || continue
+    _fixt="$_c${1:${#_c}}"
+    _fixcwd="$_c${okcwd:${#_c}}"
+    _vo="$(printf '%s' "{$passthru_src\"tool_input\":{\"file_path\":\"$_fixt\"}}" | "${BASH:-bash}" "$delegate" main-session 2>/dev/null)"
+    _vrc=$?
+    if [ "$_vrc" -eq 0 ] && [ -z "$_vo" ]; then
+      _what="the session's own root"
+      [ "$_k" = "o" ] || _what="a root granted to this session"
+      deny "tool_input.cwd '$okcwd' names $_what in another spelling (letter case, or the Git Bash /c/ form), and the path guard compares spelling exactly, so as sent this call would stop for the human's approval. Resend the same call with cwd '$_fixcwd'."
+    fi
+  done
+  IFS="$_cifs"
+  return 0
+}
+
+# judge <absolute path> <harness fields> <what the call does with it>
+# <cwd|src>: one run of the path guard. Its ask wins, after respell has had
+# its say on a target resolved through cwd; a run that fails, or answers in
+# any other shape, asks too, since a crashed delegate prints nothing, which
+# reads as a pass.
 judge() {
   _out="$(printf '%s' "{$2\"tool_input\":{\"file_path\":\"$1\"}}" | "${BASH:-bash}" "$delegate" main-session 2>/dev/null)"
   _drc=$?
   case "$_out" in
     *'"permissionDecision":"ask"'*)
       _why="$(printf '%s' "$_out" | sed -n 's/.*"permissionDecisionReason":"\(.*\)"}}.*/\1/p')"
+      [ "$4" != "cwd" ] || respell "$1"
       ask "$3 $1, and the path guard asks: $_why" ;;
   esac
   [ "$_drc" -eq 0 ] || ask "$3 $1, and the path guard it delegates to failed (exit status $_drc) without a verdict."
@@ -639,7 +754,7 @@ _gifs="$IFS"; IFS="$NL"
 for _t in $resolved; do
   IFS="$_gifs"
   [ -n "$_t" ] || { IFS="$NL"; continue; }
-  judge "$_t" "$passthru" "$tool targets"
+  judge "$_t" "$passthru" "$tool targets" cwd
   IFS="$NL"
 done
 IFS="$_gifs"
@@ -660,7 +775,7 @@ if [ "$has_src" -eq 1 ]; then
     *) ask "write.asset.source '$_src' is not an absolute path; the server reads a relative one from its own working folder, which the guard cannot see." ;;
   esac
   case "/$_src/" in */../*) ask "write.asset.source '$_src' carries a .. segment." ;; esac
-  judge "$_src" "$passthru_src" "write reads its asset.source from"
+  judge "$_src" "$passthru_src" "write reads its asset.source from" src
 fi
 
 pass

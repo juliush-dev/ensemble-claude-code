@@ -5,13 +5,18 @@
 #
 # Run it by hand, from anywhere:   bash run-fixture.sh
 # Exit 0 PASS, exit 1 FAIL. It writes nothing outside a temp directory it
-# removes on the way out, and it never touches a deployed home. On Windows run
+# removes on the way out, and it never touches a deployed home. On Windows it
+# marks one folder inside that temp directory case-sensitive (fsutil, no
+# elevation needed); the mark goes with the folder. On Windows run
 # it from Git Bash: a bare 'bash' typed in PowerShell may start WSL's bash.
 #
 # Each case feeds the guard one PreToolUse input on stdin, as the harness does,
 # and asserts the verdict: pass is no output at all, ask is one ask naming the
-# case's reason. Every case also asserts exit code 0 and that no output ever
-# carries a deny. The guard delegates each resolved target to the real
+# case's reason, deny is exactly one deny object naming the correction, under
+# 10,000 characters (the cap the hooks reference names for other hook text;
+# it names none for a deny reason, so the fixture holds the tighter one). Every case
+# also asserts exit code 0, and that no case expecting pass or ask ever sees a
+# deny. The guard delegates each resolved target to the real
 # hooks/guard-archivist-paths.sh beside it, so the delegated cases run the one
 # path law end to end.
 #
@@ -21,17 +26,27 @@
 #   session/docs-project/    a nested project with content.dir "docs"
 #   session/flow-project/    a config in flow style, which the guard does not read
 #   other/                   a project outside the session's root (a foreign root)
+#   session-lanes/           a sibling worktree, named the session's plus a suffix
 #   noroot/                  no .ok/config.yml at or above it
+#   rootabove/               a project with content.dir "Inner", whose inner/
+#                            folder serves as a session root below the .ok
+#   session/absdocs-project/ a nested project whose content.dir is given
+#                            absolute, and lowercased in the file, so its
+#                            target's case never depends on cwd's
+#   cs/proj/, cs/Proj/       two projects whose names differ only in case, in
+#                            a case-sensitive folder, where one can be made
 # Hermetic against the delegate's environment reads: CLAUDE_PROJECT_DIR, and
 # LOCALAPPDATA, TEMP and TMP are unset and TMPDIR points at a path that does not
 # exist, so the scratchpad exemption matches no fixture path; the session id
-# names no grant file.
+# names no grant file beside the real guard. The grant cases run copies of the
+# guard and its delegate from a temp hooks folder whose session-roots/ holds
+# the grant files.
 #
 # The cases: each tool's path shapes; a batch with one
 # escaping path; a .. escape; skill variants; import from the main session and
 # from the Operator; the exec tripwire, its commands joined by line breaks and
 # its flag split by a backslash included; unknown tool; unknown top-level key;
-# unknown nested key; renamed path field; missing cwd; no root, read and write;
+# unknown nested key; renamed path field; no root, read and write;
 # unparseable input; plus a foreign root, the Archivist's silent exit, a
 # non-default content.dir, a lint fix over a folder path, escape decoding in
 # paths and in exec's command, a
@@ -40,7 +55,20 @@
 # fail-toward-ask hardening: a crash forced inside the guard (a BASH_ENV file
 # makes a variable the guard assigns readonly, so the next read of it is an
 # unbound-variable exit), a delegate that crashes, a delegate that is missing;
-# and write.asset.source inside and outside the session's root.
+# and write.asset.source inside and outside the session's root. Then the
+# denies: a write-class call without cwd, for the main session and members;
+# a cwd naming the session's root or a granted root in another letter case or
+# the Git Bash /c/ form (on Windows only, where both reach the same folder),
+# each denied with the root's spelling to resend, a grant line below the
+# floor ahead of the real grant included; and the controls that must
+# not move: a sibling worktree, a foreign root however spelled, a grant line
+# below the path guard's floor, a project root above the session's root, an
+# absolute content.dir, and the Archivist's silent exit. Last, on a
+# case-sensitive folder (made with
+# fsutil on Windows, native on Linux; skipped, and said so, where none can be
+# made, as on a default macOS volume): a cwd naming a folder that differs from
+# the session's root, or a granted root, only in case is another folder, and
+# keeps its ask.
 
 set -u
 
@@ -51,6 +79,7 @@ GUARD="$HERE/../../hooks/guard-openknowledge.sh"
 PASSED=0
 FAILED=0
 FAILED_NAMES=""
+SKIP_NOTES=""
 
 TMPBASE="$(mktemp -d 2>/dev/null)" || { echo "FAIL (setup): mktemp -d failed"; exit 1; }
 trap 'rm -rf "$TMPBASE"' EXIT
@@ -64,13 +93,23 @@ SES="$B/session"
 DOCS="$SES/docs-project"
 FLOW="$SES/flow-project"
 OTHER="$B/other"
+LANES="$B/session-lanes"
 NOROOT="$B/noroot"
+ABSDOCS="$SES/absdocs-project"
 mkdir -p "$TMPBASE/session/.ok" "$TMPBASE/session/docs-project/.ok" "$TMPBASE/session/docs-project/docs" \
-         "$TMPBASE/session/flow-project/.ok" "$TMPBASE/other/.ok" "$TMPBASE/noroot/sub" || { echo "FAIL (setup): mkdir"; exit 1; }
+         "$TMPBASE/session/flow-project/.ok" "$TMPBASE/other/.ok" "$TMPBASE/session-lanes/.ok" \
+         "$TMPBASE/noroot/sub" "$TMPBASE/rootabove/.ok" "$TMPBASE/rootabove/inner" \
+         "$TMPBASE/session/absdocs-project/.ok" || { echo "FAIL (setup): mkdir"; exit 1; }
 printf '# fixture project\ncontent:\n  dir: "."\n' > "$TMPBASE/session/.ok/config.yml"
 printf 'content:\n  # the docs folder only\n  dir: docs\n' > "$TMPBASE/session/docs-project/.ok/config.yml"
 printf 'content: {dir: docs}\n' > "$TMPBASE/session/flow-project/.ok/config.yml"
 printf 'content:\n  dir: "."\n' > "$TMPBASE/other/.ok/config.yml"
+printf 'content:\n  dir: "."\n' > "$TMPBASE/session-lanes/.ok/config.yml"
+printf 'content:\n  dir: Inner\n' > "$TMPBASE/rootabove/.ok/config.yml"
+# content.dir absolute, and lowercased in the file: correcting a lowercased cwd
+# would not move the target (content is content.dir as written, cwd-independent),
+# so the guard's :718 branch must never turn this ask into a deny.
+printf 'content:\n  dir: "%s"\n' "${ABSDOCS,,}" > "$TMPBASE/session/absdocs-project/.ok/config.yml"
 
 # The no-root cases need no .ok/config.yml anywhere above the temp directory.
 _d="$B"
@@ -86,16 +125,19 @@ done
 expand() {
   _s="$1"
   _s="${_s//@SES@/$SES}"; _s="${_s//@DOCS@/$DOCS}"; _s="${_s//@FLOW@/$FLOW}"
-  _s="${_s//@OTHER@/$OTHER}"; _s="${_s//@NOROOT@/$NOROOT}"
+  _s="${_s//@OTHER@/$OTHER}"; _s="${_s//@LANES@/$LANES}"; _s="${_s//@NOROOT@/$NOROOT}"
   printf '%s' "$_s"
 }
 
-# The guard a case runs, and one extra NAME=VALUE for its environment; the
-# fault cases below change them for a single case and restore them.
+# The guard a case runs, one extra NAME=VALUE for its environment, and the
+# session id and session cwd the input carries; the fault, grant and
+# case-sensitive cases below change them for their cases and restore them.
 RUN_GUARD="$GUARD"
 RUN_ENV=""
+SESSION_ID="fixture-session-0"
+SESSION_CWD="$SES"
 
-# check <name> <pass|ask> <reason fragment or -> <raw hook input>
+# check <name> <pass|ask|deny> <reason fragment or -> <raw hook input>
 check() {
   local name="$1" expect="$2" frag="$3" json="$4" out rc
   local extra=()
@@ -106,32 +148,36 @@ check() {
   local verdict="?"
   if [ -z "$out" ]; then verdict=pass
   elif printf '%s' "$out" | grep -q '"permissionDecision":"ask"'; then verdict=ask
+  elif [ "$(printf '%s\n' "$out" | wc -l)" -eq 1 ] && printf '%s' "$out" | grep -q '^{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"OpenKnowledge guard: [^"]*"}}$'; then verdict=deny
   fi
   if [ "$rc" -ne 0 ]; then
     echo "FAIL ($name): exit code $rc, expected 0."; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
   fi
-  if printf '%s' "$out" | grep -qi 'deny'; then
+  if [ "$expect" != "deny" ] && printf '%s' "$out" | grep -qi 'deny'; then
     echo "FAIL ($name): the output carries a deny: $out"; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
   fi
   if [ "$verdict" != "$expect" ]; then
     echo "FAIL ($name): expected $expect, got $verdict. Output: ${out:-<none>}"; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
   fi
-  if [ "$expect" = "ask" ] && [ "$frag" != "-" ] && ! printf '%s' "$out" | grep -qF -- "$frag"; then
-    echo "FAIL ($name): the ask does not name '$frag'. Output: $out"; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
+  if [ "$expect" != "pass" ] && [ "$frag" != "-" ] && ! printf '%s' "$out" | grep -qF -- "$frag"; then
+    echo "FAIL ($name): the $expect does not name '$frag'. Output: $out"; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
   fi
-  if [ "$expect" = "ask" ]; then
-    echo "PASS ($name): ask, naming '$frag'."
-  else
+  if [ "$expect" = "deny" ] && [ "${#out}" -ge 10000 ]; then
+    echo "FAIL ($name): the deny runs ${#out} characters, over the 10,000 cap."; FAILED=$((FAILED + 1)); FAILED_NAMES="$FAILED_NAMES $name"; return
+  fi
+  if [ "$expect" = "pass" ]; then
     echo "PASS ($name): pass."
+  else
+    echo "PASS ($name): $expect, naming '$frag'."
   fi
   PASSED=$((PASSED + 1))
 }
 
-# tcase <name> <pass|ask> <fragment> <tool> <tool_input JSON with @TOKENS@> [agent_type]
+# tcase <name> <pass|ask|deny> <fragment> <tool> <tool_input JSON with @TOKENS@> [agent_type]
 tcase() {
   local agent=""
   [ -n "${6:-}" ] && agent="\"agent_id\":\"a0fixture\",\"agent_type\":\"$6\","
-  check "$1" "$2" "$3" "{\"session_id\":\"fixture-session-0\",\"transcript_path\":\"t.jsonl\",\"cwd\":\"$SES\",\"permission_mode\":\"auto\",\"hook_event_name\":\"PreToolUse\",${agent}\"tool_name\":\"mcp__open-knowledge__$4\",\"tool_input\":$(expand "$5")}"
+  check "$1" "$2" "$3" "{\"session_id\":\"$SESSION_ID\",\"transcript_path\":\"t.jsonl\",\"cwd\":\"$SESSION_CWD\",\"permission_mode\":\"auto\",\"hook_event_name\":\"PreToolUse\",${agent}\"tool_name\":\"mcp__open-knowledge__$4\",\"tool_input\":$(expand "$5")}"
 }
 
 # --- read tools and the exec tripwire -------------------------------------------
@@ -201,7 +247,6 @@ tcase "renamed path field"                  ask "'name'" write '{"document":{"na
 tcase "zero targets"                        ask "names no path" write '{"summary":"nothing","cwd":"@SES@"}'
 tcase "escaped key spelling"                ask "does not name" write '{"docu\u006dent":{"path":"x"},"cwd":"@SES@"}'
 tcase "duplicated key"                      ask "twice" write '{"document":{"path":"x"},"cwd":"@SES@","cwd":"@OTHER@"}'
-tcase "missing cwd, write"                  ask "no tool_input.cwd" write '{"document":{"path":"x","content":"y"}}'
 tcase "no root, write"                      ask "no .ok/config.yml" write '{"document":{"path":"x","content":"y"},"cwd":"@NOROOT@/sub"}'
 check "unparseable input"                   ask "well-formed" "{\"cwd\":\"$SES\",\"tool_name\":\"mcp__open-knowledge__write\",\"tool_input\":{\"document\":"
 check "tool input not an object"            ask "not an object" "{\"cwd\":\"$SES\",\"tool_name\":\"mcp__open-knowledge__write\",\"tool_input\":[1]}"
@@ -246,6 +291,126 @@ RUN_GUARD="$TMPBASE/hooks-alone/guard-openknowledge.sh"
 tcase "delegate missing"                    ask "is not beside it" write "$WR"
 RUN_GUARD="$GUARD"
 
+# --- the denies: a cwd the caller can correct ----------------------------------------------
+# No cwd on a write-class call: denied for every caller, the Archivist included.
+NOCWD="Resend the same call with cwd set to an absolute path inside the OpenKnowledge project you mean to write"
+tcase "missing cwd, write"                  deny "$NOCWD" write '{"document":{"path":"x","content":"y"}}'
+tcase "missing cwd, edit, Builder"          deny "$NOCWD" edit '{"document":{"path":"x","find":"a","replace":"b"}}' builder
+tcase "missing cwd, checkpoint"             deny "$NOCWD" checkpoint '{"summary":"s"}'
+tcase "missing cwd, Archivist"              deny "$NOCWD" write '{"document":{"path":"x","content":"y"}}' archivist
+# Controls that do not move.
+tcase "sibling worktree"                    ask "outside the session's own root" write '{"document":{"path":"x","content":"y"},"cwd":"@LANES@"}'
+tcase "sibling worktree, Builder"           ask "outside the session's own root" edit '{"document":{"path":"x","find":"a","replace":"b"},"cwd":"@LANES@"}' builder
+
+# A cwd in another spelling reaches the same folder only where the file system
+# folds case and Git Bash reads /c/, so these run on Windows only.
+if command -v cygpath >/dev/null 2>&1; then
+  _gb="$(cygpath -u "$SES")"
+  _ws="$(cygpath -w "$SES")"; _ws="${_ws,,}"; _ws="${_ws//\\/\\\\}"
+  WD='{"document":{"path":"notes/a","content":"x"},"cwd":"'
+  RESEND="Resend the same call with cwd '$SES'."
+  tcase "cwd drive letter lowercase"        deny "$RESEND" write "$WD${SES,}\"}"
+  tcase "cwd all lowercase"                 deny "$RESEND" write "$WD${SES,,}\"}"
+  tcase "cwd lowercase names the own root"  deny "names the session's own root" write "$WD${SES,,}\"}"
+  tcase "cwd lowercase, tail kept"          deny "Resend the same call with cwd '$SES/Notes'." write "$WD${SES,,}/Notes\"}"
+  tcase "cwd Git Bash form"                 deny "$RESEND" write "$WD$_gb\"}"
+  tcase "cwd backslashes, lowercase"        deny "$RESEND" write "$WD$_ws\"}"
+  tcase "cwd lowercase, nested content.dir" deny "Resend the same call with cwd '$DOCS/docs'." write "{\"document\":{\"path\":\"guide/intro\",\"content\":\"x\"},\"cwd\":\"${DOCS,,}/docs\"}"
+  # The control's opposite: content.dir absolute, so correcting cwd would not
+  # move the target (content is content.dir as written, not built on cwd) -
+  # the deny would teach nothing, so this stays an ask.
+  tcase "cwd lowercase, absolute content.dir" ask "outside the session's own root" write "{\"document\":{\"path\":\"guide/intro\",\"content\":\"x\"},\"cwd\":\"${ABSDOCS,,}\"}"
+  tcase "cwd lowercase, Builder"            deny "$RESEND" edit "{\"document\":{\"path\":\"notes/a\",\"find\":\"a\",\"replace\":\"b\"},\"cwd\":\"${SES,,}\"}" builder
+  tcase "cwd Git Bash form, checkpoint"     deny "$RESEND" checkpoint "{\"cwd\":\"$_gb\"}"
+  tcase "cwd lowercase, lint fix"           deny "$RESEND" lint "{\"document\":\"notes/a\",\"fix\":true,\"cwd\":\"${SES,,}\"}"
+  # Controls: nothing here passed before or asks less now.
+  tcase "cwd lowercase, Archivist"          pass - write "$WD${SES,,}\"}" archivist
+  tcase "sibling worktree, lowercase"       ask "outside the session's own root" write "$WD${LANES,,}\"}"
+  tcase "foreign root, lowercase"           ask "outside the session's own root" write "$WD${OTHER,,}\"}"
+  tcase "foreign root, Git Bash form"       ask "outside the session's own root" write "$WD$(cygpath -u "$OTHER")\"}"
+  tcase "lowercase cwd, .. path"            ask ".. segment" write "{\"document\":{\"path\":\"../x\",\"content\":\"y\"},\"cwd\":\"${SES,,}\"}"
+  # The session's root is rootabove/inner and the project's .ok sits above it,
+  # so the target is built on rootabove/ and its content.dir "Inner", and a
+  # resent cwd would not move it: no deny that teaches nothing.
+  SESSION_CWD="$B/rootabove/inner"
+  tcase "project root above the session's"  ask "outside the session's own root" write "{\"document\":{\"path\":\"notes/a\",\"content\":\"x\"},\"cwd\":\"$B/rootabove/INNER\"}"
+  SESSION_CWD="$SES"
+fi
+
+# --- grants: a root in this session's grant file ---------------------------------------------
+# Copies of the guard and its delegate, so the grant files live in a temp
+# hooks folder and never beside the real guard.
+mkdir -p "$TMPBASE/hooks-grant/session-roots"
+cp "$GUARD" "$TMPBASE/hooks-grant/guard-openknowledge.sh"
+cp "$HERE/../../hooks/guard-archivist-paths.sh" "$TMPBASE/hooks-grant/guard-archivist-paths.sh"
+printf '# granted for the fixture\r\n  %s/  \r\n' "$OTHER" > "$TMPBASE/hooks-grant/session-roots/fixture-session-g.txt"
+# Two segments from the anchor (C:/Users on Windows): under the floor.
+_floor="$(printf '%s\n' "$B" | cut -d/ -f1-2)"
+printf '%s\n' "$_floor" > "$TMPBASE/hooks-grant/session-roots/fixture-session-s.txt"
+# The line under the floor first, then the real grant.
+printf '%s\n%s\n' "$_floor" "$OTHER" > "$TMPBASE/hooks-grant/session-roots/fixture-session-f.txt"
+RUN_GUARD="$TMPBASE/hooks-grant/guard-openknowledge.sh"
+SESSION_ID="fixture-session-g"
+tcase "granted root, exact spelling"        pass - write '{"document":{"path":"notes/a","content":"x"},"cwd":"@OTHER@"}'
+tcase "granted root, Builder"               pass - edit '{"document":{"path":"notes/a","find":"a","replace":"b"},"cwd":"@OTHER@"}' builder
+if command -v cygpath >/dev/null 2>&1; then
+  tcase "granted root, lowercase"           deny "Resend the same call with cwd '$OTHER'." write "$WD${OTHER,,}\"}"
+  tcase "granted root named as granted"     deny "names a root granted to this session" write "$WD${OTHER,,}\"}"
+  tcase "granted root, Git Bash form"       deny "Resend the same call with cwd '$OTHER'." write "$WD$(cygpath -u "$OTHER")\"}"
+  tcase "own root lowercase, grant present" deny "$RESEND" write "$WD${SES,,}\"}"
+  tcase "sibling worktree, grant present"   ask "outside the session's own root" write "$WD${LANES,,}\"}"
+  # A grant line below the path guard's three-segment floor never counts, so
+  # a cwd under it keeps its ask however it is spelled.
+  SESSION_ID="fixture-session-s"
+  tcase "grant below the floor, lowercase"  ask "outside the session's own root" write "$WD${OTHER,,}\"}"
+  # A cwd that spells the line under the floor exactly and the rest in lower
+  # case: that line is passed over, and the real grant below it settles it.
+  _tail="${OTHER#"$_floor"}"
+  if [ "${_tail,,}" != "$_tail" ]; then
+    SESSION_ID="fixture-session-f"
+    tcase "floor line spelled exactly first"  deny "Resend the same call with cwd '$OTHER'." write "$WD$_floor${_tail,,}\"}"
+  else
+    SKIP_NOTES="$SKIP_NOTES [floor line spelled exactly first: the temp path below $_floor has no upper case to fold]"
+  fi
+fi
+SESSION_ID="fixture-session-0"
+RUN_GUARD="$GUARD"
+
+# --- case-sensitive: a case variant that is another folder keeps its ask ---------------------
+# The fold that finds a misspelled root is only a nomination; the guard denies
+# only where both spellings reach one folder ([ A -ef B ]). Here cs/proj and
+# cs/Proj are two projects. Windows marks the folder case-sensitive before
+# anything is made in it; Linux needs nothing; where the two names still reach
+# one folder, the block is skipped and the summary says so.
+mkdir -p "$TMPBASE/cs" || { echo "FAIL (setup): mkdir cs"; exit 1; }
+if command -v cygpath >/dev/null 2>&1 && command -v fsutil.exe >/dev/null 2>&1; then
+  fsutil.exe file setCaseSensitiveInfo "$(cygpath -w "$TMPBASE/cs")" enable >/dev/null 2>&1
+fi
+mkdir -p "$TMPBASE/cs/proj/.ok" "$TMPBASE/cs/Proj/.ok" || { echo "FAIL (setup): mkdir cs/proj, cs/Proj"; exit 1; }
+if ! [ "$TMPBASE/cs/proj" -ef "$TMPBASE/cs/Proj" ]; then
+  CS="$B/cs"
+  printf 'content:\n  dir: "."\n' > "$TMPBASE/cs/proj/.ok/config.yml"
+  printf 'content:\n  dir: "."\n' > "$TMPBASE/cs/Proj/.ok/config.yml"
+  CW='{"document":{"path":"notes/a","content":"x"},"cwd":"'
+  SESSION_CWD="$CS/proj"
+  tcase "case-sensitive: the session's own folder" pass - write "$CW$CS/proj\"}"
+  tcase "case-sensitive: case-variant folder"      ask "outside the session's own root" write "$CW$CS/Proj\"}"
+  tcase "case-sensitive: case variant, Builder"    ask "outside the session's own root" write "$CW$CS/Proj\"}" builder
+  if command -v cygpath >/dev/null 2>&1; then
+    tcase "case-sensitive: Git Bash form, own"     deny "Resend the same call with cwd '$CS/proj'." write "$CW$(cygpath -u "$CS/proj")\"}"
+    tcase "case-sensitive: Git Bash form, variant" ask "outside the session's own root" write "$CW$(cygpath -u "$CS/Proj")\"}"
+  fi
+  SESSION_CWD="$SES"
+  printf '%s\n' "$CS/proj" > "$TMPBASE/hooks-grant/session-roots/fixture-session-c.txt"
+  RUN_GUARD="$TMPBASE/hooks-grant/guard-openknowledge.sh"
+  SESSION_ID="fixture-session-c"
+  tcase "case-sensitive: granted, variant folder"  ask "outside the session's own root" write "$CW$CS/Proj\"}"
+  SESSION_ID="fixture-session-0"
+  RUN_GUARD="$GUARD"
+else
+  SKIP_NOTES="$SKIP_NOTES [case-sensitive block: no case-sensitive folder could be made here, so a case variant that is another folder went untested]"
+fi
+
 # --- a large body: the scanner must stay linear -------------------------------------------
 BIG="$(head -c 300000 /dev/zero | tr '\0' 'a')"
 START=$(date +%s)
@@ -258,6 +423,7 @@ else
 fi
 
 echo ""
+[ -z "$SKIP_NOTES" ] || echo "SKIPPED:$SKIP_NOTES"
 if [ "$FAILED" -gt 0 ]; then
   echo "FAIL: $FAILED failed, $PASSED passed (${FAILED_NAMES# })."
   exit 1
