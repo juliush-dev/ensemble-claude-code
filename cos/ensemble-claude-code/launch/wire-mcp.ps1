@@ -66,7 +66,7 @@ $ErrorActionPreference = 'Stop'
 
 # The version OpenKnowledge's tool list was enumerated at. Keep the spelling
 # OK_ENUMERATED='x.y.z' (no spaces): deploy-to-host.ps1 reads it by that text.
-$OK_ENUMERATED='0.77.7'
+$OK_ENUMERATED='0.78.0'
 
 $ensembleHome = Join-Path $env:LOCALAPPDATA 'ensemble-claude-code'
 if (-not (Test-Path (Join-Path $ensembleHome 'CLAUDE.md'))) {

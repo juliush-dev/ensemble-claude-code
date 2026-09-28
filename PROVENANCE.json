@@ -1,7 +1,7 @@
 {
   "counts": {
-    "exclude": 506,
-    "publish": 97,
+    "exclude": 512,
+    "publish": 99,
     "transform": 0
   },
   "executables": [
@@ -22,13 +22,13 @@
     "cos/ensemble-claude-code/tools/herenow.sh",
     "cos/ensemble-claude-code/tools/scout-fetch.sh"
   ],
-  "generated_at": "2026-09-27T19:08:23.208599+00:00",
+  "generated_at": "2026-09-28T02:53:19.160391+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
   "profile_content_sha256": "66cfc3fa50c2415736cf9121ec554dfb319e49261aea2957185dacfb40e92f01",
   "profile_name": "worldview-edition",
   "profile_version": "3",
-  "source_commit": "9c773091bbc6caf64124bcc2942de1b30e8459b0",
+  "source_commit": "f6e04e367778e7545adbc5ad2636d235a6e889b8",
   "tool_versions": {
     "git": "git version 2.55.0.windows.5",
     "python": "3.14.3"

@@ -48,7 +48,7 @@ set -euo pipefail
 
 # The version OpenKnowledge's tool list was enumerated at. Keep the spelling
 # OK_ENUMERATED='x.y.z' (no spaces): deploy-to-host.sh reads it by that text.
-OK_ENUMERATED='0.77.7'
+OK_ENUMERATED='0.78.0'
 
 home="${CLAUDE_ENSEMBLE_HOME:-${XDG_CONFIG_HOME:-$HOME/.config}/ensemble-claude-code}"
 

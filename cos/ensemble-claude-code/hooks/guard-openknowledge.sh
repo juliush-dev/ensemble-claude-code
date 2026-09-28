@@ -12,7 +12,7 @@
 # Edit|Write; this guard assumes no project layout (where .ok/ sits and what
 # it covers is each folder owner's call).
 #
-# How it decides, per tool (the 21 tools OpenKnowledge 0.77.7 lists in its MCP
+# How it decides, per tool (the 21 tools OpenKnowledge 0.78.0 lists in its MCP
 # tools/list, captured in full):
 #
 #   READ (exec, search, links, audit, history, skills, palette, config,
@@ -46,7 +46,7 @@
 # Tracked, not pinned: the key table below is the enumerated schema of the
 # eleven state-changing tools, at the top level and inside every path-carrying
 # object. A key it does not name asks, so a field OpenKnowledge adds or renames
-# after 0.77.7 asks instead of passing unguarded; a renamed path field also
+# after 0.78.0 asks instead of passing unguarded; a renamed path field also
 # leaves the call with zero targets, which asks. An unknown tool name asks.
 # Over-asking after an upgrade is the signal to re-enumerate, not friction to
 # remove. The re-enumeration duty (launch/wire-mcp.ps1's header) updates this
@@ -103,7 +103,7 @@
 # No globbing anywhere: flattened paths carry [ and ], and nothing here globs.
 set -uf
 
-KEY_TABLE_ENUMERATED='0.77.7'
+KEY_TABLE_ENUMERATED='0.78.0'
 
 # DECIDED is set only by ask, deny and pass, the guard's three verdicts.
 DECIDED=0
