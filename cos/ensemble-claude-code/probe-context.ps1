@@ -84,8 +84,11 @@ $ErrorActionPreference = 'Stop'
 # --- Named-tier window table (edit here; token counts are provider-set) --------
 # Match is case-insensitive substring against the model id reported by the stream.
 # The first tier with any matching substring wins.
+# Sources: platform.claude.com models/overview (latest-models table) and
+# build-with-claude/context-windows "Context window sizes by model", read
+# 2026-10-01. Sonnet 4.5 and Haiku 4.5 are 200K.
 $tierTable = @(
-    @{ Tier = '1M (Sonnet 5 / Opus 4.8 / Opus 5 / Opus 5.5 / Fable 5)'; Window = 1000000; Match = @('sonnet-5', 'opus-4-8', 'opus-5', 'fable-5', 'fable', '[1m]') },
+    @{ Tier = '1M (Sonnet 5.5 / Sonnet 5 / Sonnet 4.6 / Opus 5.5 / Opus 5 / Opus 4.8 / Opus 4.7 / Opus 4.6 / Fable 5.1 / Fable 5)'; Window = 1000000; Match = @('sonnet-5', 'sonnet-4-6', 'opus-5', 'opus-4-8', 'opus-4-7', 'opus-4-6', 'fable-5', 'fable', '[1m]') },
     @{ Tier = '200K (Haiku 4.5 / legacy Sonnet 4.5 / Opus 4.5 / Opus 4.1 / gateway / disabled-1M)'; Window = 200000; Match = @('haiku', 'sonnet-4-5', 'opus-4-5', 'opus-4-1') }
 )
 $defaultWindow = 1000000

@@ -66,3 +66,6 @@ remoteControlAtStartup
 modelSettings.opus.effortLevel
 _provenance_env
 env.PYTHONUTF8
+_provenance_plugin_install_asks
+_provenance_claude_md_excludes
+claudeMdExcludes

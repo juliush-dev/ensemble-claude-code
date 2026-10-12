@@ -1,7 +1,7 @@
 {
   "counts": {
-    "exclude": 512,
-    "publish": 99,
+    "exclude": 548,
+    "publish": 101,
     "transform": 0
   },
   "executables": [
@@ -17,20 +17,21 @@
     "cos/ensemble-claude-code/hooks/session-end-litter-flag.sh",
     "cos/ensemble-claude-code/hooks/session-start-cue.sh",
     "cos/ensemble-claude-code/hooks/session-start-harness-marker.sh",
+    "cos/ensemble-claude-code/hooks/session-start-mod-check.sh",
     "cos/ensemble-claude-code/launch/start-ensemble.sh",
     "cos/ensemble-claude-code/launch/wire-mcp.sh",
     "cos/ensemble-claude-code/tools/herenow.sh",
     "cos/ensemble-claude-code/tools/scout-fetch.sh"
   ],
-  "generated_at": "2026-09-28T02:53:19.160391+00:00",
+  "generated_at": "2026-10-12T20:28:18.137248+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
-  "profile_content_sha256": "66cfc3fa50c2415736cf9121ec554dfb319e49261aea2957185dacfb40e92f01",
+  "profile_content_sha256": "67719c667cbd186bbf3938783526e622f8e6ec4bbdc5a4c8594b2aa19b442bdb",
   "profile_name": "worldview-edition",
   "profile_version": "3",
-  "source_commit": "f6e04e367778e7545adbc5ad2636d235a6e889b8",
+  "source_commit": "52febea6324c53e526f64473abba14c88462a496",
   "tool_versions": {
-    "git": "git version 2.55.0.windows.5",
+    "git": "git version 2.56.0.windows.2",
     "python": "3.14.3"
   }
 }

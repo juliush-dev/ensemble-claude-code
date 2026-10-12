@@ -60,7 +60,8 @@
 # open-knowledge server with the enumerated version (read only - this script
 # never writes .claude.json; launch/wire-mcp.sh does). A different ok version
 # is reported, never refused: NEWER means the guard asks on any tool or field
-# it does not know until the tool list is re-enumerated, OLDER means a tool the
+# it does not know, but denies a top-level-only field such as summary or cwd
+# found nested, until the tool list is re-enumerated; OLDER means a tool the
 # cards name may be absent. Never fatal: a missing requirement is one inventory
 # line naming it, the run still ends with exit code 0, and the members report
 # the gap when they meet it. A later requirement adds one probe line to the
@@ -686,7 +687,7 @@ probe_openknowledge() {
   fi
   case "$(version_cmp "$have" "$want")" in
     eq) echo "openknowledge (ok $first at $ok_path; enumerated at $ok_enumerated)" ;;
-    gt) echo "openknowledge (ok $first at $ok_path; NEWER than the enumerated $ok_enumerated - the guard asks on any tool or field it does not know until the tool list is re-enumerated)" ;;
+    gt) echo "openknowledge (ok $first at $ok_path; NEWER than the enumerated $ok_enumerated - the guard asks on any tool or field it does not know, but denies a top-level-only field such as summary or cwd found nested, until the tool list is re-enumerated)" ;;
     *)  echo "openknowledge (ok $first at $ok_path; OLDER than the enumerated $ok_enumerated - a tool the cards name may be absent; the member says so)" ;;
   esac
 }

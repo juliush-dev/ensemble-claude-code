@@ -13,10 +13,20 @@
   },
   "remoteControlAtStartup": false,
   "autoMemoryEnabled": false,
+  "_provenance_claude_md_excludes": "claudeMdExcludes keeps instruction files this COS does not ship out of sessions that reach this home through the Agent SDK, such as T3 Code's. Those sessions set CLAUDE_CONFIG_DIR to this home but keep the SDK's default setting sources (user, project and local), so the loader walks up from the working folder and loads, as project memory, the user's own ~/.claude instruction files (that folder is an ancestor of most working folders) and, inside this factory's repository, its deploy-source copies of the instruction files. Only instruction files arrive that way: settings, skills, plugins and hooks under ~/.claude do not reach such a session. Three patterns cover the user's own ~/.claude: any user folder under a Users directory (Windows and macOS), any Linux user home, and root's home. Matching is case-sensitive against a path built from the working folder as the host spells it, so each letter of the Users segment is a class of both its cases ([Uu] and so on), and a lowercase or uppercase spelling of the same folder still matches, where an exact pattern did not (case variants tested on Windows, the Linux home pattern in WSL, on 2.1.296). The other three name this factory's deploy-source instruction files: always-on/CLAUDE.md under cos/ensemble-claude-code, and agents/claude/CLAUDE.md and agents/codex/AGENTS.md, these two anchored below a folder whose name starts with oscc-workbench (the factory repository and its lane worktrees), so same-named files in other projects still load. Nested files, loaded as Claude works in a subfolder, honor the patterns, AGENTS.md included. Launcher sessions are unaffected: under --setting-sources user they load only this home's own instruction files, which no pattern matches. This home must not be ~/.claude itself: the home patterns would then match its own CLAUDE.md and rules and strip them from every session.",
+  "claudeMdExcludes": [
+    "**/[Uu][Ss][Ee][Rr][Ss]/*/.claude/**",
+    "/home/*/.claude/**",
+    "/root/.claude/**",
+    "**/cos/ensemble-claude-code/always-on/CLAUDE.md",
+    "**/oscc-workbench*/**/agents/claude/CLAUDE.md",
+    "**/oscc-workbench*/**/agents/codex/AGENTS.md"
+  ],
   "_provenance_env": "env sets PYTHONUTF8=1 for every session and its subprocesses, so Python runs in UTF-8 mode: open() without an encoding reads and writes UTF-8 rather than the Windows ANSI code page (cp1252 on Western European systems), which raises UnicodeEncodeError on any character outside it, an arrow for one. It changes nothing where the locale is already UTF-8. It is one single value: the merge writes it from the factory, leaves every other env key the host sets (ENSEMBLE_BROWSER among them) alone, and a host that wants its own value names env.PYTHONUTF8 in settings.optout.json.",
   "env": {
     "PYTHONUTF8": "1"
   },
+  "_provenance_plugin_install_asks": "Forty of the ask rules make Claude ask before its own shell installs, enables or scaffolds a plugin: claude plugin install, claude plugin enable and claude plugin init in every spelling claude plugin --help lists on 2.1.287 (plugin or plugins, install or i, init or new; enable has no alias), ten prefixes, each bare and with arguments (the form of the git push rules), for Bash and for PowerShell. The bare rule stays beside the one with arguments: the permissions page says a trailing space and * also match the bare command, which is untested for the PowerShell tool, and the git push rules rely on the pair. A plugin can carry a mod, a hooks module whose tool.check or tool.call hook can approve a tool call past the ask rules, deny rules and guards this file wires (HARNESS.md), so these three commands get a prompt. What they cannot catch: they match the command text Claude writes, so a flag before plugin, a path-qualified claude, a nested shell, an alias a later version adds and a letter-case variant such as CLAUDE plugin install (this host's Git Bash runs it as the same program, and on 2.1.287 a Bash rule did not catch CLAUDE plugin i where it caught claude plugin i, observed; the permissions page says PowerShell rule matching ignores case, unprobed here) pass them, and a mod already loaded can approve past an ask rule. The user's own installs never meet them: /plugin, a plugin synced from the account, a plugin folder put into skills/, the --plugin-dir flag and CLAUDE_CODE_PLUGIN_DIRS. The mod-presence check under hooks.SessionStart (session-start-mod-check.sh) reports a mod at the next session start however it arrived, except one loaded with --plugin-dir.",
   "permissions": {
     "defaultMode": "auto",
     "ask": [
@@ -24,6 +34,46 @@
       "Bash(git push *)",
       "PowerShell(git push)",
       "PowerShell(git push *)",
+      "Bash(claude plugin install)",
+      "Bash(claude plugin install *)",
+      "PowerShell(claude plugin install)",
+      "PowerShell(claude plugin install *)",
+      "Bash(claude plugins install)",
+      "Bash(claude plugins install *)",
+      "PowerShell(claude plugins install)",
+      "PowerShell(claude plugins install *)",
+      "Bash(claude plugin i)",
+      "Bash(claude plugin i *)",
+      "PowerShell(claude plugin i)",
+      "PowerShell(claude plugin i *)",
+      "Bash(claude plugins i)",
+      "Bash(claude plugins i *)",
+      "PowerShell(claude plugins i)",
+      "PowerShell(claude plugins i *)",
+      "Bash(claude plugin enable)",
+      "Bash(claude plugin enable *)",
+      "PowerShell(claude plugin enable)",
+      "PowerShell(claude plugin enable *)",
+      "Bash(claude plugins enable)",
+      "Bash(claude plugins enable *)",
+      "PowerShell(claude plugins enable)",
+      "PowerShell(claude plugins enable *)",
+      "Bash(claude plugin init)",
+      "Bash(claude plugin init *)",
+      "PowerShell(claude plugin init)",
+      "PowerShell(claude plugin init *)",
+      "Bash(claude plugins init)",
+      "Bash(claude plugins init *)",
+      "PowerShell(claude plugins init)",
+      "PowerShell(claude plugins init *)",
+      "Bash(claude plugin new)",
+      "Bash(claude plugin new *)",
+      "PowerShell(claude plugin new)",
+      "PowerShell(claude plugin new *)",
+      "Bash(claude plugins new)",
+      "Bash(claude plugins new *)",
+      "PowerShell(claude plugins new)",
+      "PowerShell(claude plugins new *)",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_drag",
       "mcp__playwright__browser_drop",
@@ -111,7 +161,7 @@
         ]
       },
       {
-        "_provenance_main_session_path_guard": "Wires the shared path guard onto the main session's Edit|Write in main-session mode: it asks ONLY on a proven foreign-root write (another lane's worktree, a stray external path), auto-passing everything own-root so the Concertmaster's own-root notebook closure writes (Aim, Registry, Lanes, contract/charter surfaces) and its legitimate non-notebook writes in arbitrary projects stay frictionless. This main-session wiring is the guard file's only wiring, though the OpenKnowledge guard delegates each of its path targets to this file: the Archivist carries no path guard, its notebook-and-inbox-only boundary being doctrine on its card.",
+        "_provenance_main_session_path_guard": "Wires the shared path guard onto the main session's Edit|Write in main-session mode: it asks ONLY on a proven foreign-root write (another lane's worktree, a stray external path), auto-passing everything own-root so the Concertmaster's own-root notebook closure writes (Aim, Registry, Lanes, contract/charter surfaces) and its legitimate non-notebook writes in arbitrary projects stay frictionless. This main-session wiring is the guard file's only wiring, though the OpenKnowledge guard delegates each of its path targets to this file: the Archivist carries no path guard, its boundary (notebook surfaces, and inbox material no unit has taken up) being doctrine on its card.",
         "matcher": "Edit|Write",
         "hooks": [
           {
@@ -131,7 +181,7 @@
         ]
       },
       {
-        "_provenance_openknowledge_guard": "Wires the OpenKnowledge guard onto every open-knowledge tool, for every caller. Read tools pass; exec asks when a pipeline runs find with -delete or sort with -o. resolve_conflict, import, install, every skill variant and every folder delete ask for everyone. Every path a write, edit, delete, move, restore_version, checkpoint or fixing lint names is resolved through the call's own cwd, the nearest .ok/config.yml and its content.dir, then handed to guard-archivist-paths.sh main-session, so an OpenKnowledge write outside the session's root asks exactly as an Edit or Write there does, and the session grants and the Archivist's silent exit carry over. A write's asset.source outside the session's root asks, for every caller. A tool or key outside the table enumerated at OpenKnowledge 0.78.0 asks, as do a write without cwd, a write with no .ok root, a .. segment, a batch over 100 targets and unparseable input. Never a deny. A command hook that times out, crashes or exits without a decision does not block: the call goes on through the ordinary permission flow (hooks reference, current through Claude Code 2.1.282). So the guard turns every internal failure into an ask through an EXIT trap, and the 600-second timeout is set explicitly rather than left to the default: a 100-target batch measured 142 s on the host it was built on, and the timeout sits about four times above that so a slow host's full batch still ends in a verdict. What neither covers: a hook that cannot start at all (bash missing) still fails open. The exact-name asks on import and install in permissions.ask are the second layer for those two tools only.",
+        "_provenance_openknowledge_guard": "Wires the OpenKnowledge guard onto every open-knowledge tool, for every caller. Read tools pass; exec asks when a pipeline runs find with -delete or sort with -o. resolve_conflict, import, install, the skill variants of write, edit, delete, move and restore_version, and every folder delete ask for everyone. Every path a write, edit, delete, move, restore_version, checkpoint or fixing lint names is resolved through the call's own cwd, the nearest .ok/config.yml and its content.dir, then handed to guard-archivist-paths.sh main-session, so an OpenKnowledge write outside the session's root asks exactly as an Edit or Write there does, and the session grants and the Archivist's silent exit carry over. A write's asset.source outside the session's root asks, for every caller. A tool or key outside the table enumerated at OpenKnowledge 0.78.0 asks, as do a write with no .ok root, a .. segment, a batch over 100 targets and unparseable input. Three slips are denied instead, each naming the correction to resend, because a deny's reason reaches the caller and an ask's reaches only the human: a write without cwd; a cwd naming the session's root or a granted root in another letter case or the Git Bash /c/ form, where both spellings reach one folder on disk and the respelled target passes the path guard; a field a tool takes only at its top level (summary, cwd) found inside a nested object the table reads. A command hook that times out, crashes or exits without a decision does not block: the call goes on through the ordinary permission flow (hooks reference, Timeouts and Other exit codes). So the guard turns every internal failure into an ask through an EXIT trap, and the 600-second timeout is set explicitly rather than left to the default: a 100-target batch measured 142 s on the host it was built on, and the timeout sits about four times above that so a slow host's full batch still ends in a verdict. What neither covers: a hook that cannot start at all (bash missing) still fails open. The exact-name asks on import and install in permissions.ask are the second layer for those two tools only.",
         "matcher": "mcp__open-knowledge__.*",
         "hooks": [
           {
@@ -180,6 +230,17 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-start-cue.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "_provenance_mod_check": "Wires the mod-presence check on matchers startup, resume, clear, compact and fork. A plugin carrying a hooks module (a mod) runs inside Claude Code, and its tool.check or tool.call hook can approve a tool call past the ask rules, deny rules and guards this file wires (HARNESS.md), so the check says when one is present rather than leaving it to a glance at /plugin. It reads the home's own records and never starts a nested claude: every installPath in plugins/installed_plugins.json, the plugins under skills/ and plugins/synced/, and the folders CLAUDE_CODE_PLUGIN_DIRS names, from the environment or from env here; and the session's own project .claude/skills/, under the cwd in its input and under CLAUDE_PROJECT_DIR, read once when the two name one folder, whose mods it names as ones that may load (a project skills-dir plugin loads only from the session's primary working directory, which no hook input names, and only once that folder is trusted; whether it loads under --setting-sources user is unconfirmed). A folder in skills/ or in the project's .claude/skills without .claude-plugin/plugin.json is named as one that by the docs does not load as a plugin. A plugin whose hooks/hooks.json carries a modules key is a mod; an id set false in enabledPlugins is reported as disabled, never dropped. One line per mod reaches the human through systemMessage and the session through additionalContext, which also asks the session to tell the human at its first answer; fixtures/mod-check holds each field under 9,000 characters against the 10,000-character cap. Records it cannot read, a scan past 3 seconds and any exit before a verdict print a cannot-tell line; a home with no mod prints nothing, and so does input carrying an agent_id. It cannot see a mod installed after the session started, one loaded with the --plugin-dir flag, one in a folder added with --add-dir, or one in another config home; after /cd and then a cd in the session, neither folder it reads is the one /cd moved to, which plugins load from. Unchecked: whether /clear moves the working folder back after a cd, and whether CLAUDE_PROJECT_DIR reaches the hook in a session started with --setting-sources user; without it only the cwd is read. Compact is in the matcher because a mod can arrive mid-session and the check measured about 0.15 s on the host it was built on. The records reader's time grows with the square of the file: about 1 second at 100 recorded plugins on that host, and past about 200 the 3-second limit prints the cannot-tell line on a readable file; the homes it was built against record fewer than 10. Bash builtins only. The 5-second timeout ends a file test or read that blocks on an unreachable path, which the 3-second limit, checked between steps, cannot cut short; the harness then cancels the hook and discards its output (hooks reference, Timeouts), so that start carries no line from the check, the one silent failure. It exits 0 on every path.",
+        "matcher": "startup|resume|clear|compact|fork",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_CONFIG_DIR/hooks/session-start-mod-check.sh\"",
             "timeout": 5
           }
         ]

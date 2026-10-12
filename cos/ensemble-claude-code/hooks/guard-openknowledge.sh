@@ -48,16 +48,23 @@
 # object. A key it does not name asks, so a field OpenKnowledge adds or renames
 # after 0.78.0 asks instead of passing unguarded; a renamed path field also
 # leaves the call with zero targets, which asks. An unknown tool name asks.
+# One exception is denied, not asked (the fail direction below): inside a
+# nested object, a key the table names for that tool only as a plain
+# top-level field (its top_plain, in practice summary and cwd) is read as the
+# caller's slip. So a field upstream later nests under such a name is denied
+# with advice to move it to the top level until re-enumeration names it in
+# that object; a deny never lets it pass, and the re-enumeration diff is what
+# catches the move.
 # Over-asking after an upgrade is the signal to re-enumerate, not friction to
 # remove. The re-enumeration duty (launch/wire-mcp.ps1's header) updates this
 # table, KEY_TABLE_ENUMERATED and fixtures/openknowledge-guard/ together.
 #
-# Fail direction: ask where the guard is uncertain; deny only a cwd the caller
-# can correct. An ask's reason goes to the human and never to the caller, so a
-# caller that sent a malformed cwd learned nothing from it, and the human met
-# a prompt for a slip rather than a decision. A deny's reason reaches the
-# caller, main session and member alike, and no permission mode overrides a
-# hook's deny (hooks reference and guide). So two shapes
+# Fail direction: ask where the guard is uncertain; deny only a slip the
+# caller can correct. An ask's reason goes to the human and never to the
+# caller, so a caller that sent a malformed call learned nothing from it, and
+# the human met a prompt for a slip rather than a decision. A deny's reason
+# reaches the caller, main session and member alike, and no permission mode
+# overrides a hook's deny (hooks reference and guide). So three shapes
 # are refused with the correction to resend, for every caller whose call would
 # otherwise ask:
 #   - a write-class call without tool_input.cwd: the server needs cwd for a
@@ -73,14 +80,31 @@
 #     written, not the disk's. The session's additional working
 #     directories are not among these roots: hook input does not carry them
 #     (hooks reference, common input fields), so a cwd inside one
-#     asks as any foreign root does, however it is spelled.
-# A deny judges only the spelling; the resent call meets every check again.
+#     asks as any foreign root does, however it is spelled;
+#   - a key the tool takes only at its top level as a plain field (summary,
+#     cwd) found inside a nested object the table reads (every path-carrying
+#     object, and preview_url.skill): the deny names the move out to the top
+#     level, or, where the call's top level carries the key too, the copy to
+#     drop. Nothing else moves: a key the table names in that object is no
+#     slip (write.documents[] carries summary), and a key the tool takes
+#     nowhere (delete has no summary), a target-object name (document, folder,
+#     template, skill, asset, documents), a key no table names and a
+#     duplicated key keep asking, since moving it would not settle them.
+# A deny judges only the spelling or the placement; the resent call meets
+# every check again. Every other key of the slip's own object is read first,
+# so an unknown or duplicated key beside the slip asks whatever the order of
+# the keys. Past that object, a slip is refused ahead of any ask the same call
+# would meet later (an object read after it, a foreign root, a .. path), and
+# the resent call then meets that ask. The always-ask classes
+# (resolve_conflict, import, install, a skill variant, a folder delete) and
+# the top-level keys are decided before any nested object is read, so a call
+# that asks on one of them asks, whatever slip it carries inside.
 # Every other uncertain branch ends in an ask the human may approve, import
 # and install included: a permission deny rule would strip them from the
 # Operator too, permission rules being session-wide. A command hook that
 # crashes, exits without a decision, or outruns its timeout does not block:
 # the call goes on through the ordinary permission flow and this guard's ask
-# never fires (hooks reference, current through Claude Code 2.1.282). So the
+# never fires (hooks reference, Timeouts and Other exit codes). So the
 # guard reaches a verdict only through ask, deny or pass below; an EXIT trap
 # turns every other way out (an unbound variable, a signal, an exit nobody
 # meant) into an ask, and a delegate that fails asks too. What no trap can
@@ -113,8 +137,9 @@ ask() {
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"OpenKnowledge guard: %s Not auto-accepted; the human may still approve explicitly."}}\n' "$_r"
   exit 0
 }
-# deny is kept for a cwd the caller can correct (the header's fail direction);
-# its reason reaches the caller, so it says what to resend.
+# deny is kept for a slip the caller can correct, a cwd or a key placed inside
+# the wrong object (the header's fail direction); its reason reaches the
+# caller, so it says what to resend.
 deny() {
   DECIDED=1
   _r="$(printf '%s' "$1" | tr '\\"' "/'" | tr -d '\000-\037')"
@@ -278,18 +303,34 @@ elems() {
 }
 
 # strict <object path> <label> <allowed keys, space-separated>: asks on a key
-# the table does not name, and on a duplicated key.
+# the table does not name, and on a duplicated key. Inside a nested object, a
+# key the table does not name there but names as one of the tool's plain
+# top-level fields (top_plain, set just before the key table) is the caller's slip:
+# misplaced denies the first such key once every other key of the object has
+# been read, so a key that asks beside it asks whatever the order of the keys.
 strict() {
   kids "$1"
-  _rest="$K"
+  _rest="$K"; _slip=""
   while [ -n "$_rest" ]; do
     _k="${_rest%%>*}"; _k="${_k#<}"; _rest="${_rest#*>}"
     case "$_rest" in *"<$_k>"*) ask "$2 carries the key '$_k' twice." ;; esac
-    case " $3 " in
-      *" $_k "*) : ;;
-      *) ask "$2 carries the key '$_k', which the key table enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED does not name for this tool. A field added or renamed upstream asks until the tool list is re-enumerated." ;;
-    esac
+    case " $3 " in *" $_k "*) continue ;; esac
+    if [ "$1" != "$TI" ]; then
+      case " $top_plain " in *" $_k "*) _slip="${_slip:-$_k}"; continue ;; esac
+    fi
+    ask "$2 carries the key '$_k', which the key table enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED does not name for this tool. A field added or renamed upstream asks until the tool list is re-enumerated."
   done
+  [ -z "$_slip" ] || misplaced "$2" "$_slip"
+}
+
+# misplaced <label> <key>: the caller has put <key>, a field the tool takes
+# only at its top level, inside the object <label> names. Deny with the move
+# that corrects it, or with the copy to drop where the top level carries the
+# key too.
+misplaced() {
+  count "$TI.$2"
+  [ "$N" -ne 0 ] || deny "$1 carries the key '$2', which $tool takes only at the top level of the call in the schema enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED. Resend the same call with '$2' moved out of $1 to the top level."
+  deny "$1 carries the key '$2', which $tool takes only at the top level of the call in the schema enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED, and the call carries it there too. Resend the same call with '$2' removed from $1, keeping at the top level the value you mean."
 }
 
 # decode_path <raw JSON string text>: sets D to the path with \\ and \/
@@ -390,15 +431,31 @@ case "$tool" in
 esac
 
 # --- The key table (enumerated at KEY_TABLE_ENUMERATED) ----------------------
+# top_plain: each tool's plain top-level fields, the ones that name no target
+# (no document, folder, template, skill, asset, documents, from, to, path or
+# file). A tool's top-level keys are its targets plus these. Inside a nested
+# object strict reads a top_plain key as the caller's slip (misplaced); where
+# the table names it in that object too, it is no slip. A field that moves
+# between the top level and an object moves here at re-enumeration. It is set
+# in a statement of its own: a failed assignment abandons the whole statement
+# it sits in (bash, outside POSIX mode), so inside the table it would skip the
+# table; here it leaves top_plain unset, and the table stops on it (set -u),
+# which asks.
 case "$tool" in
-  write)           strict "$TI" "write" "document folder template skill asset documents summary cwd" ;;
-  edit)            strict "$TI" "edit" "document folder template skill summary cwd" ;;
-  delete)          strict "$TI" "delete" "document folder template skill asset cwd" ;;
-  move)            strict "$TI" "move" "from to template skill summary cwd" ;;
-  lint)            strict "$TI" "lint" "document path fix cwd" ;;
-  checkpoint)      strict "$TI" "checkpoint" "summary cwd" ;;
-  restore_version) strict "$TI" "restore_version" "document skill version summary cwd" ;;
-  preview_url)     strict "$TI" "preview_url" "document folder skill file cwd"
+  write|edit|move|checkpoint) top_plain="summary cwd" ;;
+  delete|preview_url)         top_plain="cwd" ;;
+  lint)                       top_plain="fix cwd" ;;
+  restore_version)            top_plain="version summary cwd" ;;
+esac
+case "$tool" in
+  write)           strict "$TI" "write" "document folder template skill asset documents $top_plain" ;;
+  edit)            strict "$TI" "edit" "document folder template skill $top_plain" ;;
+  delete)          strict "$TI" "delete" "document folder template skill asset $top_plain" ;;
+  move)            strict "$TI" "move" "from to template skill $top_plain" ;;
+  lint)            strict "$TI" "lint" "document path $top_plain" ;;
+  checkpoint)      strict "$TI" "checkpoint" "$top_plain" ;;
+  restore_version) strict "$TI" "restore_version" "document skill $top_plain" ;;
+  preview_url)     strict "$TI" "preview_url" "document folder skill file $top_plain"
                    first "$TI.skill"
                    [ "$T" != "o" ] || strict "$TI.skill" "preview_url.skill" "name scope"
                    pass ;;

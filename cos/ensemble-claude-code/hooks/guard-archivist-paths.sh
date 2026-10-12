@@ -7,10 +7,11 @@
 #                  own-root notebook surfaces ONLY; everything else (own-root
 #                  non-notebook paths, and ALL foreign-root paths) downgrades to
 #                  an explicit ask. Wired nowhere: the Archivist's wiring was
-#                  lifted and its notebook-and-inbox-only boundary is doctrine on
-#                  the card. Kept in the file, unwired; the default remains
-#                  "archivist" so an argument-less call is strict-by-default, not
-#                  silently permissive.
+#                  lifted and its boundary (notebook surfaces, and inbox
+#                  material no unit has taken up) is doctrine on the card.
+#                  Kept in the file, unwired; the default remains "archivist"
+#                  so an argument-less call is strict-by-default, not silently
+#                  permissive.
 #
 #   main-session   - foreign-root-only mode. The main session is the
 #                  Concertmaster: its own-root notebook closure writes (Aim,
@@ -528,7 +529,8 @@ $posix_tmp/claude"
   fi
 
   # The Archivist writes the team's memory in any repo without asking; its
-  # notebook-and-inbox-only boundary is doctrine on its card, not a prompt. This exit sits HERE - after Rider A, not at the
+  # boundary (notebook surfaces, and inbox material no unit has taken up) is
+  # doctrine on its card, not a prompt. This exit sits HERE - after Rider A, not at the
   # top of main-session mode - so a dispatched Archivist targeting the
   # grant-file directory itself (<hooks_dir>/session-roots) still meets
   # Rider A's distinct self-widening ask instead of passing silently (the early

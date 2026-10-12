@@ -66,7 +66,8 @@
 # open-knowledge server with the enumerated version (read only - this script
 # never writes .claude.json; launch\wire-mcp.ps1 does). A different ok version
 # is reported, never refused: NEWER means the guard asks on any tool or field
-# it does not know until the tool list is re-enumerated, OLDER means a tool the
+# it does not know, but denies a top-level-only field such as summary or cwd
+# found nested, until the tool list is re-enumerated; OLDER means a tool the
 # cards name may be absent. Never fatal: a missing requirement is one inventory
 # line naming it, the run still ends with exit code 0, and the members report
 # the gap when they meet it. A later requirement adds one probe line to the
@@ -408,7 +409,7 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 51 files hash-compare against source, byte-identical except the
+# Integrity: the 52 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
 # CONCERTMASTER.md is compared with its source in always-on\, the one entry
@@ -418,7 +419,7 @@ if ($null -eq $python) {
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (28 core - the 19 that were here before, less settings.json, which the
+# (29 core - the 19 that were here before, less settings.json, which the
 # assertion now covers, and less the Examiner's guard
 # hooks\guard-examiner-bash.sh, plus the Scout's guard
 # hooks\guard-scout-bash.sh,
@@ -429,7 +430,8 @@ if ($null -eq $python) {
 # hooks\guard-openknowledge.sh, and the Operator's here.now kit
 # tools\herenow.sh and its gate hooks\guard-herenow.sh, and the cross-shell
 # nudge hooks\nudge-cross-shell.sh, and the main-session rules
-# CONCERTMASTER.md; + the 8
+# CONCERTMASTER.md, and the mod-presence check
+# hooks\session-start-mod-check.sh; + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 10
 # promoted formal-library files: five SKILL.md (cross-shell-command,
 # decision-proposal, felt-intent-extraction, ubiquitous-language,
@@ -447,6 +449,7 @@ $same = @(
     'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh', 'hooks\guard-openknowledge.sh',
     'hooks\guard-herenow.sh', 'hooks\nudge-cross-shell.sh',
     'hooks\session-start-harness-marker.sh', 'hooks\session-start-cue.sh',
+    'hooks\session-start-mod-check.sh',
     'tools\scout-fetch.sh', 'tools\herenow.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
     '.mcp.json', 'HARNESS.md', 'CONCERTMASTER.md',
@@ -649,7 +652,7 @@ function Get-OpenKnowledgeLine {
         return "openknowledge (ok $first at $okPath; NOT COMPARED - OK_ENUMERATED '$okEnumerated' is not a version)"
     }
     if ($have -eq $want) { return "openknowledge (ok $first at $okPath; enumerated at $okEnumerated)" }
-    if ($have -gt $want) { return "openknowledge (ok $first at $okPath; NEWER than the enumerated $okEnumerated - the guard asks on any tool or field it does not know until the tool list is re-enumerated)" }
+    if ($have -gt $want) { return "openknowledge (ok $first at $okPath; NEWER than the enumerated $okEnumerated - the guard asks on any tool or field it does not know, but denies a top-level-only field such as summary or cwd found nested, until the tool list is re-enumerated)" }
     return "openknowledge (ok $first at $okPath; OLDER than the enumerated $okEnumerated - a tool the cards name may be absent; the member says so)"
 }
 

@@ -54,7 +54,9 @@
 # Windows only), and a large document body for the scanner's speed. Then the
 # fail-toward-ask hardening: a crash forced inside the guard (a BASH_ENV file
 # makes a variable the guard assigns readonly, so the next read of it is an
-# unbound-variable exit), a delegate that crashes, a delegate that is missing;
+# unbound-variable exit), the same collision forced on each variable the
+# key-placement check adds (top_plain, _slip), which must ask rather than
+# skip the key table, a delegate that crashes, a delegate that is missing;
 # and write.asset.source inside and outside the session's root. Then the
 # denies: a write-class call without cwd, for the main session and members;
 # a cwd naming the session's root or a granted root in another letter case or
@@ -63,7 +65,18 @@
 # floor ahead of the real grant included; and the controls that must
 # not move: a sibling worktree, a foreign root however spelled, a grant line
 # below the path guard's floor, a project root above the session's root, an
-# absolute content.dir, and the Archivist's silent exit. Last, on a
+# absolute content.dir, and the Archivist's silent exit. Then the
+# key-placement denies: summary or cwd, fields a tool takes only at its top
+# level, found inside a nested object (edit's document, folder and template,
+# write's document and a documents entry, move's template, a delete.document
+# object, preview_url's skill), each denied with the move or the copy to drop,
+# for the main session and members; a slip in a foreign root denied ahead of
+# its ask, its resend asking and the corrected call passing; a slip in a call
+# with no cwd denied on the slip first, its resend then on the missing cwd;
+# and the controls that keep their verdict: summary in a documents entry or
+# in frontmatter, an unknown key beside a slip in either order, summary in
+# delete (which takes none), a target-object name, a duplicated or escaped summary, and an unknown
+# top-level key, a skill variant or a folder delete beside a slip. Last, on a
 # case-sensitive folder (made with
 # fsutil on Windows, native on Linux; skipped, and said so, where none can be
 # made, as on a default macOS volume): a cwd naming a folder that differs from
@@ -88,6 +101,11 @@ trap 'rm -rf "$TMPBASE"' EXIT
 # cygpath -m), the plain path elsewhere.
 B="$TMPBASE"
 if command -v cygpath >/dev/null 2>&1; then B="$(cygpath -m -l "$TMPBASE")"; fi
+# gitbash_form <C:/... path>: the Git Bash /c/ form, built by hand. cygpath -u
+# is no use here: for a path under the folder Git Bash mounts at /tmp (the
+# Windows temp folder, where mktemp -d lands by default) it answers /tmp/...,
+# a mount spelling the guard does not read, not the /c/ form these cases test.
+gitbash_form() { _gbd="${1:0:1}"; printf '/%s%s' "${_gbd,,}" "${1:2}"; }
 
 SES="$B/session"
 DOCS="$SES/docs-project"
@@ -280,6 +298,15 @@ WR='{"document":{"path":"notes/a","content":"x"},"cwd":"@SES@"}'
 printf 'readonly E\n' > "$TMPBASE/force-crash.sh"
 RUN_ENV="BASH_ENV=$TMPBASE/force-crash.sh"
 tcase "forced crash inside the guard"       ask "stopped before reaching a verdict" write "$WR"
+# The key-placement check's own variables: a failed assignment abandons the
+# whole statement it sits in, so neither may let a clean call skip the key
+# table into a pass.
+printf 'readonly top_plain\n' > "$TMPBASE/force-top-plain.sh"
+RUN_ENV="BASH_ENV=$TMPBASE/force-top-plain.sh"
+tcase "forced top_plain collision"          ask "stopped before reaching a verdict" write "$WR"
+printf 'readonly _slip\n' > "$TMPBASE/force-slip.sh"
+RUN_ENV="BASH_ENV=$TMPBASE/force-slip.sh"
+tcase "forced _slip collision"              ask - write "$WR"
 RUN_ENV=""
 mkdir -p "$TMPBASE/hooks-crash" "$TMPBASE/hooks-alone"
 cp "$GUARD" "$TMPBASE/hooks-crash/guard-openknowledge.sh"
@@ -305,7 +332,7 @@ tcase "sibling worktree, Builder"           ask "outside the session's own root"
 # A cwd in another spelling reaches the same folder only where the file system
 # folds case and Git Bash reads /c/, so these run on Windows only.
 if command -v cygpath >/dev/null 2>&1; then
-  _gb="$(cygpath -u "$SES")"
+  _gb="$(gitbash_form "$SES")"
   _ws="$(cygpath -w "$SES")"; _ws="${_ws,,}"; _ws="${_ws//\\/\\\\}"
   WD='{"document":{"path":"notes/a","content":"x"},"cwd":"'
   RESEND="Resend the same call with cwd '$SES'."
@@ -327,7 +354,7 @@ if command -v cygpath >/dev/null 2>&1; then
   tcase "cwd lowercase, Archivist"          pass - write "$WD${SES,,}\"}" archivist
   tcase "sibling worktree, lowercase"       ask "outside the session's own root" write "$WD${LANES,,}\"}"
   tcase "foreign root, lowercase"           ask "outside the session's own root" write "$WD${OTHER,,}\"}"
-  tcase "foreign root, Git Bash form"       ask "outside the session's own root" write "$WD$(cygpath -u "$OTHER")\"}"
+  tcase "foreign root, Git Bash form"       ask "outside the session's own root" write "$WD$(gitbash_form "$OTHER")\"}"
   tcase "lowercase cwd, .. path"            ask ".. segment" write "{\"document\":{\"path\":\"../x\",\"content\":\"y\"},\"cwd\":\"${SES,,}\"}"
   # The session's root is rootabove/inner and the project's .ok sits above it,
   # so the target is built on rootabove/ and its content.dir "Inner", and a
@@ -356,7 +383,7 @@ tcase "granted root, Builder"               pass - edit '{"document":{"path":"no
 if command -v cygpath >/dev/null 2>&1; then
   tcase "granted root, lowercase"           deny "Resend the same call with cwd '$OTHER'." write "$WD${OTHER,,}\"}"
   tcase "granted root named as granted"     deny "names a root granted to this session" write "$WD${OTHER,,}\"}"
-  tcase "granted root, Git Bash form"       deny "Resend the same call with cwd '$OTHER'." write "$WD$(cygpath -u "$OTHER")\"}"
+  tcase "granted root, Git Bash form"       deny "Resend the same call with cwd '$OTHER'." write "$WD$(gitbash_form "$OTHER")\"}"
   tcase "own root lowercase, grant present" deny "$RESEND" write "$WD${SES,,}\"}"
   tcase "sibling worktree, grant present"   ask "outside the session's own root" write "$WD${LANES,,}\"}"
   # A grant line below the path guard's three-segment floor never counts, so
@@ -375,6 +402,51 @@ if command -v cygpath >/dev/null 2>&1; then
 fi
 SESSION_ID="fixture-session-0"
 RUN_GUARD="$GUARD"
+
+# --- the denies: a top-level field placed inside a nested object ---------------------------
+# The motivating shape (2026-09-29): summary inside edit.document, and at the
+# top level too. The deny names the copy to drop, or the move where the top
+# level lacks the key; either way the resent call meets every check again.
+DROP="Resend the same call with 'summary' removed from edit.document, keeping at the top level the value you mean."
+MOVE="Resend the same call with 'summary' moved out of edit.document to the top level."
+ED='"path":"notes/a","find":"a","replace":"b"'
+tcase "slip: summary in edit.document, top too" deny "$DROP" edit "{\"document\":{$ED,\"summary\":\"s\"},\"summary\":\"s\",\"cwd\":\"@SES@\"}"
+tcase "slip: summary in edit.document only"     deny "$MOVE" edit "{\"document\":{$ED,\"summary\":\"s\"},\"cwd\":\"@SES@\"}"
+tcase "slip: summary first, Builder"            deny "$DROP" edit "{\"document\":{\"summary\":\"s\",$ED},\"summary\":\"s\",\"cwd\":\"@SES@\"}" builder
+tcase "slip: summary, Archivist"                deny "$DROP" edit "{\"document\":{$ED,\"summary\":\"s\"},\"summary\":\"s\",\"cwd\":\"@SES@\"}" archivist
+tcase "slip: cwd in edit.document only"         deny "Resend the same call with 'cwd' moved out of edit.document to the top level." edit "{\"document\":{$ED,\"cwd\":\"@SES@\"}}"
+tcase "slip: cwd in edit.document, top too"     deny "Resend the same call with 'cwd' removed from edit.document" edit "{\"document\":{$ED,\"cwd\":\"@SES@\"},\"cwd\":\"@SES@\"}"
+tcase "slip: summary in edit.folder"            deny "'summary' moved out of edit.folder to the top level" edit '{"folder":{"path":"ideas","frontmatter":{"title":"I"},"summary":"s"},"cwd":"@SES@"}'
+tcase "slip: summary in edit.template"          deny "'summary' moved out of edit.template to the top level" edit '{"template":{"path":"logs/trip","find":"a","replace":"b","summary":"s"},"cwd":"@SES@"}'
+tcase "slip: summary in write.document"         deny "'summary' moved out of write.document to the top level" write '{"document":{"path":"notes/a","content":"x","summary":"s"},"cwd":"@SES@"}'
+tcase "slip: cwd in a write.documents entry"    deny "'cwd' removed from write.documents[]" write '{"documents":[{"path":"a/one","content":"x","cwd":"@SES@"}],"cwd":"@SES@"}'
+tcase "slip: summary in move.template"          deny "'summary' moved out of move.template to the top level" move '{"template":{"from":"logs/trip","to":"logs/journey","summary":"s"},"cwd":"@SES@"}'
+tcase "slip: cwd in a delete.document object"   deny "'cwd' moved out of delete.document to the top level" delete '{"document":{"path":"notes/a","cwd":"@SES@"}}'
+tcase "slip: cwd in preview_url.skill"          deny "'cwd' moved out of preview_url.skill to the top level" preview_url '{"skill":{"name":"trip-log","cwd":"@SES@"}}'
+# A slip is refused ahead of the ask its call would meet later; the resent
+# call meets that ask, and the corrected call keeps the verdict it had before.
+tcase "slip in a foreign root"                  deny "$DROP" edit "{\"document\":{$ED,\"summary\":\"s\"},\"summary\":\"s\",\"cwd\":\"@OTHER@\"}"
+tcase "slip resent, foreign root"               ask "outside the session's own root" edit "{\"document\":{$ED},\"summary\":\"s\",\"cwd\":\"@OTHER@\"}"
+tcase "slip resent, own root"                   pass - edit "{\"document\":{$ED},\"summary\":\"s\",\"cwd\":\"@SES@\"}"
+# A slip in a call with no cwd at all: two round trips, each teaching one
+# correction. The slip is denied first, since the nested object is read before
+# the call's cwd; the resend, the slip corrected and cwd still missing, is
+# denied on the cwd.
+tcase "slip with no cwd"                        deny "$MOVE" edit "{\"document\":{$ED,\"summary\":\"s\"}}"
+tcase "slip resent, no cwd"                     deny "$NOCWD" edit "{\"document\":{$ED},\"summary\":\"s\"}"
+# Controls: what is no slip keeps its verdict.
+tcase "no slip: summary in write.documents[]"   pass - write '{"documents":[{"path":"a/one","content":"x","summary":"s"}],"summary":"t","cwd":"@SES@"}'
+tcase "no slip: summary in frontmatter"         pass - edit '{"document":{"path":"notes/a","frontmatter":{"summary":"a property"}},"summary":"s","cwd":"@SES@"}'
+tcase "no slip: unknown key in edit.document"   ask "'attachment'" edit "{\"document\":{$ED,\"attachment\":1},\"summary\":\"s\",\"cwd\":\"@SES@\"}"
+tcase "no slip: unknown key after a slip"       ask "'attachment'" edit "{\"document\":{$ED,\"summary\":\"s\",\"attachment\":1},\"cwd\":\"@SES@\"}"
+tcase "no slip: unknown key before a slip"      ask "'attachment'" edit "{\"document\":{\"attachment\":1,$ED,\"summary\":\"s\"},\"cwd\":\"@SES@\"}"
+tcase "no slip: summary in delete.document"     ask "'summary'" delete '{"document":{"path":"notes/a","summary":"s"},"cwd":"@SES@"}'
+tcase "no slip: target name in edit.document"   ask "'folder'" edit "{\"document\":{$ED,\"folder\":\"ideas\"},\"cwd\":\"@SES@\"}"
+tcase "no slip: summary twice in edit.document" ask "twice" edit "{\"document\":{\"summary\":\"s\",$ED,\"summary\":\"t\"},\"cwd\":\"@SES@\"}"
+tcase "no slip: escaped summary spelling"       ask "does not name" edit "{\"document\":{$ED,\"summ${BS}u0061ry\":\"s\"},\"cwd\":\"@SES@\"}"
+tcase "no slip: unknown top-level key first"    ask "'attachment'" edit "{\"document\":{$ED,\"summary\":\"s\"},\"attachment\":1,\"cwd\":\"@SES@\"}"
+tcase "no slip: skill variant asks first"       ask "skill" edit "{\"skill\":{\"name\":\"trip-log\",\"find\":\"a\",\"replace\":\"b\"},\"document\":{$ED,\"summary\":\"s\"},\"cwd\":\"@SES@\"}"
+tcase "no slip: folder delete asks first"       ask "folder" delete '{"folder":"notes","template":{"path":"logs/trip","cwd":"@SES@"},"cwd":"@SES@"}'
 
 # --- case-sensitive: a case variant that is another folder keeps its ask ---------------------
 # The fold that finds a misspelled root is only a nomination; the guard denies
@@ -397,8 +469,8 @@ if ! [ "$TMPBASE/cs/proj" -ef "$TMPBASE/cs/Proj" ]; then
   tcase "case-sensitive: case-variant folder"      ask "outside the session's own root" write "$CW$CS/Proj\"}"
   tcase "case-sensitive: case variant, Builder"    ask "outside the session's own root" write "$CW$CS/Proj\"}" builder
   if command -v cygpath >/dev/null 2>&1; then
-    tcase "case-sensitive: Git Bash form, own"     deny "Resend the same call with cwd '$CS/proj'." write "$CW$(cygpath -u "$CS/proj")\"}"
-    tcase "case-sensitive: Git Bash form, variant" ask "outside the session's own root" write "$CW$(cygpath -u "$CS/Proj")\"}"
+    tcase "case-sensitive: Git Bash form, own"     deny "Resend the same call with cwd '$CS/proj'." write "$CW$(gitbash_form "$CS/proj")\"}"
+    tcase "case-sensitive: Git Bash form, variant" ask "outside the session's own root" write "$CW$(gitbash_form "$CS/Proj")\"}"
   fi
   SESSION_CWD="$SES"
   printf '%s\n' "$CS/proj" > "$TMPBASE/hooks-grant/session-roots/fixture-session-c.txt"

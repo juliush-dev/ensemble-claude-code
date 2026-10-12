@@ -66,8 +66,8 @@
 # Fail direction: an unreadable command from the Operator blocks; from anyone
 # else it asks; input whose caller cannot be told asks. A command hook that
 # crashes, exits without a decision or outruns its timeout does not block: the
-# call goes on through the ordinary permission flow (hooks reference, current
-# through Claude Code 2.1.282). So every way out but the three verdicts below
+# call goes on through the ordinary permission flow (hooks reference, Timeouts
+# and Other exit codes). So every way out but the three verdicts below
 # (pass, ask, block) is caught by an EXIT trap and turned into a block for the
 # Operator and an ask for everyone else, and the settings.json entry sets an
 # explicit timeout. An error inside a compound command does not exit at all:
