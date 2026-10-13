@@ -15,12 +15,14 @@
 # path instead (hooks reference, 2.1.283). The longest thing this hook prints
 # is the fallback on a startup with no project face: the "No face here" line,
 # the decision-proposal line, the fallback header and the whole file. This
-# fixture prints exactly that and fails above LIMIT, 9,000 characters. The
-# 1,000-character margin covers what is documented but not observed here (how
-# the harness counts a trailing newline or any framing) and an edit or two to
-# the file made between runs of this fixture, which nothing runs
-# automatically. The file must stay ASCII: then characters equal bytes, the
-# count needs no locale, and the Git Bash print cannot mis-decode it.
+# fixture prints exactly that and fails above LIMIT, 9,500 characters, 500
+# under the cap. The count includes the newline the print ends with; whether
+# the harness adds framing of its own is unchecked. The 500-character margin
+# covers that framing and an edit or two to the file made between runs of
+# this fixture, which nothing runs automatically. The limit is a judgment,
+# set on the human's word 2026-10-13. The file must stay ASCII: then
+# characters equal bytes, the count needs no locale, and the Git Bash print
+# cannot mis-decode it.
 #
 # THE CASES. With and without ENSEMBLE_CONCERTMASTER_APPENDED (the launcher's
 # marker): startup, resume and compact, in a project face and outside one; an
@@ -31,7 +33,7 @@ set -u
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_SRC="$HERE/../../hooks/session-start-cue.sh"
 RULES_SRC="$HERE/../../always-on/CONCERTMASTER.md"
-LIMIT=9000
+LIMIT=9500
 [ -f "$HOOK_SRC" ] || { echo "FAIL (setup): hook not found at $HOOK_SRC"; exit 1; }
 [ -f "$RULES_SRC" ] || { echo "FAIL (setup): rules file not found at $RULES_SRC"; exit 1; }
 

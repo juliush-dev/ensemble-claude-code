@@ -76,7 +76,20 @@
 # and the controls that keep their verdict: summary in a documents entry or
 # in frontmatter, an unknown key beside a slip in either order, summary in
 # delete (which takes none), a target-object name, a duplicated or escaped summary, and an unknown
-# top-level key, a skill variant or a folder delete beside a slip. Last, on a
+# top-level key, a skill variant or a folder delete beside a slip. Then the
+# native-key denies: a key of Claude Code's native file tools that no
+# OpenKnowledge tool takes (file_path, old_string, new_string, replace_all,
+# allow_large), at the top level or nested, each denied with its owner, the
+# key to drop and what the tool takes instead; the lived case first (edit with
+# a top-level file_path beside document, an Archivist's, 2026-10-09), in the
+# lived backslash spelling on Windows, for each caller, and its resend
+# passing; a stray key in a foreign root, in a call with no cwd, beside a
+# skill variant and beside a nested slip, each denied first; and the controls
+# that keep asking: an unknown key beside a stray key in either order, keys
+# the native tools share with OpenKnowledge (content, limit) or a generic one
+# (pages), a duplicated or escaped file_path and resolve_conflict, with
+# file_path in frontmatter still passing. The forced _slip collision runs on a
+# stray-key call too. Last, on a
 # case-sensitive folder (made with
 # fsutil on Windows, native on Linux; skipped, and said so, where none can be
 # made, as on a default macOS volume): a cwd naming a folder that differs from
@@ -307,6 +320,9 @@ tcase "forced top_plain collision"          ask "stopped before reaching a verdi
 printf 'readonly _slip\n' > "$TMPBASE/force-slip.sh"
 RUN_ENV="BASH_ENV=$TMPBASE/force-slip.sh"
 tcase "forced _slip collision"              ask - write "$WR"
+# The same collision on a call carrying a native tool's key: the slip is never
+# denied, and the call must not run on past the key table into a pass.
+tcase "forced _slip collision, stray key"   ask - edit '{"document":{"path":"notes/a","find":"a","replace":"b"},"file_path":"@SES@/notes/a.md","cwd":"@SES@"}'
 RUN_ENV=""
 mkdir -p "$TMPBASE/hooks-crash" "$TMPBASE/hooks-alone"
 cp "$GUARD" "$TMPBASE/hooks-crash/guard-openknowledge.sh"
@@ -447,6 +463,62 @@ tcase "no slip: escaped summary spelling"       ask "does not name" edit "{\"doc
 tcase "no slip: unknown top-level key first"    ask "'attachment'" edit "{\"document\":{$ED,\"summary\":\"s\"},\"attachment\":1,\"cwd\":\"@SES@\"}"
 tcase "no slip: skill variant asks first"       ask "skill" edit "{\"skill\":{\"name\":\"trip-log\",\"find\":\"a\",\"replace\":\"b\"},\"document\":{$ED,\"summary\":\"s\"},\"cwd\":\"@SES@\"}"
 tcase "no slip: folder delete asks first"       ask "folder" delete '{"folder":"notes","template":{"path":"logs/trip","cwd":"@SES@"},"cwd":"@SES@"}'
+
+# --- the denies: a key of Claude Code's native file tools ---------------------------------
+# The motivating shape (2026-10-09, a Haiku-routed Archivist, three edit calls,
+# each asked): a top-level file_path, the native Read, Edit and Write tools'
+# key, beside document. The deny names the key's owner and the key to drop;
+# the resent call meets every check again.
+FPOWN="which is a key of Claude Code's native Read, Edit and Write tools, not of OpenKnowledge's edit"
+FPTOP="Resend the same call with 'file_path' removed from the top level of the call."
+FPHOW="edit names its file by the path inside its target object"
+LIVED_DOC='"document":{"path":"grounding/2026-10-09-recall","find":"- The two machines: unchecked.","replace":"- The two machines: sent."}'
+tcase "stray key: lived edit, Archivist"         deny "$FPTOP" edit "{\"cwd\":\"@SES@\",$LIVED_DOC,\"file_path\":\"@SES@/grounding/2026-10-09-recall.md\"}" archivist
+tcase "stray key: lived edit names the owner"    deny "$FPOWN" edit "{\"cwd\":\"@SES@\",$LIVED_DOC,\"file_path\":\"@SES@/grounding/2026-10-09-recall.md\"}" archivist
+tcase "stray key: lived edit says what to send"  deny "$FPHOW" edit "{\"file_path\":\"@SES@/grounding/2026-10-09-recall.md\",\"cwd\":\"@SES@\",$LIVED_DOC}" archivist
+if command -v cygpath >/dev/null 2>&1; then
+  # The lived calls' own spelling: cwd and file_path with JSON-escaped backslashes.
+  _wf="$(cygpath -w -l "$TMPBASE/session/grounding/2026-10-09-recall.md")"; _wf="${_wf//\\/\\\\}"
+  _wc="$(cygpath -w -l "$TMPBASE/session")"; _wc="${_wc//\\/\\\\}"
+  tcase "stray key: lived edit, backslash form"  deny "$FPTOP" edit "{\"cwd\":\"$_wc\",$LIVED_DOC,\"file_path\":\"$_wf\"}" archivist
+fi
+tcase "stray key: lived edit, Builder"           deny "$FPTOP" edit "{\"cwd\":\"@SES@\",$LIVED_DOC,\"file_path\":\"@SES@/x.md\"}" builder
+tcase "stray key: lived edit, main session"      deny "$FPTOP" edit "{\"cwd\":\"@SES@\",$LIVED_DOC,\"file_path\":\"@SES@/x.md\"}"
+# The resend, file_path dropped: the clean call keeps its verdict.
+tcase "stray key resent, Archivist"              pass - edit "{\"cwd\":\"@SES@\",$LIVED_DOC}" archivist
+tcase "stray key resent, main session"           pass - edit "{\"cwd\":\"@SES@\",$LIVED_DOC}"
+# Nested, and the siblings: every key here belongs to a native file tool and
+# to no OpenKnowledge tool.
+tcase "stray key: file_path in edit.document"    deny "Resend the same call with 'file_path' removed from edit.document." edit "{\"document\":{$ED,\"file_path\":\"@SES@/notes/a.md\"},\"cwd\":\"@SES@\"}"
+tcase "stray key: old_string in edit.document"   deny "edit takes the text to find as find" edit '{"document":{"path":"notes/a","old_string":"a","replace":"b"},"cwd":"@SES@"}'
+tcase "stray key: old_string names Edit"         deny "a key of Claude Code's native Edit tool" edit '{"document":{"path":"notes/a","old_string":"a","replace":"b"},"cwd":"@SES@"}'
+tcase "stray key: new_string in edit.document"   deny "edit takes the new text as replace" edit '{"document":{"path":"notes/a","find":"a","new_string":"b"},"cwd":"@SES@"}'
+tcase "stray key: replace_all in edit.document"  deny "'replace_all' removed from edit.document. edit changes the one match occurrence picks" edit "{\"document\":{$ED,\"replace_all\":true},\"cwd\":\"@SES@\"}"
+tcase "stray key: old_string in write.document"  deny "through edit, with find and replace inside edit.document" write '{"document":{"path":"notes/a","content":"x","old_string":"a"},"cwd":"@SES@"}'
+tcase "stray key: allow_large on write"          deny "a key of Claude Code's native Read tool" write '{"document":{"path":"notes/a","content":"x"},"allow_large":true,"cwd":"@SES@"}'
+tcase "stray key: file_path on move"             deny "move names its files by from and to" move '{"from":"notes/a","to":"archive/a","file_path":"@SES@/notes/a.md","cwd":"@SES@"}'
+tcase "stray key: file_path on delete"           deny "delete names its file by document" delete '{"document":"notes/a","file_path":"@SES@/notes/a.md","cwd":"@SES@"}'
+tcase "stray key: file_path on checkpoint"       deny "checkpoint names no file" checkpoint '{"file_path":"@SES@/notes/a.md","cwd":"@SES@"}'
+tcase "stray key: file_path on preview_url"      deny "preview_url names a markdown file by file" preview_url '{"file_path":"@NOROOT@/a.md"}'
+tcase "stray key: file_path in a documents entry" deny "'file_path' removed from write.documents[]" write '{"documents":[{"path":"a/one","content":"x","file_path":"@SES@/a/one.md"}],"cwd":"@SES@"}'
+# A stray key is refused ahead of the ask its call would meet later; the
+# resent call meets that ask.
+tcase "stray key in a foreign root"              deny "$FPTOP" edit "{\"document\":{$ED},\"file_path\":\"@OTHER@/notes/a.md\",\"cwd\":\"@OTHER@\"}"
+tcase "stray key resent, foreign root"           ask "outside the session's own root" edit "{\"document\":{$ED},\"cwd\":\"@OTHER@\"}"
+tcase "stray key with no cwd"                    deny "$FPTOP" edit "{\"document\":{$ED},\"file_path\":\"@SES@/notes/a.md\"}"
+tcase "stray key resent, no cwd"                 deny "$NOCWD" edit "{\"document\":{$ED}}"
+tcase "stray key beside a skill variant"         deny "'file_path' removed from the top level" write '{"skill":{"name":"trip-log","body":"x"},"file_path":"@SES@/x.md","cwd":"@SES@"}'
+tcase "stray key beside a nested slip"           deny "$FPTOP" edit "{\"document\":{$ED,\"summary\":\"s\"},\"file_path\":\"@SES@/x.md\",\"cwd\":\"@SES@\"}"
+# Controls: what is no native tool's key alone keeps its verdict.
+tcase "no stray: unknown key after a stray key"  ask "'attachment'" edit "{\"document\":{$ED},\"file_path\":\"@SES@/x.md\",\"attachment\":1,\"cwd\":\"@SES@\"}"
+tcase "no stray: unknown key before a stray key" ask "'attachment'" edit "{\"attachment\":1,\"document\":{$ED},\"file_path\":\"@SES@/x.md\",\"cwd\":\"@SES@\"}"
+tcase "no stray: content at write's top level"   ask "'content'" write '{"document":{"path":"notes/a"},"content":"x","cwd":"@SES@"}'
+tcase "no stray: limit on edit"                  ask "'limit'" edit "{\"document\":{$ED},\"limit\":5,\"cwd\":\"@SES@\"}"
+tcase "no stray: pages on write"                 ask "'pages'" write '{"document":{"path":"notes/a","content":"x"},"pages":"1-2","cwd":"@SES@"}'
+tcase "no stray: file_path in frontmatter"       pass - edit '{"document":{"path":"notes/a","frontmatter":{"file_path":"a property"}},"cwd":"@SES@"}'
+tcase "no stray: file_path twice"                ask "twice" edit "{\"document\":{$ED},\"file_path\":\"a\",\"file_path\":\"b\",\"cwd\":\"@SES@\"}"
+tcase "no stray: escaped file_path spelling"     ask "does not name" edit "{\"document\":{$ED},\"file${BS}u005fpath\":\"a\",\"cwd\":\"@SES@\"}"
+tcase "no stray: resolve_conflict asks first"    ask "resolve_conflict" resolve_conflict '{"file":"notes/a.md","file_path":"notes/a.md","strategy":"ours","cwd":"@SES@"}'
 
 # --- case-sensitive: a case variant that is another folder keeps its ask ---------------------
 # The fold that finds a misspelled root is only a nomination; the guard denies

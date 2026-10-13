@@ -18,6 +18,8 @@ Every still-open `Gaps.md` entry in the closing unit's scope must resolve, one o
 
 An open entry in a frozen notebook is a wish buried alive. The sweep is not optional triage; it is what closing means.
 
+Gap numbers are local to the `Gaps.md` that holds them. When a gap or pending port named elsewhere (a commit message, a sibling unit's notebook) is not found in the closing unit's files, that is a search result, not a resolution: trace the name to the notebook it came from before recording it as not owed, and record which notebooks were searched.
+
 ## The closing stamps
 
 - **A pursuit closing stamps its still-live routes:** one line at the head of each such route's `Handoff.md` — "ended with the pursuit, DATE" — so a later reader of the tree learns it is over without visiting the pursuit. A route retired by decision while its pursuit continues gets its status flipped to `retired (reason)` instead.
@@ -29,4 +31,4 @@ Update the unit's registry line in the parent's notebook: status (discharged / r
 
 ## The freeze
 
-Last act: the unit's notebook freezes — never maintained again, never deleted. Iteration records flip to `status: frozen` if any were left open. From here the notebook is preserved evidence, feeding the parent's sharpening.
+Last act: the unit's notebook freezes — never maintained again, never deleted. Iteration records flip to `status: frozen` if any were left open. From here the notebook is preserved evidence, feeding the parent's sharpening. After the freeze, the refocus line of `pass-discipline`'s stop applies: closing a unit is a transition.

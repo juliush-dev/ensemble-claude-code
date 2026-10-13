@@ -42,10 +42,11 @@ The transaction, in order:
 1. Establish the clean source state.
 2. Create the lane (`git worktree add` from that named source state).
 3. Where the source checkout carries `.ok/config.yml` and the host carries OpenKnowledge, give the lane its OpenKnowledge project by copy, in the new worktree: `mkdir .ok`, `cp <source>/.ok/config.yml .ok/`, and `cp <source>/.okignore .` where the source has one. The session initiating the lane runs it beside step 2; members' cards keep their own hands off `.ok/` and `.okignore`. Not `ok init`: even with `--no-mcp --no-skills` it rewrites the tracked `.gitignore`, writes OpenKnowledge's project skill into the worktree's editor folders and records the lane under `~/.ok/`. The copies stay ignored through the common `.git/info/exclude`, which every worktree shares, never committed from the lane; `git status` shows nothing new.
-4. Write the lane's **lightweight declaration** in the lane's own state — identity, source lane, source state/commit, declared focus, reason isolation was chosen, isolation mechanism, bounds/focus guard, status, anticipated convergence target when known. (No notebook slot — lane-hood is not unit-hood.)
-5. Write the **topology-registry line** in the main lane (see below).
-6. Commit both initiation records in their respective lanes.
-7. Only then begin the first lane work iteration.
+4. When members will write in the lane and the session's own root does not contain it, the Concertmaster grants the lane root through its session grant (`CONCERTMASTER.md`), announced like a dispatch: the lane root, nothing wider. Without it the path guard asks the human at every member write there.
+5. Write the lane's **lightweight declaration** in the lane's own state — identity, source lane, source state/commit, declared focus, reason isolation was chosen, isolation mechanism, bounds/focus guard, status, anticipated convergence target when known. (No notebook slot — lane-hood is not unit-hood.)
+6. Write the **topology-registry line** in the main lane (see below).
+7. Commit both initiation records in their respective lanes.
+8. Only then begin the first lane work iteration.
 
 This closes both failure windows: a lane advancing while main's topology map is still uncommitted, and main claiming a lane whose own declaration is not yet durable.
 

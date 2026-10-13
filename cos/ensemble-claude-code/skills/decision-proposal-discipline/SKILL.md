@@ -7,7 +7,7 @@ description: Make design, architecture, workflow, policy, operational, administr
 
 ## Overview
 
-Use this skill when the shape of a decision matters. It combines neutral-first design, stack-choice neutrality, proposal re-testing, and auditable grounding for concrete choices.
+Use this skill when the shape of a decision matters. It combines neutral-first design, rational tailoring, stack-choice neutrality, proposal re-testing, and auditable grounding for concrete choices.
 
 In the Ensemble, this discipline is carried by the Examiner when forming recommendations for dispatch, and by the Concertmaster in designation dialogue and at architectural forks — the moments where an anchored proposal would propagate the furthest.
 
@@ -20,6 +20,7 @@ Invoke this skill when:
 - Carrying an earlier proposal into a spec, deliverable, policy, procedure, implementation, recommendation, or client-facing artifact.
 - A proposal has been repeated into multiple durable surfaces.
 - The user pushes back on one part of a proposal.
+- Deciding where a rule, practice, record or instruction will live, whenever the place decides whether it takes effect or who meets it. Placement looks like filing; it is a decision.
 
 ## Workflow
 
@@ -27,7 +28,7 @@ Invoke this skill when:
 2. Run a neutral pass first: describe the right solution if the current structure, workflow, document set, notebook geography, process, institution, implementation, or prior proposal did not exist.
 3. Run the current-state pass: compare the ideal with the actual system, process, artifact, institution, constraints, commitments, and cost of change.
 4. If the ideal and incremental paths differ, present both with the compromise named, leading with the one you recommend; that is the recommendation, not a survey.
-5. For stack, provider, vendor, tool, or process choices, compare candidates against the task's actual requirements. Treat familiarity and consistency as factors, not as automatic winners.
+5. Compare candidates against the task's actual requirements, and prefer the most reliable one that does not build past them: name what each added part buys, and drop what buys nothing the task or the project's health needs. For stack, provider, vendor, tool, or process choices, treat familiarity and consistency as factors, not as automatic winners.
 6. For concrete values or rule choices, record why the value is defensible. Use a traceable check, source, host or context probe, official requirement, or user-stated convention.
 7. If a proposal has propagated, re-test it against actual commitments before propagating further. Re-testing, like retrieving the decision behind a failing path and stating the call, is surfaced to the user, never silently overriding the user's decision.
 8. Separate facts, assumptions, user preferences, and recommendations.

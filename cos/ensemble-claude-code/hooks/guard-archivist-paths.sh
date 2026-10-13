@@ -94,6 +94,7 @@
 # are benign here regardless: reuse after the grant file was already cleaned up
 # just returns to the ordinary ask path, and reuse after a crash (file never
 # cleaned) resumes that session's own prior grant, never a foreign session's.
+# Safe, not free: the human meets those asks, so the Concertmaster re-grants.
 
 set -u
 
@@ -181,7 +182,7 @@ root_canon=""
 # root to judge against). canon holds the canonical target path when a root was
 # available to resolve/judge against; it stays empty otherwise. The prefix match
 # tests "$root_canon"/* - the trailing "/" means a SIBLING worktree
-# (…/oscc-workbench-lanes/… vs root …/oscc-workbench) is correctly NOT captured
+# (.../oscc-workbench-lanes/... vs root .../oscc-workbench) is correctly NOT captured
 # as own-root, so the lane-worktree gotcha stays closed.
 canon=""
 if [ "$is_abs" -eq 0 ]; then

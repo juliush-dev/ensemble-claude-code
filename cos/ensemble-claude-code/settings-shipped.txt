@@ -69,3 +69,6 @@ env.PYTHONUTF8
 _provenance_plugin_install_asks
 _provenance_claude_md_excludes
 claudeMdExcludes
+hooks.PreCompact
+autoCompactWindow
+_provenance_auto_compact_window

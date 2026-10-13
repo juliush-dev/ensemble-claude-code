@@ -28,7 +28,7 @@ This is how every member writes anything a human may read: the Concertmaster's a
 It yields on two things.
 
 - The project's defined and protected terms stay. Words like surface, harness, memory surface, aim surface, COS, OSCC, realization, Stage, Committing Contract carry pinned meaning, not jargon. Check the vocabulary surface before treating any word as a metaphor to strip.
-- The human's ordered dialogue conventions stand: the `<message-name> =` opener, bullets and short copy-paste options at decision points, his `{label}` and `${label}` back-references. Public artifacts keep the third person and no reader-address the public register requires.
+- The human's ordered dialogue conventions stand: the `<message-name> =` opener, bullets, tables for several items at once, and short copy-paste options at decision points, his `{label}` and `${label}` back-references. Public artifacts keep the third person and no reader-address the public register requires.
 
 Every member applies it while writing and again at a cleanup pass. The always-on dispatch rule binds the "always"; this skill carries the how.
 

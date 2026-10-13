@@ -48,13 +48,15 @@
 # object. A key it does not name asks, so a field OpenKnowledge adds or renames
 # after 0.78.0 asks instead of passing unguarded; a renamed path field also
 # leaves the call with zero targets, which asks. An unknown tool name asks.
-# One exception is denied, not asked (the fail direction below): inside a
+# Two exceptions are denied, not asked (the fail direction below). Inside a
 # nested object, a key the table names for that tool only as a plain
 # top-level field (its top_plain, in practice summary and cwd) is read as the
-# caller's slip. So a field upstream later nests under such a name is denied
-# with advice to move it to the top level until re-enumeration names it in
-# that object; a deny never lets it pass, and the re-enumeration diff is what
-# catches the move.
+# caller's slip. At any level the table reads, so is a key of Claude Code's
+# native file tools that no OpenKnowledge tool takes (file_path, old_string,
+# new_string, replace_all, allow_large). So a field upstream later nests
+# under a top_plain name, or adds under one of those five names, is denied
+# with advice to move or drop it until re-enumeration names it there; a deny
+# never lets it pass, and the re-enumeration diff is what catches the change.
 # Over-asking after an upgrade is the signal to re-enumerate, not friction to
 # remove. The re-enumeration duty (launch/wire-mcp.ps1's header) updates this
 # table, KEY_TABLE_ENUMERATED and fixtures/openknowledge-guard/ together.
@@ -64,7 +66,7 @@
 # caller, so a caller that sent a malformed call learned nothing from it, and
 # the human met a prompt for a slip rather than a decision. A deny's reason
 # reaches the caller, main session and member alike, and no permission mode
-# overrides a hook's deny (hooks reference and guide). So three shapes
+# overrides a hook's deny (hooks reference and guide). So four shapes
 # are refused with the correction to resend, for every caller whose call would
 # otherwise ask:
 #   - a write-class call without tool_input.cwd: the server needs cwd for a
@@ -89,16 +91,27 @@
 #     slip (write.documents[] carries summary), and a key the tool takes
 #     nowhere (delete has no summary), a target-object name (document, folder,
 #     template, skill, asset, documents), a key no table names and a
-#     duplicated key keep asking, since moving it would not settle them.
+#     duplicated key keep asking, since moving it would not settle them;
+#   - a key of Claude Code's native file tools that no OpenKnowledge tool
+#     takes (file_path, old_string, new_string, replace_all, allow_large), at
+#     the top level or inside an object the table reads: the deny names the
+#     tool the key belongs to, the key to drop and, where the tool has one,
+#     what it takes instead (document.path and cwd for file_path; find,
+#     replace and occurrence on edit). The lived case (2026-10-09): edit with
+#     a top-level file_path beside document, three calls, each an ask the
+#     caller never saw. Keys the native tools share with OpenKnowledge
+#     (content, offset, limit, path) and the generic pages keep asking, as
+#     every other key no table names does.
 # A deny judges only the spelling or the placement; the resent call meets
 # every check again. Every other key of the slip's own object is read first,
 # so an unknown or duplicated key beside the slip asks whatever the order of
 # the keys. Past that object, a slip is refused ahead of any ask the same call
 # would meet later (an object read after it, a foreign root, a .. path), and
-# the resent call then meets that ask. The always-ask classes
-# (resolve_conflict, import, install, a skill variant, a folder delete) and
-# the top-level keys are decided before any nested object is read, so a call
-# that asks on one of them asks, whatever slip it carries inside.
+# the resent call then meets that ask. resolve_conflict, import and install
+# ask before any key is read. A skill variant and a folder delete are decided
+# after the top-level keys and before any nested object, so a call that asks
+# on one of them asks whatever slip it carries inside, while a native tool's
+# key at its top level is refused first and the resent call meets that ask.
 # Every other uncertain branch ends in an ask the human may approve, import
 # and install included: a permission deny rule would strip them from the
 # Operator too, permission rules being session-wide. A command hook that
@@ -137,9 +150,9 @@ ask() {
   printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"ask","permissionDecisionReason":"OpenKnowledge guard: %s Not auto-accepted; the human may still approve explicitly."}}\n' "$_r"
   exit 0
 }
-# deny is kept for a slip the caller can correct, a cwd or a key placed inside
-# the wrong object (the header's fail direction); its reason reaches the
-# caller, so it says what to resend.
+# deny is kept for a slip the caller can correct, a cwd, a key placed inside
+# the wrong object or a native tool's key (the header's fail direction); its
+# reason reaches the caller, so it says what to resend.
 deny() {
   DECIDED=1
   _r="$(printf '%s' "$1" | tr '\\"' "/'" | tr -d '\000-\037')"
@@ -303,11 +316,15 @@ elems() {
 }
 
 # strict <object path> <label> <allowed keys, space-separated>: asks on a key
-# the table does not name, and on a duplicated key. Inside a nested object, a
-# key the table does not name there but names as one of the tool's plain
-# top-level fields (top_plain, set just before the key table) is the caller's slip:
-# misplaced denies the first such key once every other key of the object has
-# been read, so a key that asks beside it asks whatever the order of the keys.
+# the table does not name, and on a duplicated key. Two keys the table does not
+# name are the caller's slip instead. Inside a nested object, a key the table
+# names as one of the tool's plain top-level fields (top_plain, set just before
+# the key table) goes to misplaced. At any level the table reads, a key of
+# Claude Code's native file tools that no OpenKnowledge tool takes (file_path,
+# old_string, new_string, replace_all, allow_large) goes to foreign. The first
+# slip is denied once every other key of the object has been read, so a key
+# that asks beside it asks whatever the order of the keys. _slip carries the
+# kind, m or f, ahead of the key.
 strict() {
   kids "$1"
   _rest="$K"; _slip=""
@@ -316,11 +333,19 @@ strict() {
     case "$_rest" in *"<$_k>"*) ask "$2 carries the key '$_k' twice." ;; esac
     case " $3 " in *" $_k "*) continue ;; esac
     if [ "$1" != "$TI" ]; then
-      case " $top_plain " in *" $_k "*) _slip="${_slip:-$_k}"; continue ;; esac
+      case " $top_plain " in *" $_k "*) _slip="${_slip:-m $_k}"; continue ;; esac
     fi
+    case "$_k" in
+      file_path|old_string|new_string|replace_all|allow_large) _slip="${_slip:-f $_k}"; continue ;;
+    esac
     ask "$2 carries the key '$_k', which the key table enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED does not name for this tool. A field added or renamed upstream asks until the tool list is re-enumerated."
   done
-  [ -z "$_slip" ] || misplaced "$2" "$_slip"
+  case "$_slip" in
+    '') : ;;
+    'm '*) misplaced "$2" "${_slip#m }" ;;
+    'f '*) foreign "$1" "$2" "${_slip#f }" ;;
+    *) ask "the guard's key-placement check reached a state it does not read." ;;
+  esac
 }
 
 # misplaced <label> <key>: the caller has put <key>, a field the tool takes
@@ -331,6 +356,42 @@ misplaced() {
   count "$TI.$2"
   [ "$N" -ne 0 ] || deny "$1 carries the key '$2', which $tool takes only at the top level of the call in the schema enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED. Resend the same call with '$2' moved out of $1 to the top level."
   deny "$1 carries the key '$2', which $tool takes only at the top level of the call in the schema enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED, and the call carries it there too. Resend the same call with '$2' removed from $1, keeping at the top level the value you mean."
+}
+
+# foreign <object path> <label> <key>: the caller has put <key>, a key of
+# Claude Code's native file tools (their input schemas as a session lists them:
+# Read takes file_path and allow_large, Edit file_path, old_string, new_string
+# and replace_all, Write file_path) that no OpenKnowledge tool takes, into the
+# object <label> names. Deny with the key's owner, the key to drop and, where
+# the tool has one, what it takes instead. Keys the native tools share with an
+# OpenKnowledge tool (content, offset, limit, path) and generic names an
+# upstream field could plausibly take (pages) are not on the list: they keep
+# asking. The owner ($4), the place to drop the key from ($5) and the advice
+# ($6) are appended to the positional parameters with set --, never assigned
+# to a variable: a variable a readonly collision could block would abandon the
+# whole top-level command (the key table included) and let the call run on.
+foreign() {
+  case "$3" in
+    file_path) set -- "$1" "$2" "$3" "Claude Code's native Read, Edit and Write tools" ;;
+    old_string|new_string|replace_all) set -- "$1" "$2" "$3" "Claude Code's native Edit tool" ;;
+    *) set -- "$1" "$2" "$3" "Claude Code's native Read tool" ;;
+  esac
+  if [ "$1" = "$TI" ]; then set -- "$@" "the top level of the call"; else set -- "$@" "$2"; fi
+  case "$3:$tool" in
+    file_path:edit) set -- "$@" " edit names its file by the path inside its target object (such as document.path, relative to the project's content folder, without the .md extension) and the project by cwd at the top level." ;;
+    file_path:write) set -- "$@" " write names its file by the path inside its target object (such as document.path, relative to the project's content folder) and the project by cwd at the top level." ;;
+    file_path:delete|file_path:restore_version) set -- "$@" " $tool names its file by document, a path relative to the project's content folder, and the project by cwd at the top level." ;;
+    file_path:move) set -- "$@" " move names its files by from and to, paths relative to the project's content folder, and the project by cwd at the top level." ;;
+    file_path:lint) set -- "$@" " lint names its file by document or its folder by path, relative to the project's content folder, and the project by cwd at the top level." ;;
+    file_path:checkpoint) set -- "$@" " checkpoint names no file, only the project, by cwd at the top level." ;;
+    file_path:preview_url) set -- "$@" " preview_url names a markdown file by file, an absolute path, or a document by document." ;;
+    old_string:edit) set -- "$@" " edit takes the text to find as find, in the target object beside path (such as document.find)." ;;
+    new_string:edit) set -- "$@" " edit takes the new text as replace, in the target object beside path (such as document.replace)." ;;
+    replace_all:edit) set -- "$@" " edit changes the one match occurrence picks (the first by default); repeat the call for each further match." ;;
+    old_string:*|new_string:*) set -- "$@" " OpenKnowledge changes part of a document's body through edit, with find and replace inside edit.document." ;;
+    *) set -- "$@" "" ;;
+  esac
+  deny "$2 carries the key '$3', which is a key of $4, not of OpenKnowledge's $tool in the schema enumerated at OpenKnowledge $KEY_TABLE_ENUMERATED. Resend the same call with '$3' removed from $5.$6"
 }
 
 # decode_path <raw JSON string text>: sets D to the path with \\ and \/

@@ -38,7 +38,7 @@
 #    summary. The file is found in the hook folder's parent, the home. Hook
 #    stdout is capped at 10,000 characters (above it the model sees a
 #    2,000-character preview), so fixtures/session-cue/run-fixture.sh
-#    keeps the longest print under a 9,000-character limit. A claude started
+#    keeps the longest print under a 9,500-character limit. A claude started
 #    from inside a launched session inherits the marker without the flag and
 #    gets no fallback; the probe (probe-context.ps1) passes the flag itself.
 #

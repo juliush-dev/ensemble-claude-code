@@ -155,6 +155,10 @@ For `.md` / config edits the plan expresses as inline blocks, prefer the editor/
 
 On Windows the filesystem is case-insensitive, but `git add` matches its pathspec **case-sensitively**. `git add Charter.md` when the tracked path is `charter.md` matches nothing and stages nothing — with no error — so an edit-then-add-then-commit chain can silently drop a file. This is the same false-evidence class as the shell traps above: the command "succeeded" (exit 0) while doing nothing. When the case of a path is uncertain, verify the staged state with a separate probe — `git status --short` after the add — rather than trusting the add's silent success.
 
+### A commit that names paths drops an executable bit set only in the index
+
+On a tree with `core.filemode=false`, an executable bit set with `git update-index --chmod=+x` and not yet in `HEAD` lives only in the index. `git commit --only -- <path>`, like any `git commit` that names paths (`--only` is its default then), commits the path's content as `100644`: the commit exits 0, the index keeps `100755`, and `git status` still shows the path staged. With the bit as the path's only change, the commit stops with "nothing to commit". After such a commit, check that `git ls-tree HEAD <path>` shows `100755`, or commit that path with a commit that names no paths, which keeps the bit. Observed on git 2.56.0.windows.2.
+
 ### Git Bash `sed -i` rewrites a CRLF file to LF
 
 On a CRLF working file (`git ls-files --eol` shows `w/crlf`), Git Bash's `sed` matches no `\r$` pattern, and `sed -i` writes the whole file back with LF endings whatever its pattern matched. Every line changes: a corruption, not a no-op. Edit such files with the Edit tool; if `sed -i` already ran on a file with no other uncommitted edits, restore it with `git checkout -- <file>`.
