@@ -22,14 +22,22 @@
 # names no grant file. CLAUDE_CONFIG_DIR points at a throwaway config home, so
 # the kit word's expanded form is exercised without a real home.
 #
-# The cases: the Operator's three forms (the publish asking with its target,
+# The cases: the Operator's publish form unflagged (asking with its target,
 # new site or slug, inside and outside the session's root), the kit named by
 # its expanded path, each excluded flag, metacharacters, a second command, a
 # newline, a single-quoted and an unquoted path, a $ in a path, a bad slug, a
 # repeated or unquoted title, a direct publish.sh, a PowerShell call, forged
 # nested agent_type keys both ways, unparseable input; the main session's and a
-# member's publish and key shapes asking, their ordinary commands and a Drive
-# read passing; then the fail-toward-decision hardening: a crash forced inside
+# member's publish and key shapes asking, their ordinary commands passing, and
+# a Drive read now asking (H13, flipped from pass by the 2026-10-13 build, D2);
+# G1 to G32 of that build's spec: the owner-only publish asking, --ordered
+# passing inside the root and asking outside it, with no root known, or with
+# the delegate crashed or missing, --public asking, the flags combined or
+# repeated blocking, the site and Drive reads passing and their bad values
+# blocking, case A's drive-put asking unordered and passing ordered inside the
+# root, the excluded Drive commands blocking, and the main session's and a
+# member's Drive, site-read and Drive-token shapes asking while the kit's
+# manifest and a keyless site probe pass; then the fail-toward-decision hardening: a crash forced inside
 # the gate for the Operator (block) and for the main session (ask; the failed
 # assignment abandons the shape gate's block without exiting, so this case
 # proves the position guard that stops a fall-through), a failed assignment
@@ -50,7 +58,9 @@ FAILED=0
 FAILED_NAMES=""
 
 TMPBASE="$(mktemp -d 2>/dev/null)" || { echo "FAIL (setup): mktemp -d failed"; exit 1; }
-trap 'rm -rf "$TMPBASE"' EXIT
+# The belt: the only recursive delete is of this temp base, never of an empty, root or relative path.
+case "$TMPBASE" in ""|/|.|[!/]*) echo "FAIL (setup): temp base resolved to '$TMPBASE'"; exit 1 ;; esac
+trap 'case "${TMPBASE:-}" in ""|/|.) ;; *) rm -rf -- "$TMPBASE";; esac' EXIT
 
 # Paths in the form the harness hands a hook: C:/... on Windows (Git Bash's
 # cygpath -m), the plain path elsewhere.
@@ -146,18 +156,72 @@ check "main: nested agent_type operator"    pass - "$(hin Bash "ls" "" ',"agent_
 check "operator: unparseable input"         ask "not one well-formed JSON object" "{\"agent_type\":\"operator\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":"
 
 # --- any other caller: the shape gate ----------------------------------------------------------
-main "main: publish.sh --help"              ask "dispatches to the Operator" "bash \\\"\$HOME/.agents/skills/here-now/scripts/publish.sh\\\" --help"
-main "main: the key variable"               ask "dispatches to the Operator" "echo \$HERENOW_API_KEY"
+main "main: publish.sh --help"              ask "dispatch to the Operator" "bash \\\"\$HOME/.agents/skills/here-now/scripts/publish.sh\\\" --help"
+main "main: the key variable"               ask "dispatch to the Operator" "echo \$HERENOW_API_KEY"
 main "main: the key file"                   ask "a key file is never read" "cat ~/.herenow/credentials"
-main "main: the kit's publish"              ask "dispatches to the Operator" "$K publish \\\"$SES/site\\\""
-main "main: the API by curl"                ask "dispatches to the Operator" "curl -X POST https://here.now/api/v1/publish"
+main "main: the kit's publish"              ask "dispatch to the Operator" "$K publish \\\"$SES/site\\\""
+main "main: the API by curl"                ask "dispatch to the Operator" "curl -X POST https://here.now/api/v1/publish"
 main "main: the kit's check"                pass - "$K check"
 main "main: git status"                     pass - "git status"
-main "main: a Drive read (H13)"             pass - "bash \\\"\$HOME/.agents/skills/here-now/scripts/drive.sh\\\" list"
+main "main: a Drive read (H13, flipped from pass to ask, D2)" ask "site and Drive work dispatch to the Operator" "bash \\\"\$HOME/.agents/skills/here-now/scripts/drive.sh\\\" list"
 check "main: PowerShell key file, Windows"  ask "a key file is never read" "$(hin PowerShell 'Get-Content $env:USERPROFILE\\.herenow\\credentials')"
 check "builder: git status"                 pass - "$(hin Bash "git status" builder)"
-check "builder: publish.sh"                 ask "dispatches to the Operator" "$(hin Bash "bash ./scripts/PUBLISH.SH site" builder)"
+check "builder: publish.sh"                 ask "dispatch to the Operator" "$(hin Bash "bash ./scripts/PUBLISH.SH site" builder)"
 check "main: empty input"                   ask "no tool input" ""
+
+# --- G1 to G32: owner-only publish, the ordered writes, sites and Drive (the 2026-10-13 build spec) -------
+op "G1 publish, no flag, in root"           ask "owner-only by default" "$K publish \\\"$SES/site\\\"" "OUTSIDE"
+op "G2 publish --ordered, in root"          pass - "$K publish \\\"$SES/site\\\" --ordered"
+op "G3 publish --ordered, outside root"     ask "OUTSIDE the session's root" "$K publish \\\"$OTHER/site\\\" --ordered"
+op "G6 publish --public"                    ask "a PUBLIC publish" "$K publish \\\"$SES/site\\\" --public"
+op "G7 --public with --ordered"             block "--ordered with --public" "$K publish \\\"$SES/site\\\" --public --ordered"
+op "G7 --ordered with --public"             block "--ordered with --public" "$K publish \\\"$SES/site\\\" --ordered --public"
+op "G8 --ordered twice"                     block "--ordered given twice" "$K publish \\\"$SES/site\\\" --ordered --ordered"
+op "G8 --public twice"                      block "--public given twice" "$K publish \\\"$SES/site\\\" --public --public"
+op "G9 update --slug --ordered, in root"    pass - "$K publish \\\"$SES/site\\\" --slug my-site --title \\\"T\\\" --ordered"
+op "G10 site-ls"                            pass - "$K site-ls"
+op "G11 site-ls with a value"               block "words after site-ls" "$K site-ls \\\"x\\\""
+op "G12 site-files quoted slug"             pass - "$K site-files \\\"my-site\\\""
+op "G12 site-files bare slug"               pass - "$K site-files my-site"
+op "G13 site-files bad slug"                block "slug outside" "$K site-files \\\"Bad_Slug\\\""
+op "G14 site-cat"                           pass - "$K site-cat \\\"my-site\\\" \\\"docs/index.html\\\""
+op "G15 site-cat with a .. segment"         block ".. segment in the site path" "$K site-cat \\\"my-site\\\" \\\"docs/../../x\\\""
+op "G15 site-cat with a leading slash"      block "site path starting with /" "$K site-cat \\\"my-site\\\" \\\"/etc/x\\\""
+op "G15 site-cat with a \$"                 block "backtick or backslash in the site path" "$K site-cat \\\"my-site\\\" \\\"\$HOME/x\\\""
+op "G15 site-cat with a backslash"          block "backtick or backslash in the site path" "$K site-cat \\\"my-site\\\" \\\"a\\\\\\\\b\\\""
+op "G16 drive-ls"                           pass - "$K drive-ls"
+op "G17 drive-ls a drive"                   pass - "$K drive-ls \\\"My Drive\\\""
+op "G18 drive-ls a drive and a prefix"      pass - "$K drive-ls \\\"My Drive\\\" \\\"notes/\\\""
+op "G19 drive-ls three values"              block "more than a drive name and a prefix" "$K drive-ls \\\"My Drive\\\" \\\"notes/\\\" \\\"x\\\""
+op "G19 drive-ls a drive starting with -"   block "drive name starting with -" "$K drive-ls \\\"-x\\\""
+op "G20 drive-cat"                          pass - "$K drive-cat \\\"My Drive\\\" \\\"rules/check-reality.md\\\""
+op "G20 drive-cat with a .. segment"        block ".. segment in the drive path" "$K drive-cat \\\"My Drive\\\" \\\"../x\\\""
+op "G21 case A, unordered drive-put"        ask "drive My Drive, path rules/check-reality.md, local file $SES/rules/check-reality.md" \
+  "$K drive-put \\\"My Drive\\\" \\\"rules/check-reality.md\\\" --from \\\"$SES/rules/check-reality.md\\\"" "OUTSIDE"
+op "G22 case A, ordered drive-put in root"  pass - "$K drive-put \\\"My Drive\\\" \\\"rules/check-reality.md\\\" --from \\\"$SES/rules/check-reality.md\\\" --ordered"
+op "G22 --ordered before --from"            pass - "$K drive-put \\\"My Drive\\\" \\\"rules/check-reality.md\\\" --ordered --from \\\"$SES/rules/check-reality.md\\\""
+op "G23 case A ordered, file outside root"  ask "local file lies OUTSIDE the session's root" \
+  "$K drive-put \\\"My Drive\\\" \\\"rules/check-reality.md\\\" --from \\\"$OTHER/check-reality.md\\\" --ordered"
+op "G24 drive-put without --from"           block "without --from" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\""
+op "G24 drive-put --from twice"             block "--from given twice" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\" --from \\\"$SES/a.md\\\" --from \\\"$SES/b.md\\\""
+op "G24 drive-put --token"                  block "an option drive-put does not take (--token)" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\" --from \\\"$SES/a.md\\\" --token t"
+op "G24 drive-put --ordered twice"          block "--ordered given twice" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\" --from \\\"$SES/a.md\\\" --ordered --ordered"
+op "G25 drive-share"                        block "no subcommand" "$K drive-share \\\"My Drive\\\""
+op "G25 drive-rm"                           block "no subcommand" "$K drive-rm \\\"My Drive\\\" \\\"a.md\\\""
+op "G26 drive.sh directly"                  block "not the here.now kit" "bash \\\"\$HOME/.agents/skills/here-now/scripts/drive.sh\\\" ls"
+main "G27 main: drive.sh ls"                ask "site and Drive work dispatch to the Operator" "bash \\\"\$HOME/.agents/skills/here-now/scripts/drive.sh\\\" ls"
+main "G28 main: drive.sh share"             ask "dispatch to the Operator" "bash \\\"\$HOME/.agents/skills/here-now/scripts/drive.sh\\\" share \\\"My Drive\\\" --perms write"
+main "G29 main: the kit's site-ls"          ask "dispatch to the Operator" "$K site-ls"
+main "G29 main: the kit's drive-cat"        ask "dispatch to the Operator" "$K drive-cat \\\"My Drive\\\" \\\"a.md\\\""
+main "G29 main: the kit's drive-put"        ask "dispatch to the Operator" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\" --from \\\"$SES/a.md\\\" --ordered"
+main "G29 main: the kit's manifest"         pass - "$K manifest \\\"$SES/site\\\""
+main "G30 main: the Drive token"            ask "dispatch to the Operator" "echo \$HERENOW_DRIVE_TOKEN"
+main "G31 main: the Drive API by curl"      ask "dispatch to the Operator" "curl https://here.now/api/v1/drives"
+main "G32 main: a keyless site probe"       pass - "curl -s https://x-1.here.now/"
+check "G32 builder: drive.sh"               ask "dispatch to the Operator" "$(hin Bash "bash ./scripts/drive.sh ls" builder)"
+# No session root the gate can know: the delegate would pass, so --ordered asks.
+NOROOT="{\"session_id\":\"fixture-session-0\",\"hook_event_name\":\"PreToolUse\",\"agent_id\":\"a0fixture\",\"agent_type\":\"operator\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"$K publish \\\"$SES/site\\\" --ordered\"}}"
+check "G2b --ordered, no session root known" ask "knows no session root" "$NOROOT"
 
 # --- fail toward a decision -------------------------------------------------------------------------
 printf 'readonly rest\n' > "$TMPBASE/crash-operator.sh"
@@ -182,8 +246,11 @@ cp "$GUARD" "$TMPBASE/hooks-alone/guard-herenow.sh"
 printf '#!/usr/bin/env bash\nexit 3\n' > "$TMPBASE/hooks-crash/guard-archivist-paths.sh"
 RUN_GUARD="$TMPBASE/hooks-crash/guard-herenow.sh"
 op "operator: publish, delegate crashes"    ask "check failed (exit status 3)" "$K publish \\\"$OTHER/site\\\""
+op "G4 publish --ordered, delegate crashes"  ask "check failed (exit status 3)" "$K publish \\\"$SES/site\\\" --ordered"
+op "G4 drive-put --ordered, delegate crashes" ask "check failed (exit status 3)" "$K drive-put \\\"My Drive\\\" \\\"a.md\\\" --from \\\"$SES/a.md\\\" --ordered"
 RUN_GUARD="$TMPBASE/hooks-alone/guard-herenow.sh"
 op "operator: publish, delegate missing"    ask "is not beside the gate" "$K publish \\\"$OTHER/site\\\""
+op "G5 publish --ordered, delegate missing" ask "is not beside the gate" "$K publish \\\"$SES/site\\\" --ordered"
 RUN_GUARD="$GUARD"
 
 # --- a large member command: the scanner must stay fast -------------------------------------------

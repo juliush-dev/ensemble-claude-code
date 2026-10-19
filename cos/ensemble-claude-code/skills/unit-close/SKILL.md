@@ -9,7 +9,7 @@ When a unit ends, its notebook freezes into preserved evidence. This runbook is 
 
 ## The sweep rule — no unit closes with silent open gaps
 
-Every still-open `Gaps.md` entry in the closing unit's scope must resolve, one of exactly four ways:
+Every still-open `Gaps.md` entry in the closing unit's scope, and every open item in a contract-direct pursuit's Current state, must resolve, one of exactly four ways:
 
 - **Closed with evidence** — the gap was handled; link the evidence.
 - **Graduated** — it became its own work unit; name where it went (the designation and registry line).

@@ -410,7 +410,7 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 53 files hash-compare against source, byte-identical except the
+# Integrity: the 54 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
 # CONCERTMASTER.md is compared with its source in always-on\, the one entry
@@ -420,7 +420,7 @@ if ($null -eq $python) {
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (30 core - the 19 that were here before, less settings.json, which the
+# (31 core - the 19 that were here before, less settings.json, which the
 # assertion now covers, and less the Examiner's guard
 # hooks\guard-examiner-bash.sh, plus the Scout's guard
 # hooks\guard-scout-bash.sh,
@@ -432,7 +432,8 @@ if ($null -eq $python) {
 # tools\herenow.sh and its gate hooks\guard-herenow.sh, and the cross-shell
 # nudge hooks\nudge-cross-shell.sh, and the main-session rules
 # CONCERTMASTER.md, and the mod-presence check
-# hooks\session-start-mod-check.sh, and the refocus hook hooks\refocus.sh;
+# hooks\session-start-mod-check.sh, and the refocus hook hooks\refocus.sh,
+# and the delete guard hooks\guard-delete.sh;
 # + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 10
 # promoted formal-library files: five SKILL.md (cross-shell-command,
@@ -451,7 +452,7 @@ $same = @(
     'hooks\guard-push-gate.sh', 'hooks\guard-scout-bash.sh', 'hooks\guard-live-reads.sh', 'hooks\guard-openknowledge.sh',
     'hooks\guard-herenow.sh', 'hooks\nudge-cross-shell.sh',
     'hooks\session-start-harness-marker.sh', 'hooks\session-start-cue.sh',
-    'hooks\session-start-mod-check.sh', 'hooks\refocus.sh',
+    'hooks\session-start-mod-check.sh', 'hooks\refocus.sh', 'hooks\guard-delete.sh',
     'tools\scout-fetch.sh', 'tools\herenow.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
     '.mcp.json', 'HARNESS.md', 'CONCERTMASTER.md',

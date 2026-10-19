@@ -1,13 +1,14 @@
 {
   "counts": {
-    "exclude": 576,
-    "publish": 103,
+    "exclude": 582,
+    "publish": 107,
     "transform": 0
   },
   "executables": [
     "cos/ensemble-claude-code/deploy-to-host.sh",
     "cos/ensemble-claude-code/fixtures/sentinel-judge/sentinel-judge.sh",
     "cos/ensemble-claude-code/hooks/guard-archivist-paths.sh",
+    "cos/ensemble-claude-code/hooks/guard-delete.sh",
     "cos/ensemble-claude-code/hooks/guard-herenow.sh",
     "cos/ensemble-claude-code/hooks/guard-live-reads.sh",
     "cos/ensemble-claude-code/hooks/guard-openknowledge.sh",
@@ -24,13 +25,13 @@
     "cos/ensemble-claude-code/tools/herenow.sh",
     "cos/ensemble-claude-code/tools/scout-fetch.sh"
   ],
-  "generated_at": "2026-10-13T06:47:46.602408+00:00",
+  "generated_at": "2026-10-19T08:35:10.164586+00:00",
   "generator_identity": "oscc-publication-projector",
   "generator_version": "0.1.0",
-  "profile_content_sha256": "e730f6e158da9bb32b501501e6196e2dc36b2278568aecdeb9e1ffdeed05f903",
+  "profile_content_sha256": "6f0ee46f72b05d4de608e1b980fcbe6fb3dbaa244c4b6d49141609ced465e734",
   "profile_name": "worldview-edition",
-  "profile_version": "4",
-  "source_commit": "fc52eccb2ccc1fd0f2a786de9d791c9f7199ee44",
+  "profile_version": "5",
+  "source_commit": "fec539dda77a7abfa925e7ed6814e4ff8cd472c2",
   "tool_versions": {
     "git": "git version 2.56.0.windows.2",
     "python": "3.14.3"

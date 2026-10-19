@@ -3,36 +3,59 @@
 # PreToolUse guard on Bash|PowerShell, for every caller.
 # ASCII-only, LF line endings (the subtree's *.sh eol=lf attribute).
 #
-# A here.now publish is a live external write to a world-readable URL, a hard
-# human gate. The Operator publishes, through its kit tools/herenow.sh; this
-# guard holds the Operator's shell to that kit and puts every publish in front
-# of the human. Two rules, keyed on the hook input's top-level agent_type:
+# here.now site and Drive writes are live external writes, a hard human gate;
+# a publish is owner-only by default (the kit locks and checks it), a public
+# one is the human's explicit word. The Operator works here.now through its
+# kit tools/herenow.sh; this guard holds the Operator's shell to that kit, lets
+# the reads through, lets an ordered write through only when its local source
+# lies inside the session's root, and puts every other write in front of the
+# human. Two rules, keyed on the hook input's top-level agent_type:
 #
-#   THE OPERATOR (agent_type exactly "operator") - an ALLOWLIST. Three forms
-#   pass or ask, everything else is blocked (exit 2) with the forms printed:
-#     "$CLAUDE_CONFIG_DIR/tools/herenow.sh" check                  pass
-#     "$CLAUDE_CONFIG_DIR/tools/herenow.sh" manifest "<path>"      pass
-#     "$CLAUDE_CONFIG_DIR/tools/herenow.sh" publish "<path>"
-#         [--slug <slug>] [--title "<text>"] [--description "<text>"]  ask
-#   A pass is not an approval: the call goes on to the ordinary permission
-#   flow (in auto mode, the classifier). The publish ask names the target and
-#   whether it makes a new site or updates a slug; when the target lies outside
-#   the session's root and its grants, the reason says so. That judgment is
-#   delegated to guard-archivist-paths.sh main-session, as the OpenKnowledge
-#   guard delegates its targets, so one path law judges every surface. A shell
-#   with one purpose takes an allowlist (the Scout guard's header says why); the
-#   Operator's shell has one purpose. A PowerShell call from the Operator is
-#   blocked: its shell is Bash.
+#   THE OPERATOR (agent_type exactly "operator") - an ALLOWLIST. These forms
+#   pass or ask, everything else is blocked (exit 2) with the forms printed
+#   (K is "$CLAUDE_CONFIG_DIR/tools/herenow.sh"):
+#     K check; K manifest "<path>"                                  pass
+#     K site-ls; K site-files "<slug>"; K site-cat "<slug>" "<path>" pass
+#     K drive-ls; K drive-ls "<drive>" ["<prefix>"];
+#     K drive-cat "<drive>" "<path>"                                pass
+#     K publish "<path>" [--slug <slug>] [--title "<text>"]
+#         [--description "<text>"] --ordered, the target inside the root  pass
+#     K publish ... --ordered, outside the root or the check unmade   ask
+#     K publish ... (no flag)                                        ask
+#     K publish ... --public                                         ask
+#     K drive-put "<drive>" "<path>" --from "<local-file>" --ordered,
+#         the local file inside the root                             pass
+#     K drive-put ... otherwise                                      ask
+#   --ordered with --public, or any option twice, blocks. --ordered means the
+#   Operator's dispatch quotes the human's order for this act; the gate cannot
+#   see the order, so the flag is honor-based, bounded by the root check here,
+#   the kit's owner-only sequence and refusals, and the classifier. A pass is
+#   not an approval: the call goes on to the ordinary permission flow (in auto
+#   mode, the classifier). An ask names the act (the target, new site or slug;
+#   the drive, path and local file); when the local source lies outside the
+#   session's root and its grants, or the check could not be made, the reason
+#   says so. That judgment is delegated to guard-archivist-paths.sh
+#   main-session, as the OpenKnowledge guard delegates its targets, so one path
+#   law judges every surface; the delegate's own exemptions (the session's
+#   scratchpad, a session grant) count as inside. A root the gate cannot know
+#   (neither CLAUDE_PROJECT_DIR nor the input's cwd) leaves the check unmade,
+#   since the delegate passes what it cannot place. A shell with one purpose
+#   takes an allowlist (the Scout guard's header says why); the Operator's
+#   shell has one purpose. A PowerShell call from the Operator is blocked: its
+#   shell is Bash.
 #
 #   ANY OTHER CALLER (agent_type absent, ordinarily the bare main session, or
-#   present but not "operator", another member) - a
-#   shape gate. A command carrying a here.now publish or credential shape
-#   anywhere in its text asks: publish.sh, here.now/api, HERENOW_API_KEY,
-#   .herenow/credentials, or "herenow.sh publish" (matched without regard to
-#   case, quotes or the slash direction). Publishing dispatches to the Operator
-#   through its kit, and a key file is never read by hand. Everything else
-#   passes untouched. drive.sh shapes are deliberately not matched: the main
-#   session's lived here.now Drive reads keep flowing under the classifier.
+#   present but not "operator", another member) - a shape gate. A command
+#   carrying a here.now publish, site, Drive or credential shape anywhere in
+#   its text asks: publish.sh, drive.sh, here.now/api, HERENOW_API_KEY,
+#   HERENOW_DRIVE_TOKEN, .herenow/credentials, "herenow.sh publish",
+#   "herenow.sh site-" or "herenow.sh drive-" (matched without regard to case,
+#   quotes or the slash direction). here.now publishing, site and Drive work
+#   dispatch to the Operator through its kit, and a key file is never read by
+#   hand. The kit's check and manifest, which never read the key or call the
+#   network, and a keyless curl of a site's own address pass; everything else
+#   passes untouched. Ask, not block, so the human's own lived command still
+#   runs on his prompt.
 #
 # The Operator's accepted forms, word by word (single or repeated spaces
 # between words; nothing else may appear):
@@ -42,13 +65,20 @@
 #     only when it has no space; compared case-insensitively on Windows). This
 #     kit-word block is copied from hooks/guard-scout-bash.sh, the kit's name
 #     aside; change both together;
-#   - a path is double-quoted, non-empty, with no $, backtick or double quote
-#     inside, no \\ pair and no trailing backslash (so bash reads the same
-#     string this guard reads);
-#   - --slug takes [a-z0-9-]+, bare or double-quoted; --title and
-#     --description take a double-quoted value with no $, backtick, double
-#     quote or backslash; each option at most once. Every other flag is blocked
-#     (the kit refuses them too, each with its harm named).
+#   - a local path (publish's target, drive-put's --from, manifest's path) is
+#     double-quoted, non-empty, with no $, backtick or double quote inside, no
+#     \\ pair and no trailing backslash (so bash reads the same string this
+#     guard reads);
+#   - a site or Drive path (site-cat's, drive-cat's, drive-put's, a drive-ls
+#     prefix) is double-quoted, non-empty, with no $, backtick, double quote or
+#     backslash, no leading / and no .. segment;
+#   - a drive name is double-quoted, non-empty, with no $, backtick, double
+#     quote or backslash, and does not start with -;
+#   - a slug (site-files, site-cat, --slug) takes [a-z0-9-]+, bare or
+#     double-quoted; --title and --description take a double-quoted value with
+#     no $, backtick, double quote or backslash; each option at most once.
+#     Every other flag is blocked (the kit refuses them too, each with its harm
+#     named).
 # JSON escapes other than \" and \\ (a newline, a tab, \u...) and any control
 # character block.
 #
@@ -72,8 +102,9 @@
 # Operator and an ask for everyone else, and the settings.json entry sets an
 # explicit timeout. An error inside a compound command does not exit at all:
 # bash abandons that command and goes on with the next, so a guard line after
-# each branch that could fall through turns that into a verdict too. A delegate that fails leaves the publish asking, its reason
-# saying the root check did not run. What no trap covers: a hook that never
+# each branch that could fall through turns that into a verdict too. A
+# delegate that fails leaves the write asking, its reason saying the root
+# check did not run. What no trap covers: a hook that never
 # starts (bash missing), a run the harness kills at its timeout, and a DECIDED
 # made readonly before the gate starts (BASH_ENV or a startup file), which
 # every verdict assigns, so the run exits 1 with none; the card's
@@ -90,7 +121,14 @@ caller="unknown"   # operator | other | unknown
 
 FORMS='  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" check
   "$CLAUDE_CONFIG_DIR/tools/herenow.sh" manifest "<path>"
-  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" publish "<path>" [--slug <slug>] [--title "<text>"] [--description "<text>"]'
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" site-ls
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" site-files "<slug>"
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" site-cat "<slug>" "<path>"
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" drive-ls
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" drive-ls "<drive>" ["<prefix>"]
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" drive-cat "<drive>" "<path>"
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" publish "<path>" [--slug <slug>] [--title "<text>"] [--description "<text>"] [--ordered | --public]
+  "$CLAUDE_CONFIG_DIR/tools/herenow.sh" drive-put "<drive>" "<path>" --from "<local-file>" [--ordered]'
 
 block() {
   DECIDED=1
@@ -122,7 +160,7 @@ on_exit() {
 trap 'on_exit $?' EXIT
 trap 'exit 143' HUP INT TERM
 
-OTHER_REASON="publishing dispatches to the Operator through its kit; a key file is never read by hand."
+OTHER_REASON="here.now publishing, site and Drive work dispatch to the Operator through its kit; a key file is never read by hand."
 
 input="$(cat 2>/dev/null || true)"
 [ -n "$input" ] || ask "no tool input reached the gate."
@@ -283,8 +321,9 @@ if [ "$caller" != operator ]; then
   norm="${norm//$'\001'/\\}"
   norm="$(printf '%s' "$norm" | tr '[:upper:]' '[:lower:]' | tr -d "\"'" | tr '\\' '/' | tr -s ' \t' '  ')"
   case "$norm" in
-    *publish.sh*|*here.now/api*|*herenow_api_key*|*.herenow/credentials*|*'herenow.sh publish'*)
-      ask "this command carries a here.now publish or key shape; $OTHER_REASON" ;;
+    *publish.sh*|*drive.sh*|*here.now/api*|*herenow_api_key*|*herenow_drive_token*|*.herenow/credentials*|\
+    *'herenow.sh publish'*|*'herenow.sh site-'*|*'herenow.sh drive-'*)
+      ask "this command carries a here.now publish, site, Drive or key shape; $OTHER_REASON" ;;
   esac
   pass
 fi
@@ -436,28 +475,97 @@ check_text_value() {
     *'$'*|*'`'*|*'\'*) block "a \$, backtick or backslash in the $2" ;;
   esac
 }
+# A site or Drive path: a text value, relative to its root, no .. segment.
+check_rel_value() {
+  check_text_value "$1" "$2"
+  case "$1" in /*) block "a $2 starting with /" ;; esac
+  case "/$1/" in */../*) block "a .. segment in the $2" ;; esac
+}
+check_drive_value() {
+  check_text_value "$1" "drive name"
+  case "$1" in -*) block "a drive name starting with -" ;; esac
+}
+# take_slug: a slug, bare or double-quoted, into sv.
+take_slug() {
+  case "$rest" in
+    \"*) take_quoted "slug"; sv="$qv" ;;
+    *)   sv="${rest%% *}"; rest="${rest:${#sv}}" ;;
+  esac
+  printf '%s' "$sv" | LC_ALL=C grep -Eq '^[a-z0-9-]+$' || block "a slug outside [a-z0-9-]"
+}
+# at_end <what>: nothing may follow.
+at_end() { ltrim; [ -z "$rest" ] || block "$1"; }
 
 ltrim
 sub="${rest%% *}"
 rest="${rest:${#sub}}"
+have_ordered=0
 case "$sub" in
   check)
-    ltrim
-    [ -z "$rest" ] || block "words after check"
+    at_end "words after check"
     pass ;;
   manifest)
     ltrim
     take_quoted "path"
     check_path_value "$qv"
-    ltrim
-    [ -z "$rest" ] || block "more than one path, or words after the path"
+    at_end "more than one path, or words after the path"
     pass ;;
+  site-ls)
+    at_end "words after site-ls, which takes none"
+    pass ;;
+  site-files)
+    ltrim; take_slug
+    at_end "words after the slug"
+    pass ;;
+  site-cat)
+    ltrim; take_slug
+    ltrim; take_quoted "site path"; check_rel_value "$qv" "site path"
+    at_end "words after the site path"
+    pass ;;
+  drive-ls)
+    ltrim
+    [ -z "$rest" ] && pass
+    take_quoted "drive name"; check_drive_value "$qv"
+    ltrim
+    [ -z "$rest" ] && pass
+    take_quoted "prefix"; check_rel_value "$qv" "prefix"
+    at_end "more than a drive name and a prefix after drive-ls"
+    pass ;;
+  drive-cat)
+    ltrim; take_quoted "drive name"; check_drive_value "$qv"
+    ltrim; take_quoted "drive path"; check_rel_value "$qv" "drive path"
+    at_end "words after the drive path"
+    pass ;;
+  drive-put)
+    ltrim; take_quoted "drive name"; check_drive_value "$qv"; drive="$qv"
+    ltrim; take_quoted "drive path"; check_rel_value "$qv" "drive path"; dpath="$qv"
+    from=""; have_from=0
+    while :; do
+      ltrim
+      [ -n "$rest" ] || break
+      opt="${rest%% *}"
+      rest="${rest:${#opt}}"
+      case "$opt" in
+        --from)
+          [ "$have_from" -eq 0 ] || block "--from given twice"
+          ltrim; take_quoted "local file"; check_path_value "$qv"; from="$qv"; have_from=1 ;;
+        --ordered)
+          [ "$have_ordered" -eq 0 ] || block "--ordered given twice"
+          have_ordered=1 ;;
+        -*)
+          block "an option drive-put does not take ($opt); only --from and --ordered" ;;
+        *)
+          block "a stray word or a shell metacharacter after the drive path" ;;
+      esac
+    done
+    [ "$have_from" -eq 1 ] || block "drive-put without --from \"<local-file>\""
+    ;;
   publish)
     ltrim
     take_quoted "path"
     check_path_value "$qv"
     target="$qv"
-    slug=""; have_slug=0; have_title=0; have_desc=0
+    slug=""; have_slug=0; have_title=0; have_desc=0; have_public=0
     while :; do
       ltrim
       [ -n "$rest" ] || break
@@ -480,10 +588,18 @@ case "$sub" in
         --description)
           [ "$have_desc" -eq 0 ] || block "--description given twice"
           ltrim; take_quoted "description"; check_text_value "$qv" "description"; have_desc=1 ;;
-        --api-key|--api-key=*|--base-url|--base-url=*|--allow-nonherenow-base-url|\
+        --ordered)
+          [ "$have_ordered" -eq 0 ] || block "--ordered given twice"
+          [ "$have_public" -eq 0 ] || block "--ordered with --public; an ordered publish is owner-only, and a public one always asks"
+          have_ordered=1 ;;
+        --public)
+          [ "$have_public" -eq 0 ] || block "--public given twice"
+          [ "$have_ordered" -eq 0 ] || block "--ordered with --public; an ordered publish is owner-only, and a public one always asks"
+          have_public=1 ;;
+        --api-key|--api-key=*|--token|--token=*|--base-url|--base-url=*|--allow-nonherenow-base-url|\
         --claim-token|--claim-token=*|--overwrite|--ttl|--ttl=*|--workspace|--workspace=*|\
         --from-drive|--from-drive=*|--version|--version=*|--spa|--client|--client=*)
-          block "the option ${opt%%=*}, which the kit refuses (it names the harm); only --slug, --title and --description" ;;
+          block "the option ${opt%%=*}, which the kit refuses (it names the harm); only --slug, --title, --description, --ordered and --public" ;;
         -*)
           block "an option the kit does not take ($opt)" ;;
         *)
@@ -492,21 +608,17 @@ case "$sub" in
     done
     ;;
   *)
-    block "no subcommand the kit takes (check, manifest or publish)" ;;
+    block "no subcommand the kit takes (check, manifest, site-ls, site-files, site-cat, drive-ls, drive-cat, publish or drive-put)" ;;
 esac
-[ "$sub" = publish ] || block "the gate lost its place after an internal error, and an unfinished check never passes"
+case "$sub" in
+  publish|drive-put) ;;
+  *) block "the gate lost its place after an internal error, and an unfinished check never passes" ;;
+esac
 
-# --- publish: the ask, and whether the target lies outside the session's root -------
-if [ "$have_slug" -eq 1 ]; then act="an update of the site $slug"; else act="a new site"; fi
+# --- the writes: whether the local source lies inside the session's root ------------
+# judge_root <path>: sets root_state (inside | outside | unmade) and root_note.
+root_state=unmade
 root_note=""
-# The target in the form the path guard compares: forward slashes, and on
-# Windows the mixed form (C:/...), which is how the session's root reaches it.
-_t="$(printf '%s' "$target" | tr '\\' '/')"
-if command -v cygpath >/dev/null 2>&1; then
-  case "$_t" in
-    /*) _m="$(cygpath -m "$_t" 2>/dev/null)"; [ -n "$_m" ] && _t="$_m" ;;
-  esac
-fi
 case "$0" in */*) _hooks="${0%/*}" ;; *) _hooks=. ;; esac
 delegate="$_hooks/guard-archivist-paths.sh"
 passthru=""
@@ -514,23 +626,61 @@ case "$cwd_raw" in *'\"'*|*$'\002'*) cwd_raw="" ;; esac
 case "$sid_raw" in *'\"'*|*$'\002'*) sid_raw="" ;; esac
 [ -n "$sid_raw" ] && passthru="$passthru\"session_id\":\"$sid_raw\","
 [ -n "$cwd_raw" ] && passthru="$passthru\"cwd\":\"$cwd_raw\","
-if [ ! -f "$delegate" ]; then
-  root_note=" The session-root check did not run: guard-archivist-paths.sh is not beside the gate."
-else
-  # judge: one run of the path guard, as the OpenKnowledge guard runs it. Its
-  # ask means the target lies outside the session's root and its grants; a run
-  # that fails or answers in another shape leaves the check unmade, and says so.
+judge_root() {
+  root_state=unmade
+  root_note=""
+  # The path in the form the path guard compares: forward slashes, and on
+  # Windows the mixed form (C:/...), which is how the session's root reaches it.
+  _t="$(printf '%s' "$1" | tr '\\' '/')"
+  if command -v cygpath >/dev/null 2>&1; then
+    case "$_t" in
+      /*) _m="$(cygpath -m "$_t" 2>/dev/null)"; [ -n "$_m" ] && _t="$_m" ;;
+    esac
+  fi
+  if [ ! -f "$delegate" ]; then
+    root_note=" The session-root check did not run: guard-archivist-paths.sh is not beside the gate."
+    return 0
+  fi
+  # The delegate passes a path it cannot place; with no root to place it
+  # against, a pass would read as inside, so the check stays unmade.
+  if [ -z "${CLAUDE_PROJECT_DIR:-}" ] && [ -z "$cwd_raw" ]; then
+    root_note=" The session-root check did not run: the gate knows no session root (neither CLAUDE_PROJECT_DIR nor the input's cwd)."
+    return 0
+  fi
+  # One run of the path guard, as the OpenKnowledge guard runs it. Its ask
+  # means the path lies outside the session's root and its grants; silence
+  # with exit 0 means inside; a run that fails or answers in another shape
+  # leaves the check unmade, and says so.
   _tj="${_t//\\/\\\\}"
   _out="$(printf '%s' "{$passthru\"tool_input\":{\"file_path\":\"$_tj\"}}" | "${BASH:-bash}" "$delegate" main-session 2>/dev/null)"
   _drc=$?
   case "$_out" in
-    *'"permissionDecision":"ask"'*) root_note=" The target lies OUTSIDE the session's root." ;;
+    *'"permissionDecision":"ask"'*) root_state=outside; root_note=" The $2 lies OUTSIDE the session's root." ;;
     *)
       if [ "$_drc" -ne 0 ]; then
-        root_note=" The session-root check failed (exit status $_drc) and did not say where the target lies."
+        root_note=" The session-root check failed (exit status $_drc) and did not say where the $2 lies."
       elif [ -n "$_out" ]; then
         root_note=" The session-root check answered in a shape the gate does not read."
+      else
+        root_state=inside
       fi ;;
   esac
+  return 0
+}
+
+if [ "$sub" = drive-put ]; then
+  judge_root "$from" "local file"
+  [ "$have_ordered" -eq 1 ] && [ "$root_state" = inside ] && pass
+  ask "a Drive upload, a live external write: drive $drive, path $dpath, local file $from.$root_note An unordered upload, or one whose local file lies outside the session's root, asks."
 fi
-ask "publish is a live external write to a world-readable URL. Target $target, $act.$root_note"
+[ "$sub" = publish ] || block "the gate lost its place after an internal error, and an unfinished check never passes"
+if [ "$have_slug" -eq 1 ]; then act="an update of the site $slug"; else act="a new site"; fi
+judge_root "$target" "target"
+if [ "$have_public" -eq 1 ]; then
+  ask "a PUBLIC publish: a new site anyone with the link can read, or an update that keeps the site's current access, which the gate cannot see. Target $target, $act.$root_note"
+fi
+if [ "$have_ordered" -eq 1 ]; then
+  [ "$root_state" = inside ] && pass
+  ask "an ordered publish passes only when its target lies inside the session's root. Target $target, $act.$root_note"
+fi
+ask "publish is a live external write, owner-only by default: the kit puts a new site up as a placeholder, locks it to the owner and checks it before the content goes up, and an update goes only to an owner-only site. Without --ordered it asks. Target $target, $act.$root_note"

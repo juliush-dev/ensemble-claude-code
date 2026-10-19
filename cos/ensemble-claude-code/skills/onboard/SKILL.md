@@ -19,7 +19,7 @@ This is the retrieval protocol's onboarding moment: a project's notebook geograp
 The face is enough to orient. Go deeper only where the task points:
 
 - Working a specific pursuit → its contract kernel, then its spec and plan.
-- Picking up a route → stop; that is the `pass-discipline` runbook's binding pickup read, not onboarding.
+- Picking up a route or a contract-direct pursuit → stop; that is the `pass-discipline` runbook's binding pickup read, not onboarding.
 - A tending's beat → its charter, then the `occurrence` runbook.
 
 ## Honesty notes
