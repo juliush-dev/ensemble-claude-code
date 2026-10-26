@@ -1,13 +1,13 @@
 ---
 name: cross-shell-command-discipline
-description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, verifying target state through a different shell than the one that will execute the command, or proving a tool is present on Windows.
+description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, verifying target state through a different shell than the one that will execute the command, proving a tool is present on Windows, or a Windows-host trap inside one shell (Git Bash line endings with sed -i or grep, empty or quoted native arguments in Windows PowerShell 5.1, PowerShell array and boolean expressions).
 ---
 
 # Cross-Shell Command Discipline
 
 ## Overview
 
-Use this skill when the shell boundary is part of the problem. A shell boundary is the point where one command interpreter hands text to another, such as PowerShell calling `wsl.exe`, WSL calling Windows executables, Git Bash launching a script that touches Windows paths, or `ssh` passing a quoted command to a remote shell.
+Use this skill when the shell boundary is part of the problem. A shell boundary is the point where one command interpreter hands text to another, such as PowerShell calling `wsl.exe`, WSL calling Windows executables, Git Bash launching a script that touches Windows paths, or `ssh` passing a quoted command to a remote shell. The skill also carries Windows-host traps that bite inside one shell, such as Git Bash rewriting or miscounting line endings and Windows PowerShell 5.1 dropping an empty native argument, because they give the same false evidence.
 
 The aim is to avoid false evidence. A command that failed because PowerShell, Bash, WSL, Git Bash, `cmd`, SSH, or Docker parsed it differently than intended tells you more about the command string than about the target system.
 
@@ -25,8 +25,9 @@ Invoke this skill when a command or verification step includes:
 - Globs, redirection, command substitution, pipelines, variable expansion, or `for` loops crossing from one shell into another.
 - A verification command whose result will decide whether deployment, file sync, or cleanup succeeded.
 - A previous command in the same task failed with a parser error, empty output, unexpected quoting behavior, or a path-not-found result that could be a shell mismatch.
+- A Windows-host trap inside one shell: Git Bash `sed -i` on a CRLF file or `grep` counting carriage returns, a native argument from Windows PowerShell 5.1 that is empty or holds a double quote and a space, or a PowerShell expression that joins command calls with `-and` or nests one array in another.
 
-Do not invoke for simple single-shell commands with no quoting, path translation, or nested execution.
+Do not invoke for simple single-shell commands with no quoting, path translation, nested execution, or Windows-host trap named above.
 
 ## Workflow
 
@@ -115,7 +116,7 @@ Authoring a script *for* one shell from *inside* another (for example writing a 
 
 2. **Non-ASCII characters silently mangle across the authoring boundary and break the target shell's parse.** When the script you write contains em-dashes (`—`), arrows (`→`), or smart quotes — often pasted in from prose or a plan — those multi-byte characters can corrupt as the bytes cross the shell/encoding boundary, producing a *parse-time* failure in the target shell rather than a clean runtime error. **Author any cross-shell script ASCII-only** (`-`/`--` for em-dashes, `->` for arrows, straight quotes), and verify zero non-ASCII bytes before running it. The Windows-PowerShell-specific mechanism behind this: Windows PowerShell 5.x reads a no-BOM UTF-8 `.ps1` through the machine's ANSI code page, so a multi-byte UTF-8 character (em-dash, arrow, smart quote) is misdecoded into stray bytes that break the target shell's *parse* rather than throwing a clean runtime error. When non-ASCII is genuinely unavoidable, the two escape hatches are (a) write the file with a UTF-8 BOM, which forces WPS 5.x to decode it as UTF-8, or (b) construct the character in-script instead of writing it as a literal (`[char]0x2014` for an em-dash). The ASCII-only authoring rule here is the provider-independent form that holds across any author-in-one-shell, run-in-another boundary.
 
-3. **The Bash tool halves backslash pairs.** A `\\` typed in a Bash-tool command reaches bash as one `\`, in single quotes and in a quoted heredoc alike, so a heredoc-written script or regex silently loses half its backslashes. The Write tool keeps both. **Write backslash-bearing content with the Write tool**, and check the bytes on disk before running it.
+3. **The Bash tool halves backslash pairs.** A `\\` typed in a Bash-tool command reaches bash as one `\`, in single quotes and in a quoted heredoc alike, so a heredoc-written script or regex silently loses half its backslashes. The Write tool keeps both. **Write backslash-bearing content with the Write tool**, and check the bytes on disk before running it. The halving also stops a variable from expanding: `"D:\\work\\$p"` typed in the Bash tool reaches bash as `"D:\work\$p"`, where `\$` escapes the dollar, so the program receives the literal text `$p`; the same line in a script file expands. Write Windows paths in Bash with forward slashes, `"D:/work/$p"`. A program that creates a missing folder then makes one named after the literal, so prove a built path with a read-only check before such a program runs against it.
 
 ### Watch variable pre-expansion when PowerShell wraps a Bash command
 
@@ -127,13 +128,20 @@ wsl.exe -- bash -lc 'echo "$HOME"; ls "$d"'
 
 Two signatures of this trap: a `HOME` that reads like a Windows path with its separators stripped, and a `cp` or `ls` that errors on a path missing the segment a shell variable should have supplied. The attribution is boundary-agnostic — even single-quoted, a multi-statement Bash body with `var=...; ...$var...` assignments can come back empty **through Git Bash / MSYS → `wsl.exe` → `bash -lc` exactly as through PowerShell → `wsl.exe`**. A body like `C=/home/<user>/.config/app; ... "$C/skills"` resolved `$C` to empty, so the paths degraded to `/skills`, `/settings.json`, and read as not-found. The fix that worked: fully literal absolute paths, no assign-then-reuse variable across the boundary. When literal paths are impractical, switch to the write-a-script route above rather than fighting the one-liner.
 
-### PowerShell 5.1 splits a native argument holding quotes and spaces
+### PowerShell 5.1 splits or drops native arguments
 
 Windows PowerShell 5.1 hands a native program an argument that holds both a double quote and a space unwrapped, so it splits at the space even when the PowerShell side quoted it; JSON is the usual victim. Put the value in an environment variable, its double quotes escaped for the target's parser, and pass it after the stop-parsing token `--%`, where PowerShell substitutes `%VAR%` and passes the rest verbatim:
 
 ```powershell
 $env:ARG_JSON = $json -replace '"', '\"'
 prog --% add-json "%ARG_JSON%"
+```
+
+It also drops an empty argument. In `prog --flag '' last` the program sees `--flag last`, so the next argument takes the empty one's place. `""` and a variable holding `''` drop the same way, and `$env:X = ''` deletes the variable, so `"%X%"` after `--%` arrives as the text `%X%`. Pass the quote pair itself:
+
+```powershell
+prog --flag '""' last
+prog --% --flag "" last
 ```
 
 ### Running a PowerShell-authored plan through Git Bash / MSYS
@@ -163,18 +171,22 @@ On a tree with `core.filemode=false`, an executable bit set with `git update-ind
 
 On a CRLF working file (`git ls-files --eol` shows `w/crlf`), Git Bash's `sed` matches no `\r$` pattern, and `sed -i` writes the whole file back with LF endings whatever its pattern matched. Every line changes: a corruption, not a no-op. Edit such files with the Edit tool; if `sed -i` already ran on a file with no other uncommitted edits, restore it with `git checkout -- <file>`.
 
+### Git Bash `grep` cannot count carriage returns
+
+Given a CR as its pattern, Git Bash's `grep` matches every line: `grep -c $'\r' file` returns the file's line count, as do `$'\r$'` and `-U`, so an LF-only file reads as all CRLF. Count endings by bytes, `tr -cd '\r' < file | wc -c` (CR bytes) or Python's `open(p, 'rb').read().count(b'\r\n')` (CRLF pairs), or read `git ls-files --eol`, and do it before and after any in-place rewrite. Observed with GNU grep 3.0.
+
 ### Bundled / Windows-native Python invoked from MSYS: path-form split
 
 When you call a Windows-native interpreter (for example an app's bundled venv Python at `app/venv/Scripts/python`) from inside MSYS, two boundary traps appear:
 
 1. A `#!/usr/bin/env python3` launcher script does **not** resolve its shebang under MSYS and throws an import traceback if run directly. Invoke through the interpreter explicitly: `app/venv/Scripts/python app/launcher <args>` instead of `./launcher` or `& "...\launcher"`.
-2. The interpreter is Windows-native, so inside any `python -c "..."` snippet it cannot open MSYS `/c/...` paths and throws `FileNotFoundError`, even though bash builtins (`cp`, `sha256sum`, `grep`) read `/c/...` fine in the same session. Give the embedded Python **native** Windows paths as raw strings:
+2. The interpreter is Windows-native, so inside any `python -c "..."` snippet it cannot open MSYS `/c/...` paths and throws `FileNotFoundError`, even though bash builtins (`cp`, `sha256sum`, `grep`) read `/c/...` fine in the same session. Give the embedded Python **native** Windows paths, `C:/...` or a `C:\...` raw string:
 
 ```bash
 app/venv/Scripts/python -c "import yaml; d=yaml.safe_load(open(r'C:\Users\me\config.yaml',encoding='utf-8')); print(d['key'])"
 ```
 
-Rule of thumb for the whole session: bash builtins get `/c/...` paths; a Windows-native interpreter's `-c` snippet gets `C:\...` raw-string paths. Mixing the two is the most common silent failure in this configuration — a `FileNotFoundError` here is a path-form mismatch, not a missing file (do not let it harden into a "the file is gone" conclusion).
+Rule of thumb for the whole session: bash builtins get `/c/...` paths; a Windows-native interpreter's `-c` snippet gets `C:/...` paths, or `C:\...` raw strings. Mixing the two is the most common silent failure in this configuration — a `FileNotFoundError` here is a path-form mismatch, not a missing file (do not let it harden into a "the file is gone" conclusion).
 
 ### A Windows program that starts `bash` by bare name gets WSL's
 
@@ -187,6 +199,8 @@ Pass the full path of the bash you mean (the `shutil.which` result, or Git's `bi
 
 Even with the right bash, set the variables a script needs inside the call, through `env=` or an `export` at the head of the `-c` string, never trusting the caller's environment to arrive unchanged. Check them with `${VAR-unset}`, not `${VAR:-default}`: the colon form treats set-but-empty as unset and falls back silently, which is how an empty `TMPDIR` becomes `/tmp` and a fixture's expected direction inverts.
 
+### Two PowerShell expression traps
+
 When you need a PowerShell boolean expression, wrap command calls before combining them:
 
 ```powershell
@@ -194,6 +208,8 @@ Where-Object { (Test-Path -LiteralPath (Join-Path $_.FullName 'SKILL.md')) -and 
 ```
 
 Do not write the `-and` as if it were an argument to `Test-Path`.
+
+A one-element nested array flattens: `@( @('x', 'y') )` holds `'x'` and `'y'`, so a loop expecting one array per element walks the items. A leading comma keeps the inner array whole, `@( ,@('x', 'y') )`. Two or more inner arrays separated by commas each stay whole.
 
 ### Proving a tool is present on Windows
 

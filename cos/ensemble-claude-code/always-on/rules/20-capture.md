@@ -4,14 +4,14 @@ Work throws off feedback constantly. A **capture signal** is feedback that passe
 
 **The landing menu — eight questions, a closed set:**
 
-1. Does it change where the route stands or where the next pass picks up? → the route's `Handoff.md`.
-2. Is it a problem or question surfaced but not handled, within the route's scope? → the route's `Gaps.md`.
+1. Does it change where the route stands or where the next pass picks up? → the route's `Handoff.md`, or contract-direct, the contract's Current state.
+2. Is it a problem or question surfaced but not handled, within the route's scope? → the route's `Gaps.md`, or contract-direct, the contract's Current state.
 3. Is it a wish bigger than the unit you are in? → an aim surface's ripening region, asking **"bigger toward which body?"** — a complaint about the operating shape itself belongs to the shape's own project aim, not to the project you happen to be in.
 4. Is it a standing decision or constraint? → the constitution's bounds.
 5. Is new work being born right here? → a designation plus its registry line.
 6. Is it a tending's check result? → an occurrence record.
 7. Would it matter beyond this project? → the shared external brain.
-8. What the pass itself did and left → the iteration record, at the stop.
+8. What the pass itself did and left → the iteration record, or contract-direct, the commit message, at the stop.
 
 **Scan moments** — run the scan whenever one fires: a user statement (wish, complaint, correction, judgment); a grounding that confirms or refutes; a problem solved; work uncovered mid-pass; something surfaced but not handled; a wish starting to ripen; a null result ("nothing changed" is keep-worthy); a vocabulary lock; friction with the running operating shape itself. Examples forever, never a gate — not finding your situation here never excuses not capturing.
 

@@ -59,8 +59,10 @@
 # hookSpecificOutput.additionalContext, which the session reads, plus one
 # sentence asking the session to tell the human at its first answer. One line
 # per mod. Past 8,700 characters the remaining lines are counted in a last line
-# instead, so each field stays under 9,000 characters, below the harness's
-# 10,000-character cap.
+# instead. The rest of each field, up to the harness's 10,000-character cap,
+# is room for what the hook adds after that budget: the count line, a
+# cannot-tell line naming a home path of any length, and in
+# additionalContext the sentence above.
 #
 # Fail direction: say more. It is silent when the scan finds no mod, a home
 # without installed_plugins.json included (a fresh home has no plugins), and in

@@ -22,7 +22,9 @@
 # a host skills\ folder only when skills-shipped.txt (the append-only manifest of
 # every skill this COS has ever shipped) lists it AND the current source no longer
 # carries it - a shipped-then-retired skill; a host-added skill this COS never
-# shipped is left alone.
+# shipped is left alone. The one other file it removes is CONCERTMASTER.md, the
+# main-session rules file's name before 2026-10-25, from the home's root, and
+# only once this run's LEAD.md has landed matching its source.
 #
 # settings.json is not copied but MERGED, by merge-settings.py, the one merge
 # implementation both deploy scripts call. The home's own settings.json is the
@@ -106,7 +108,7 @@
 # Then it hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six
 # always-on copies excepted, though the main-session rules file
-# CONCERTMASTER.md, also from always-on\, is verified), asserts the deployed
+# LEAD.md, also from always-on\, is verified), asserts the deployed
 # settings.json path by path against what the factory declares, and prints the
 # inventory.
 # It refuses to overwrite an existing target unless -Force (which moves the
@@ -124,13 +126,13 @@ Write-Host "Target: $target"
 
 if (Test-Path $target) {
     if ($Update) {
-        Write-Host "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried. A host skills folder this COS shipped in an earlier release but no longer carries is pruned - it came from the source, so git can restore it; a skills folder this COS never shipped is left alone as yours. -Force is the other path: it moves the whole home to a timestamped backup - plugins, sessions, and login move with it and are re-established by hand.)"
+        Write-Host "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried. A host skills folder this COS shipped in an earlier release but no longer carries is pruned - it came from the source, so git can restore it; a skills folder this COS never shipped is left alone as yours. A CONCERTMASTER.md at the home's root, the former name of the main-session rules file LEAD.md, is removed once LEAD.md lands. -Force is the other path: it moves the whole home to a timestamped backup - plugins, sessions, and login move with it and are re-established by hand.)"
     } elseif (-not $Force) {
         Write-Host ""
         Write-Host "Target already exists. Contents:"
         Get-ChildItem $target | Select-Object -ExpandProperty Name
         Write-Host ""
-        Write-Host "Re-run with -Update to refresh the staged files in place (keeps login/session state; prunes only a skill this COS shipped and has since retired, and leaves any skill you added yourself alone),"
+        Write-Host "Re-run with -Update to refresh the staged files in place (keeps login/session state; prunes only a skill this COS shipped and has since retired and the rules file's former name CONCERTMASTER.md, and leaves any skill you added yourself alone),"
         Write-Host "or with -Force to replace the whole home (the existing directory is moved to a timestamped backup first; plugins, sessions, and login move with it and are re-established by hand)."
         exit 1
     } else {
@@ -224,7 +226,8 @@ Get-ChildItem (Join-Path $src 'skills') -Directory | ForEach-Object {
 # skills\unslop, shipped then renamed to writing-and-talking-style, would
 # otherwise linger beside its replacement on an -Update. A folder NOT in the
 # manifest is one this COS never shipped (a host-added skill) and is kept. Scoped
-# strictly to skills\ subdirectories; nothing else is ever removed.
+# strictly to skills\ subdirectories; the only other file this script removes is
+# the stale CONCERTMASTER.md, handled beside the LEAD.md copy below.
 $manifestPath = Join-Path $src 'skills-shipped.txt'
 $shipped = @()
 if (Test-Path $manifestPath) {
@@ -261,12 +264,28 @@ Copy-Item (Join-Path $src '.mcp.json') $target
 # and the fixes its guards rely on. Read by hooks\session-start-harness-marker.sh
 # at session start; never loaded into context.
 Copy-Item (Join-Path $src 'HARNESS.md') $target
-# CONCERTMASTER.md: the main session's own rules, from always-on\ to the home's
+# LEAD.md: the main session's own rules, from always-on\ to the home's
 # root, where Claude Code never loads it on its own (it is not under rules\ and
 # not named CLAUDE.md), so no member receives it. launch\start-ensemble.ps1
 # appends it to the main session's system prompt; hooks\session-start-cue.sh
 # prints it when a session starts without the launcher. Hash-verified below.
-Copy-Item (Join-Path $src 'always-on\CONCERTMASTER.md') (Join-Path $target 'CONCERTMASTER.md')
+Copy-Item (Join-Path $src 'always-on\LEAD.md') (Join-Path $target 'LEAD.md')
+# The rules file's former name. A home deployed before 2026-10-25 holds these
+# rules as CONCERTMASTER.md, which the launcher and the session cue no longer
+# read. It is removed only when the LEAD.md this run just wrote matches its
+# source byte for byte, so a home is never left without its rules file. A home
+# without the old file gets no line about it.
+$staleRules = Join-Path $target 'CONCERTMASTER.md'
+if (Test-Path -LiteralPath $staleRules -PathType Leaf) {
+    $newRules = Join-Path $target 'LEAD.md'
+    $rulesHash = (Get-FileHash -LiteralPath (Join-Path $src 'always-on\LEAD.md') -Algorithm SHA256).Hash
+    if ((Test-Path -LiteralPath $newRules -PathType Leaf) -and ((Get-FileHash -LiteralPath $newRules -Algorithm SHA256).Hash -eq $rulesHash)) {
+        Remove-Item -LiteralPath $staleRules -Force
+        Write-Host "Removed the stale main-session rules file CONCERTMASTER.md: it is the former name of LEAD.md, which this run wrote and checked against its source."
+    } else {
+        Write-Host "Kept CONCERTMASTER.md: LEAD.md did not land matching its source this run, so the old rules file stays until a run that writes it." -ForegroundColor Yellow
+    }
+}
 
 # --- settings.json: the preserving merge ------------------------------------
 # The home's own settings.json is where host values live: the user edits it
@@ -410,17 +429,17 @@ if ($null -eq $python) {
     $settingsMerged = $true
 }
 
-# Integrity: the 54 files hash-compare against source, byte-identical except the
+# Integrity: the 55 files hash-compare against source, byte-identical except the
 # five agent cards (against their guard-processed content, which equals the
 # source byte-for-byte while the source ships clean, as it now does).
-# CONCERTMASTER.md is compared with its source in always-on\, the one entry
+# LEAD.md is compared with its source in always-on\, the one entry
 # whose source path differs from its home path ($sourceOf below).
 # settings.json is NOT in this set and cannot be: the deployed file legitimately
 # carries host keys the factory never declared, so no hash of source, and no
 # hash of a merged text, says anything true about it. It is verified instead by
 # a post-write assertion below - the file is re-read from disk, parsed, and
 # checked path by path.
-# (31 core - the 19 that were here before, less settings.json, which the
+# (32 core - the 19 that were here before, less settings.json, which the
 # assertion now covers, and less the Examiner's guard
 # hooks\guard-examiner-bash.sh, plus the Scout's guard
 # hooks\guard-scout-bash.sh,
@@ -431,9 +450,10 @@ if ($null -eq $python) {
 # hooks\guard-openknowledge.sh, and the Operator's here.now kit
 # tools\herenow.sh and its gate hooks\guard-herenow.sh, and the cross-shell
 # nudge hooks\nudge-cross-shell.sh, and the main-session rules
-# CONCERTMASTER.md, and the mod-presence check
+# LEAD.md, and the mod-presence check
 # hooks\session-start-mod-check.sh, and the refocus hook hooks\refocus.sh,
-# and the delete guard hooks\guard-delete.sh;
+# and the delete guard hooks\guard-delete.sh, and the grant-write guard
+# hooks\guard-grant-writes.sh;
 # + the 8
 # curated obsidian skill files: three SKILL.md plus five references; + the 10
 # promoted formal-library files: five SKILL.md (cross-shell-command,
@@ -453,9 +473,10 @@ $same = @(
     'hooks\guard-herenow.sh', 'hooks\nudge-cross-shell.sh',
     'hooks\session-start-harness-marker.sh', 'hooks\session-start-cue.sh',
     'hooks\session-start-mod-check.sh', 'hooks\refocus.sh', 'hooks\guard-delete.sh',
+    'hooks\guard-grant-writes.sh',
     'tools\scout-fetch.sh', 'tools\herenow.sh',
     'launch\start-ensemble.ps1', 'launch\wire-mcp.ps1', 'launch\cos.ps1',
-    '.mcp.json', 'HARNESS.md', 'CONCERTMASTER.md',
+    '.mcp.json', 'HARNESS.md', 'LEAD.md',
     'skills\onboard\SKILL.md', 'skills\pass-discipline\SKILL.md', 'skills\unit-close\SKILL.md',
     'skills\occurrence\SKILL.md', 'skills\designate\SKILL.md',
     'skills\operational-lane-discipline\SKILL.md',
@@ -482,7 +503,7 @@ $same = @(
     'skills\json-canvas\SKILL.md',
     'skills\json-canvas\references\EXAMPLES.md'
 )
-$sourceOf = @{ 'CONCERTMASTER.md' = 'always-on\CONCERTMASTER.md' }
+$sourceOf = @{ 'LEAD.md' = 'always-on\LEAD.md' }
 $failed = @()
 foreach ($p in $same) {
     if ($strippedExpected.ContainsKey($p)) {
@@ -784,7 +805,7 @@ if ($settingsMerged) {
 } else {
     $settingsLine = 'settings.json (NOT WRITTEN - no Python 3; the host file is untouched and unchanged)'
 }
-$staged = @('CLAUDE.md', 'CONCERTMASTER.md', 'HARNESS.md', $settingsLine, '.mcp.json', $browserLine)
+$staged = @('CLAUDE.md', 'LEAD.md', 'HARNESS.md', $settingsLine, '.mcp.json', $browserLine)
 $staged += $hostRequirementLines
 $staged += Get-ChildItem (Join-Path $src 'always-on\rules') -Filter *.md | ForEach-Object { "rules\" + $_.Name }
 $staged += Get-ChildItem (Join-Path $src 'agents') -Filter *.md | ForEach-Object { "agents\" + $_.Name }

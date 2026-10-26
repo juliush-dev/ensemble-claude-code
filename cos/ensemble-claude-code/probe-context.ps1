@@ -16,13 +16,13 @@
 #
 # HOW IT MIRRORS THE LIVE LAUNCH (grounded against launch/start-ensemble.ps1)
 #   An interactive session launches as:  CLAUDE_CONFIG_DIR = <home>;
-#   ENSEMBLE_CONCERTMASTER_APPENDED = 1; claude --setting-sources user
-#   --append-system-prompt-file <home>\CONCERTMASTER.md ...   This probe sets the
+#   ENSEMBLE_LEAD_APPENDED = 1; claude --setting-sources user
+#   --append-system-prompt-file <home>\LEAD.md ...   This probe sets the
 #   SAME CLAUDE_CONFIG_DIR and marker and passes the SAME --setting-sources user
 #   and the same appended main-session rules file, so the same deployed layer
 #   (home CLAUDE.md + rules + the main-session rules + skill listing + members)
 #   loads, and the session cue prints no fallback copy of the rules on top. A
-#   home without CONCERTMASTER.md is probed without the flag or the marker, as
+#   home without LEAD.md is probed without the flag or the marker, as
 #   the launcher would start it. It adds
 #   -p (headless) with a trivial prompt and --output-format stream-json --verbose,
 #   and it deliberately does NOT pass --bare (--bare skips CLAUDE.md/skills/hooks/
@@ -186,7 +186,7 @@ function Show-Report {
 }
 
 # --- Build the launch shape (mirrors launch/start-ensemble.ps1) ----------------
-$mainRules = Join-Path $EnsembleHome 'CONCERTMASTER.md'
+$mainRules = Join-Path $EnsembleHome 'LEAD.md'
 $mainArgs = @()
 if (Test-Path $mainRules) { $mainArgs = @('--append-system-prompt-file', $mainRules) }
 $claudeArgs = @('--setting-sources', 'user') + $mainArgs + @(
@@ -194,8 +194,8 @@ $claudeArgs = @('--setting-sources', 'user') + $mainArgs + @(
     '--output-format', 'stream-json',
     '--verbose'
 )
-$markerLine = 'ENSEMBLE_CONCERTMASTER_APPENDED=<unset>'
-if ($mainArgs.Count -gt 0) { $markerLine = 'ENSEMBLE_CONCERTMASTER_APPENDED=1' }
+$markerLine = 'ENSEMBLE_LEAD_APPENDED=<unset>'
+if ($mainArgs.Count -gt 0) { $markerLine = 'ENSEMBLE_LEAD_APPENDED=1' }
 
 Write-Host ("Ensemble home     : {0}" -f $EnsembleHome)
 Write-Host ("Working directory : {0}" -f $WorkingDirectory)
@@ -225,13 +225,13 @@ if (-not (Test-Path (Join-Path $EnsembleHome 'CLAUDE.md'))) {
 }
 
 $prevConfig = $env:CLAUDE_CONFIG_DIR
-$prevAppended = $env:ENSEMBLE_CONCERTMASTER_APPENDED
+$prevAppended = $env:ENSEMBLE_LEAD_APPENDED
 $prevLocation = (Get-Location).Path
 $prevEap = $ErrorActionPreference
 $rawLines = $null
 try {
     $env:CLAUDE_CONFIG_DIR = $EnsembleHome
-    if ($mainArgs.Count -gt 0) { $env:ENSEMBLE_CONCERTMASTER_APPENDED = '1' } else { $env:ENSEMBLE_CONCERTMASTER_APPENDED = $null }
+    if ($mainArgs.Count -gt 0) { $env:ENSEMBLE_LEAD_APPENDED = '1' } else { $env:ENSEMBLE_LEAD_APPENDED = $null }
     Set-Location -LiteralPath $WorkingDirectory
     Write-Host ""
     Write-Host "Launching headless probe against the deployed home..."
@@ -252,7 +252,7 @@ try {
 finally {
     $ErrorActionPreference = $prevEap
     $env:CLAUDE_CONFIG_DIR = $prevConfig
-    $env:ENSEMBLE_CONCERTMASTER_APPENDED = $prevAppended
+    $env:ENSEMBLE_LEAD_APPENDED = $prevAppended
     Set-Location -LiteralPath $prevLocation
 }
 

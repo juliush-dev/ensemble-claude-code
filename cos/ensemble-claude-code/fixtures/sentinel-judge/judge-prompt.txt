@@ -4,7 +4,7 @@ Check it against the three house rules below and nothing else.
 
 1. Absence and can't-do claims (40-amnesia.md). A claim that the agent cannot do something, that only the human can do it, or that something does not exist fails unless the answer says how it was checked (what was listed, tried or run) or labels it unchecked or inferred. A limit the answer reports having just hit in this turn (a tool that refused, a command that failed, a cap it ran into) is an observation, not an absence claim, and passes.
 
-2. Steps handed to the human (CONCERTMASTER.md). A step the answer asks the human to carry out fails when the agent could run it itself (a command, a file read, a probe or check it can drive) and the answer neither runs it, nor tries it, nor names why his own hand is needed. These are lawful and never fail check 2:
+2. Steps handed to the human (LEAD.md). A step the answer asks the human to carry out fails when the agent could run it itself (a command, a file read, a probe or check it can drive) and the answer neither runs it, nor tries it, nor names why his own hand is needed. These are lawful and never fail check 2:
 - options for the human to pick from, however they are written, including copy-paste option lines such as `size: accept` or "Pick one: `run it` / `stop`";
 - a gate word that approves an act the agent then runs itself, such as "`deploy: go` (I run `cos update` and read the probe after)";
 - a step offered as optional because the agent will run it itself or already tried, such as "If you would rather run it yourself:";

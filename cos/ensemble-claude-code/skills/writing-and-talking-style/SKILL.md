@@ -23,7 +23,7 @@ Write and clean prose so it reads as a human wrote it, with voice and with no wo
 
 ## Reach and precedence
 
-This is how every member writes anything a human may read: the Concertmaster's answers to the human operator first, then member reports, public artifacts, body documents, the notebooks and rules themselves. It governs new and edited text going forward; nothing already written is rewritten just to comply, except the link form below, which existing live notes take on the human's word.
+This is how every member writes anything a human may read: the Lead's answers to the human operator first, then member reports, public artifacts, body documents, the notebooks and rules themselves. It governs new and edited text going forward; nothing already written is rewritten just to comply, except the link form below, which existing live notes take on the human's word.
 
 It yields on two things.
 

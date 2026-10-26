@@ -260,6 +260,6 @@ idle=$((now - last))
 [ "$idle" -gt "$life" ] || exit 0
 
 block=1
-printf 'Compaction stopped: this conversation has been idle %s, past its %s prompt cache, so compacting would first re-read all of its ~%s tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact %s <focus>\n' \
+printf 'Compaction stopped: this conversation has been idle %s, past its %s prompt cache, so compacting would first re-read all of its ~%s tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff or Current state carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact %s <focus>\n' \
   "$(fmt_idle "$idle")" "$life_s" "$(fmt_k "$ctx")" "$ESCAPE_WORD" >&3
 exit 2

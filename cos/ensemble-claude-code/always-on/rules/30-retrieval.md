@@ -4,7 +4,7 @@ The team's memory is external, in its notebooks. A capture never read back has g
 
 **At onboarding** — read the project's face before touching it: the constitution (identity, bounds), then `Aim.md` (what the project wants now), then the registry (what is live). Descend no deeper than the task needs; the geography exists so a reader can stop at the right level.
 
-**At pickup** — the binding read, before working a route: `Handoff.md` and `Gaps.md`, then recent pass records latest-first where the handoff points. Pending ports staged on these surfaces resurface here automatically, every pickup, until executed.
+**At pickup** — the binding read, before working a route or a contract-direct pursuit: `Handoff.md` and `Gaps.md`, or the contract's Current state, then recent pass records latest-first where the handoff points. Pending ports staged on these surfaces resurface here automatically, every pickup, until executed.
 
 **Before birthing work** — check it is not already alive: the aim's ripening region (already ripening?), the registry (already carried by a live unit?), and before seeding a route, the plan's Routes section (seed new versus continue).
 

@@ -13,12 +13,12 @@ Do not use this skill for a quick factual answer, a single decorative diagram, o
 
 ## Envelope in the Ensemble
 
-This skill spans two members' work, and the split is not optional. The Concertmaster orchestrates; it does not do both legs itself:
+This skill spans two members' work, and the split is not optional. The Lead orchestrates; it does not do both legs itself:
 
-- **Research legs are the Scout's.** The live-research gate, source-hierarchy gathering, freshness verification, and the untrusted-source discipline below are fan-out grounding — Scout work. A member without web tools never self-grounds; when the document needs current sources, the Concertmaster nominates the Scout, who returns the grounded ledger.
+- **Research legs are the Scout's.** The live-research gate, source-hierarchy gathering, freshness verification, and the untrusted-source discipline below are fan-out grounding — Scout work. A member without web tools never self-grounds; when the document needs current sources, the Lead nominates the Scout, who returns the grounded ledger.
 - **Authoring is the Builder's.** Extracting the ontology, choosing views, designing the visual language, drafting the diagrams and prose, and running the Obsidian-compliance validation are body-authoring — Builder work.
 
-Neither member silently claims both legs. The document is produced as a dispatched sequence — Scout grounds, Builder authors, the Concertmaster consolidates — with each return ending in its grounding-status line. The epistemic contract below is the whole reason for the split: evidence must come from live sources, never from one member's recall.
+Neither member silently claims both legs. The document is produced as a dispatched sequence — Scout grounds, Builder authors, the Lead consolidates — with each return ending in its grounding-status line. The epistemic contract below is the whole reason for the split: evidence must come from live sources, never from one member's recall.
 
 ## Core outcome
 

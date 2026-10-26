@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # run-fixture.sh: the fixture for hooks/session-start-cue.sh, the session cue
-# and its fallback print of the main-session rules (always-on/CONCERTMASTER.md).
+# and its fallback print of the main-session rules (always-on/LEAD.md).
 #
 # ASCII-ONLY, LF line endings, like everything else in this deploy set.
 #
 # Run it by hand, from anywhere:   bash run-fixture.sh
 # Exit 0 PASS, exit 1 FAIL. It stages a throwaway home (hooks/ plus
-# CONCERTMASTER.md, the deployed layout) in a temp directory it removes on the
+# LEAD.md, the deployed layout) in a temp directory it removes on the
 # way out, and never touches a deployed home. On Windows run it from Git Bash:
 # a bare 'bash' typed in PowerShell may start WSL's bash.
 #
@@ -15,16 +15,16 @@
 # path instead (hooks reference, 2.1.283). The longest thing this hook prints
 # is the fallback on a startup with no project face: the "No face here" line,
 # the decision-proposal line, the fallback header and the whole file. This
-# fixture prints exactly that and fails above LIMIT, 9,500 characters, 500
-# under the cap. The count includes the newline the print ends with; whether
-# the harness adds framing of its own is unchecked. The 500-character margin
-# covers that framing and an edit or two to the file made between runs of
-# this fixture, which nothing runs automatically. The limit is a judgment,
-# set on the human's word 2026-10-13. The file must stay ASCII: then
+# fixture prints exactly that and fails above LIMIT, the cap itself: a check
+# trips at the provider's cap with no margin of its own (the human's word
+# "caps-reading = match", 2026-10-24, replacing the 9,500 of 2026-10-13). The
+# count includes the newline the print ends with. Nothing runs this fixture
+# automatically, so run it before any edit to the file lands. The file must
+# stay ASCII: then
 # characters equal bytes, the count needs no locale, and the Git Bash print
 # cannot mis-decode it.
 #
-# THE CASES. With and without ENSEMBLE_CONCERTMASTER_APPENDED (the launcher's
+# THE CASES. With and without ENSEMBLE_LEAD_APPENDED (the launcher's
 # marker): startup, resume and compact, in a project face and outside one; an
 # agent_id input; empty input. Every case must exit 0 with nothing on stderr.
 
@@ -32,8 +32,8 @@ set -u
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_SRC="$HERE/../../hooks/session-start-cue.sh"
-RULES_SRC="$HERE/../../always-on/CONCERTMASTER.md"
-LIMIT=9500
+RULES_SRC="$HERE/../../always-on/LEAD.md"
+LIMIT=10000
 [ -f "$HOOK_SRC" ] || { echo "FAIL (setup): hook not found at $HOOK_SRC"; exit 1; }
 [ -f "$RULES_SRC" ] || { echo "FAIL (setup): rules file not found at $RULES_SRC"; exit 1; }
 
@@ -46,7 +46,7 @@ HOME_DIR="$TMPBASE/home"
 FACE="$TMPBASE/project"
 mkdir -p "$HOME_DIR/hooks" "$FACE" || { echo "FAIL (setup): mkdir"; exit 1; }
 cp "$HOOK_SRC" "$HOME_DIR/hooks/session-start-cue.sh" || { echo "FAIL (setup): copy hook"; exit 1; }
-cp "$RULES_SRC" "$HOME_DIR/CONCERTMASTER.md" || { echo "FAIL (setup): copy rules"; exit 1; }
+cp "$RULES_SRC" "$HOME_DIR/LEAD.md" || { echo "FAIL (setup): copy rules"; exit 1; }
 : > "$FACE/Constitution.md"
 HOOK="$HOME_DIR/hooks/session-start-cue.sh"
 NOFACE="/ensemble-fixture-no-such-dir/work"
@@ -71,9 +71,9 @@ hin() {
 check() {
   local name="$1" marker="$2" json="$3" want="$4" out rc err
   if [ "$marker" = 1 ]; then
-    out="$(printf '%s' "$json" | env ENSEMBLE_CONCERTMASTER_APPENDED=1 "$BASH" "$HOOK" 2>"$TMPBASE/err")"
+    out="$(printf '%s' "$json" | env ENSEMBLE_LEAD_APPENDED=1 "$BASH" "$HOOK" 2>"$TMPBASE/err")"
   else
-    out="$(printf '%s' "$json" | env -u ENSEMBLE_CONCERTMASTER_APPENDED "$BASH" "$HOOK" 2>"$TMPBASE/err")"
+    out="$(printf '%s' "$json" | env -u ENSEMBLE_LEAD_APPENDED "$BASH" "$HOOK" 2>"$TMPBASE/err")"
   fi
   rc=$?
   err="$(cat "$TMPBASE/err")"
@@ -87,19 +87,19 @@ FALLBACK="$L_HEAD$NL$BODY"
 
 # --- The size check ---------------------------------------------------------
 if LC_ALL=C grep -q '[^ -~[:space:]]' "$RULES_SRC"; then
-  bad size "always-on/CONCERTMASTER.md carries a non-ASCII byte; keep it ASCII"
+  bad size "always-on/LEAD.md carries a non-ASCII byte; keep it ASCII"
 else
-  out="$(hin startup "$NOFACE" | env -u ENSEMBLE_CONCERTMASTER_APPENDED "$BASH" "$HOOK" 2>/dev/null; printf x)"
+  out="$(hin startup "$NOFACE" | env -u ENSEMBLE_LEAD_APPENDED "$BASH" "$HOOK" 2>/dev/null; printf x)"
   out="${out%x}"
   LC_ALL=C
   chars=${#out}
   unset LC_ALL
   if [ "$chars" -gt "$LIMIT" ]; then
-    bad size "longest print is $chars characters, over the $LIMIT limit (the hook cap is 10,000)"
+    bad size "longest print is $chars characters, over the $LIMIT-character hook cap"
   elif [ "$out" != "$L_NONE$NL$L_DPD$NL$FALLBACK$NL" ]; then
     bad size "the longest print is not the expected no-face startup fallback"
   else
-    good size "longest print $chars characters, $((LIMIT - chars)) under the $LIMIT limit, $((10000 - chars)) under the cap"
+    good size "longest print $chars characters, $((LIMIT - chars)) under the $LIMIT-character hook cap"
   fi
 fi
 

@@ -29,16 +29,16 @@
 #    so this file stays ASCII. It is a marker in the brain's own tree, never a
 #    machine path. A brain without that note reads as a place with no face.
 #
-# 2. The fallback. The launcher appends the home's CONCERTMASTER.md (the
-#    Concertmaster's own rules) to the main session's system prompt and sets
-#    ENSEMBLE_CONCERTMASTER_APPENDED=1 for the session. When that marker is
+# 2. The fallback. The launcher appends the home's LEAD.md (the
+#    Lead's own rules) to the main session's system prompt and sets
+#    ENSEMBLE_LEAD_APPENDED=1 for the session. When that marker is
 #    absent (a session started without the launcher), this prints one header
 #    line and then the file, so the main session still holds its rules; on
 #    compact it prints them again, because hook-added text does not survive the
 #    summary. The file is found in the hook folder's parent, the home. Hook
 #    stdout is capped at 10,000 characters (above it the model sees a
 #    2,000-character preview), so fixtures/session-cue/run-fixture.sh
-#    keeps the longest print under a 9,500-character limit. A claude started
+#    fails a longest print over that cap. A claude started
 #    from inside a launched session inherits the marker without the flag and
 #    gets no fallback; the probe (probe-context.ps1) passes the flag itself.
 #
@@ -65,7 +65,7 @@ re='"source"[[:space:]]*:[[:space:]]*"([^"]*)"'
 hookdir="${0%/*}"
 [ "$hookdir" = "$0" ] && hookdir="${0%\\*}"
 [ "$hookdir" = "$0" ] && hookdir="."
-rules="$hookdir/../CONCERTMASTER.md"
+rules="$hookdir/../LEAD.md"
 
 cue() {
   # The cwd comes from the hook's stdin JSON; JSON escapes backslashes, so they
@@ -101,7 +101,7 @@ cue() {
 
 fallback() {
   local line
-  [ -n "${ENSEMBLE_CONCERTMASTER_APPENDED:-}" ] && return 0
+  [ -n "${ENSEMBLE_LEAD_APPENDED:-}" ] && return 0
   [ -f "$rules" ] && [ -r "$rules" ] || return 0
   echo "[session-cue] This session was not launched with the main-session rules appended; they follow in full."
   while IFS= read -r line || [ -n "$line" ]; do

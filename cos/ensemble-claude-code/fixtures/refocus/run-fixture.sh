@@ -165,13 +165,14 @@ run() {
 }
 
 # --- Expected text ------------------------------------------------------------
-# The two texts as the spec gives them, verbatim.
+# The two texts as the spec gives them, verbatim, but for the block naming
+# Current state beside Handoff (2026-10-19, for contract-direct pursuits).
 SPEC_LINE='[refocus] This conversation resumed after 3h12m idle at about 190K tokens; its prompt cache had expired, so this first request re-reads the whole history. The first reply opens with one refocus line: compact now with a stated focus while the history is cached again, or a fresh session with its resume prompt.'
-SPEC_BLOCK='Compaction stopped: this conversation has been idle 3h12m, past its 1h prompt cache, so compacting would first re-read all of its ~190K tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact anyway <focus>'
+SPEC_BLOCK='Compaction stopped: this conversation has been idle 3h12m, past its 1h prompt cache, so compacting would first re-read all of its ~190K tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff or Current state carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact anyway <focus>'
 # line <idle> <K>
 line() { printf '[refocus] This conversation resumed after %s idle at about %s tokens; its prompt cache had expired, so this first request re-reads the whole history. The first reply opens with one refocus line: compact now with a stated focus while the history is cached again, or a fresh session with its resume prompt.' "$1" "$2"; }
 # blockmsg <idle> <lifetime> <K>
-blockmsg() { printf 'Compaction stopped: this conversation has been idle %s, past its %s prompt cache, so compacting would first re-read all of its ~%s tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact anyway <focus>' "$1" "$2" "$3"; }
+blockmsg() { printf 'Compaction stopped: this conversation has been idle %s, past its %s prompt cache, so compacting would first re-read all of its ~%s tokens at full price. A fresh session costs less: run /clear, then name the work to pick up; its Handoff or Current state carries the state, so no resume note is needed (asking this conversation for one costs the same full re-read). To compact anyway: /compact anyway <focus>' "$1" "$2" "$3"; }
 
 # --- Assertions ---------------------------------------------------------------
 quiet() {

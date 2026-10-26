@@ -43,8 +43,8 @@
 # check or the variable's next read must reach the EXIT trap and its
 # cannot-tell line).
 # Length: 20 and 40 mods, every mod printed in full or counted in a last line,
-# the first line exact, each field under 9,000 characters (the harness caps
-# each at 10,000). Every case must exit 0 with nothing on stderr. Where python3
+# the first line exact, each field at most 10,000 characters, the harness's
+# cap per field. Every case must exit 0 with nothing on stderr. Where python3
 # or python answers, every output is also parsed as JSON and its
 # additionalContext checked against its systemMessage.
 #
@@ -546,7 +546,7 @@ aclen() {
   printf '%s' "${#s}"
 }
 # many_case <name> <count>: every mod printed in full or counted in the last
-# line, the first line exact, both fields under 9,000.
+# line, the first line exact, both fields at most 10,000.
 many_case() {
   local name="$1" count="$2" sm ac shown counted=0 first re
   many "$1" "$2"
@@ -564,9 +564,9 @@ many_case() {
   [[ "$OUT" =~ $re ]] && counted="${BASH_REMATCH[1]}"
   if [ $((shown + counted)) -ne "$count" ]; then bad "$name" "$shown printed plus $counted counted is not $count"; return; fi
   sm="$(smlen)"; ac="$(aclen)"
-  if [ "$sm" -gt 9000 ] || [ "$ac" -gt 9000 ]; then bad "$name" "systemMessage $sm, additionalContext $ac characters; over 9,000"; return; fi
+  if [ "$sm" -gt 10000 ] || [ "$ac" -gt 10000 ]; then bad "$name" "systemMessage $sm, additionalContext $ac characters; over the 10,000 cap per field"; return; fi
   json_ok "$name" || return
-  good "$name" "$shown printed, $counted counted; systemMessage $sm, additionalContext $ac characters, under 9,000 (the cap is 10,000 per field)"
+  good "$name" "$shown printed, $counted counted; systemMessage $sm, additionalContext $ac characters, within the 10,000 cap per field"
 }
 many_case twenty 20
 many_case forty 40

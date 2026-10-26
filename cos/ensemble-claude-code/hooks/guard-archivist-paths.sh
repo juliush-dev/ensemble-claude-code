@@ -14,7 +14,7 @@
 #                  permissive.
 #
 #   main-session   - foreign-root-only mode. The main session is the
-#                  Concertmaster: its own-root notebook closure writes (Aim,
+#                  Lead: its own-root notebook closure writes (Aim,
 #                  Registry, Lanes, contract/charter surfaces) must stay
 #                  frictionless, AND it legitimately edits non-notebook files in
 #                  arbitrary projects. So this mode auto-passes EVERYTHING
@@ -37,7 +37,7 @@
 #
 # Session-scoped grant mechanism (main-session mode only):
 # a foreign-root ask this guard would otherwise raise can be pre-empted by a
-# grant the Concertmaster itself wrote for the session - one absolute root per
+# grant the Lead itself wrote for the session - one absolute root per
 # line in hooks/session-roots/<session_id>.txt, beside this script (located
 # via the script's own directory, never $CLAUDE_CONFIG_DIR, so the grant
 # travels with the guard). session_id is parsed from the same PreToolUse input
@@ -45,12 +45,14 @@
 # grant is consumed by the dispatching session AND its dispatched members
 # alike: a call carrying an agent_id meets the granted tree under the same
 # rules governing any own-root write, no agent_id exclusion on the match itself.
-# Widening the grant surface stays Concertmaster-only - a distinct ask
+# Widening the grant surface stays Lead-only - a distinct ask
 # (Rider A, below) fires instead when an agent_id-carrying hand's write
 # targets the grant-file directory itself, catching the straightforward and
-# case-varied (case-folded) forms of that write. It does not catch a
-# Bash-shaped write that never goes through the Edit|Write tool wiring this
-# guard is invoked through - that bypass is unclosed. Each grant line is
+# case-varied (case-folded) forms of that write. A Bash- or PowerShell-shaped
+# write never goes through the Edit|Write tool wiring this guard is invoked
+# through; since 2026-10-20 the session-level hooks/guard-grant-writes.sh asks
+# on such a write for every caller, a string heuristic whose misses its own
+# header names. Each grant line is
 # trimmed first (leading/trailing whitespace and a trailing CR, so a
 # CRLF-terminated grant file still parses) then normalized and canonicalized
 # FIRST - unlike the
@@ -84,9 +86,10 @@
 # skipped, never treated as a match. The surviving canonical root is
 # prefix-matched against the already-canonical target; a match sets
 # own_root=1, the same verdict an own-root write earns.
-# The grant file is written by the Concertmaster (via the Write tool, so the
+# The grant file is written by the Lead (via the Write tool, so the
 # guard's own ask still carries the widening to the human the first time it is
-# needed) and removed by the SessionEnd litter-flag hook; this script never
+# needed; a shell write asks from guard-grant-writes.sh instead) and removed by
+# the SessionEnd litter-flag hook; this script never
 # creates the session-roots/ directory itself, and its absence is the
 # ordinary case - tolerated the same as a missing grant file for one session.
 # Whether --resume/--continue reuse a prior run's session id is undocumented
@@ -94,7 +97,7 @@
 # are benign here regardless: reuse after the grant file was already cleaned up
 # just returns to the ordinary ask path, and reuse after a crash (file never
 # cleaned) resumes that session's own prior grant, never a foreign session's.
-# Safe, not free: the human meets those asks, so the Concertmaster re-grants.
+# Safe, not free: the human meets those asks, so the Lead re-grants.
 
 set -u
 
@@ -405,7 +408,7 @@ $posix_tmp/claude"
     # A grant is consumed by the dispatching session AND its dispatched
     # members alike - a member's hand meets the granted tree under the same
     # rules governing any own-root write, no agent_id exclusion on the match
-    # itself. Widening the grant surface stays Concertmaster-only,
+    # itself. Widening the grant surface stays Lead-only,
     # guarded separately by Rider A below - never by excluding
     # agent_id-carrying calls from consuming a grant here.
     if [ -n "$session_id" ]; then
@@ -506,11 +509,12 @@ $posix_tmp/claude"
   # sides before the compare so a flipped-case
   # path on a case-insensitive filesystem is caught the same as a byte-exact
   # one. An ask, never a deny - the "neither mode ever hard-blocks" invariant
-  # holds here too; the Concertmaster's own hand (no agent_id) is untouched by
+  # holds here too; the Lead's own hand (no agent_id) is untouched by
   # this check and keeps the ordinary once-per-root foreign-root ask below.
   # This catches the straightforward and case-varied forms of a self-widening
-  # write; it does not catch a Bash-shaped write that bypasses the Edit|Write
-  # tool wiring this guard is invoked through entirely - unclosed.
+  # write made through Edit|Write. A Bash- or PowerShell-shaped write bypasses
+  # this guard's wiring entirely; the session-level guard-grant-writes.sh asks
+  # on it instead, for every caller, the main session included.
   if [ -n "$agent_id" ]; then
     _sw_target_lc="$(lc "${canon:-$norm}")"
     _sw_hit=0
@@ -526,7 +530,7 @@ $posix_tmp/claude"
         "$_sw_root_lc"|"$_sw_root_lc"/*) _sw_hit=1 ;;
       esac
     fi
-    [ "$_sw_hit" -eq 1 ] && ask "Main-session path guard: this write targets the session-grant directory itself, from a dispatched member (agent_id present). A member may consume a grant the Concertmaster wrote, never widen or overwrite the grant mechanism itself - attempted self-widening, distinct from an ordinary foreign-root write. Not auto-accepted; the human may still approve explicitly."
+    [ "$_sw_hit" -eq 1 ] && ask "Main-session path guard: this write targets the session-grant directory itself, from a dispatched member (agent_id present). A member may consume a grant the Lead wrote, never widen or overwrite the grant mechanism itself - attempted self-widening, distinct from an ordinary foreign-root write. Not auto-accepted; the human may still approve explicitly."
   fi
 
   # The Archivist writes the team's memory in any repo without asking; its

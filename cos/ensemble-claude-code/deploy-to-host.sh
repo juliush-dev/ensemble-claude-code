@@ -16,7 +16,9 @@
 # skills-shipped.txt (the append-only manifest of every skill this COS has ever
 # shipped) lists it AND the current source no longer carries it - a
 # shipped-then-retired skill; a host-added skill this COS never shipped is left
-# alone.
+# alone. The one other file it removes is CONCERTMASTER.md, the main-session
+# rules file's name before 2026-10-25, from the home's root, and only once this
+# run's LEAD.md has landed matching its source.
 #
 # settings.json is not copied but MERGED, by merge-settings.py, the one merge
 # implementation both deploy scripts call. The home's own settings.json is the
@@ -82,7 +84,7 @@
 #
 # It hash-verifies every file in the verified set (byte-identical against
 # source, the agent cards against their guard-processed content; the six always-on
-# copies excepted, though the main-session rules file CONCERTMASTER.md, also
+# copies excepted, though the main-session rules file LEAD.md, also
 # from always-on/, is verified), asserts the deployed settings.json path by path against what
 # the factory declares, prints the inventory, and refuses to clobber an existing
 # home unless --update or --force.
@@ -175,7 +177,7 @@ sha256_stdin() {
 
 if [ -e "$target" ]; then
   if [ "$update" -eq 1 ]; then
-    echo "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried. A host skills folder this COS shipped in an earlier release but no longer carries is pruned - it came from the source, so git can restore it; a skills folder this COS never shipped is left alone as yours. --force is the other path: it moves the whole home to a timestamped backup - plugins, sessions, and login move with it and are re-established by hand.)"
+    echo "Update mode: overwriting the staged files in place; session, trust, and login state stay untouched. (Git rolls back anything the source ever carried. A host skills folder this COS shipped in an earlier release but no longer carries is pruned - it came from the source, so git can restore it; a skills folder this COS never shipped is left alone as yours. A CONCERTMASTER.md at the home's root, the former name of the main-session rules file LEAD.md, is removed once LEAD.md lands. --force is the other path: it moves the whole home to a timestamped backup - plugins, sessions, and login move with it and are re-established by hand.)"
   elif [ "$force" -eq 1 ]; then
     backup="${target}.backup-$(date +%Y%m%d-%H%M%S)"
     mv "$target" "$backup"
@@ -185,7 +187,7 @@ if [ -e "$target" ]; then
     echo "Target already exists. Contents:"
     ls -1 "$target" || true
     echo ""
-    echo "Re-run with --update to refresh the staged files in place (keeps login/session state; prunes only a skill this COS shipped and has since retired, and leaves any skill you added yourself alone),"
+    echo "Re-run with --update to refresh the staged files in place (keeps login/session state; prunes only a skill this COS shipped and has since retired and the rules file's former name CONCERTMASTER.md, and leaves any skill you added yourself alone),"
     echo "or with --force to replace the whole home (the existing directory is moved to a timestamped backup first; plugins, sessions, and login move with it and are re-established by hand)."
     exit 1
   fi
@@ -330,7 +332,8 @@ done
 # skills/unslop, shipped then renamed to writing-and-talking-style, would
 # otherwise linger beside its replacement on an --update. A folder NOT in the
 # manifest is one this COS never shipped (a host-added skill) and is kept. Scoped
-# strictly to skills/ subdirectories; nothing else is ever removed. The manifest
+# strictly to skills/ subdirectories; the only other file this script removes is
+# the stale CONCERTMASTER.md, handled beside the LEAD.md copy below. The manifest
 # is pre-filtered ONCE here - comment lines and blanks dropped, surrounding
 # whitespace trimmed - mirroring the .ps1's Get-Content filter, so a host folder
 # named exactly like a comment line can never match (a raw grep -qxF against the
@@ -399,12 +402,25 @@ copy_verified '.mcp.json' '.mcp.json'
 # and the fixes its guards rely on. Read by hooks/session-start-harness-marker.sh
 # at session start; never loaded into context.
 copy_verified 'HARNESS.md' 'HARNESS.md'
-# CONCERTMASTER.md: the main session's own rules, from always-on/ to the home's
+# LEAD.md: the main session's own rules, from always-on/ to the home's
 # root, where Claude Code never loads it on its own (it is not under rules/ and
 # not named CLAUDE.md), so no member receives it. launch/start-ensemble.sh
 # appends it to the main session's system prompt; hooks/session-start-cue.sh
 # prints it when a session starts without the launcher. Hash-verified below.
-copy_verified 'always-on/CONCERTMASTER.md' 'CONCERTMASTER.md'
+copy_verified 'always-on/LEAD.md' 'LEAD.md'
+# The rules file's former name. A home deployed before 2026-10-25 holds these
+# rules as CONCERTMASTER.md, which the launcher and the session cue no longer
+# read. It is removed only when the LEAD.md this run just wrote matches its
+# source byte for byte, so a home is never left without its rules file. A home
+# without the old file gets no line about it.
+if [ -f "$target/CONCERTMASTER.md" ]; then
+  if [ -f "$target/LEAD.md" ] && [ "$(sha256 "$src/always-on/LEAD.md")" = "$(sha256 "$target/LEAD.md")" ]; then
+    rm -f "$target/CONCERTMASTER.md"
+    echo "Removed the stale main-session rules file CONCERTMASTER.md: it is the former name of LEAD.md, which this run wrote and checked against its source."
+  else
+    echo "Kept CONCERTMASTER.md: LEAD.md did not land matching its source this run, so the old rules file stays until a run that writes it." >&2
+  fi
+fi
 
 # --- settings.json: the preserving merge ------------------------------------
 # The home's own settings.json is where host values live: the user edits it
