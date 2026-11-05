@@ -1,6 +1,6 @@
 ---
 name: cross-shell-command-discipline
-description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, verifying target state through a different shell than the one that will execute the command, proving a tool is present on Windows, or a Windows-host trap inside one shell (Git Bash line endings with sed -i or grep, empty or quoted native arguments in Windows PowerShell 5.1, PowerShell array and boolean expressions).
+description: Prevent shell-boundary mistakes when composing, running, or verifying commands across PowerShell, Bash, Git Bash, WSL, cmd, SSH, Docker, or nested interpreters. Use whenever a task involves wsl.exe, bash -lc, powershell -Command, cmd /c, ssh, docker exec, a subprocess that starts bash, path-like environment variables, paths with spaces, nested quoting, globs, pipelines, redirection, variable expansion, verifying target state through a different shell than the one that will execute the command, proving a tool is present on Windows, or a Windows-host trap inside one shell (Git Bash line endings with sed -i, grep or diff, empty or quoted native arguments in Windows PowerShell 5.1, PowerShell array and boolean expressions).
 ---
 
 # Cross-Shell Command Discipline
@@ -25,7 +25,7 @@ Invoke this skill when a command or verification step includes:
 - Globs, redirection, command substitution, pipelines, variable expansion, or `for` loops crossing from one shell into another.
 - A verification command whose result will decide whether deployment, file sync, or cleanup succeeded.
 - A previous command in the same task failed with a parser error, empty output, unexpected quoting behavior, or a path-not-found result that could be a shell mismatch.
-- A Windows-host trap inside one shell: Git Bash `sed -i` on a CRLF file or `grep` counting carriage returns, a native argument from Windows PowerShell 5.1 that is empty or holds a double quote and a space, or a PowerShell expression that joins command calls with `-and` or nests one array in another.
+- A Windows-host trap inside one shell: Git Bash `sed -i` on a CRLF file, `grep` counting carriage returns or `diff` reading Windows Python's output, a native argument from Windows PowerShell 5.1 that is empty or holds a double quote and a space, or a PowerShell expression that joins command calls with `-and` or nests one array in another.
 
 Do not invoke for simple single-shell commands with no quoting, path translation, nested execution, or Windows-host trap named above.
 
@@ -174,6 +174,10 @@ On a CRLF working file (`git ls-files --eol` shows `w/crlf`), Git Bash's `sed` m
 ### Git Bash `grep` cannot count carriage returns
 
 Given a CR as its pattern, Git Bash's `grep` matches every line: `grep -c $'\r' file` returns the file's line count, as do `$'\r$'` and `-U`, so an LF-only file reads as all CRLF. Count endings by bytes, `tr -cd '\r' < file | wc -c` (CR bytes) or Python's `open(p, 'rb').read().count(b'\r\n')` (CRLF pairs), or read `git ls-files --eol`, and do it before and after any in-place rewrite. Observed with GNU grep 3.0.
+
+### Windows Python's output fails a plain `diff` in Git Bash
+
+Windows Python run from Git Bash ends every line it prints with CRLF, while git and the Git Bash tools print LF. A plain `diff` of the two then reports every line different, a mismatch that is only line endings. Compare with `diff --strip-trailing-cr`, or strip the CR first with `tr -d '\r'`. Observed with Python 3.14.3 and GNU diffutils 3.12.
 
 ### Bundled / Windows-native Python invoked from MSYS: path-form split
 

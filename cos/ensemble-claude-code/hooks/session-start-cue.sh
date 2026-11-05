@@ -19,7 +19,12 @@
 #                                 -> "Wrapped project: load onboard ..."
 #      the shared external brain  -> no face line; the brain is the one place
 #                                    work may happen unwrapped
-#      neither, up to the root    -> "No face here: ask the human ..."
+#      neither, up to the root    -> "No face here: search for the notebook
+#                                    that claims this folder ...; if none,
+#                                    ask the human ..."
+#
+#    The claim search is the session's, by onboard; this hook only names it
+#    and searches nothing.
 #
 #    and always adds the decision-proposal-discipline line. It needs the cwd;
 #    without one it prints nothing.
@@ -94,7 +99,7 @@ cue() {
 
   case "$place" in
     face) echo "[session-cue] Wrapped project: load onboard before working." ;;
-    none) echo "[session-cue] No face here: ask the human before working (wrap offer)." ;;
+    none) echo "[session-cue] No face here: search for the notebook that claims this folder (onboard); if none, ask the human before working (wrap offer)." ;;
   esac
   echo "[session-cue] Load decision-proposal-discipline before the first ask."
 }

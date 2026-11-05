@@ -1,6 +1,7 @@
 {
   "_provenance_playwright": "Browser reads flow for the Operator; browser writes ask. The ten write-shaped browser tools (click, drag, drop, evaluate, file_upload, fill_form, handle_dialog, press_key, select_option, type) each carry an exact-name ask rule. The read-shaped tools carry no rule of their own. The guard-live-reads.sh PreToolUse hook lets a call through to the auto-mode classifier only when the Operator makes it and the tool is on the hook's read list; it asks on a call from the main session or any other agent, and on any browser tool the list does not name. navigate and navigate_back are on the read list, so a URL the Operator opens is not prompted. Two deny rules, the glob browser_run_code* and the exact browser_run_code_unsafe, block the RCE-class code-execution tool outright. The glob covers current and legacy tool names (nothing else shares the prefix), and the exact string guarantees a match for the pinned tool version (mid-name glob behavior is undocumented). The ask rules, the denies and the hook's read list re-verify against the enumerated tool inventory on every version move.",
   "_provenance_claude_ai_connectors": "The claude.ai account-connector rules are a layered set: reads flow for the Operator, writes ask. The guard-live-reads.sh PreToolUse hook sees every connector tool. It lets a call through silently to the auto-mode classifier only when the Operator makes it and the tool is on the hook's read list (the Gmail search, get and list tools; the Drive search, list, read, metadata, permissions and download tools), and asks on everything else: a write, a call from the main session or any other agent, a tool of a connector no curation has admitted, a tool upstream adds later, and input the hook cannot parse. The exact-string Gmail and Drive ask entries name every known write tool, so a write still asks if the hook ever fails to run; exact strings are also startup typo-check tripwires (glob rules are exempt from the startup check, exact strings are not, and a mismatch surfaces a warning). The deny entries are TRIPWIRES, not boundaries: mcp__claude_ai_Google_Calendar__* and mcp__claude_ai_Supabase__* deny two un-curated connector classes wholesale; Gmail send*/delete* and Drive share*/delete* pre-empt name-prefixed destructive and exfil tools absent from the connector's toolset as enumerated at admission; the deny is a tripwire should upstream ever add them, and the drift shows when it bites. The reply, forward and trash tools the connectors expose match none of those prefixes: they are writes, and they ask by exact name. No allow rules by decision; a read that flows is decided by the classifier, never auto-allowed. The ask rules, the denies and the hook's read list re-verify against the live inventory at every deploy and every re-enumeration. Operator confinement is doctrinal, not structural; the deny/ask layer and the hook are the structural carrier.",
+  "_provenance_heptabase": "The Heptabase rules cover the official Heptabase MCP server (https://api.heptabase.com/mcp, browser OAuth), which launch/wire-mcp.ps1 registers at user scope as two entries only when run with -Heptabase: heptabase, pinned to the scopes space:read space:write, for the Operator, and heptabase-read, pinned to space:read, for the Scout. The two entries keep separate sign-ins. On the human's word the Operator's Heptabase work runs with no ask and, but for the two stops named below, no confirm-first: permissions.ask and permissions.deny carry no rule on mcp__heptabase__, and the guard-live-reads.sh PreToolUse hook passes every tool of that server for the Operator, by pattern, because the hosted toolset moves without a release (59 tools one morning, trash_cards and restore_cards among them, and 65 that evening, the server having added two reads and four writes). The pass adds no allow: in auto mode the classifier still decides each call. The Operator's card keeps two stops, on his answers of that evening, and no rule or hook here holds them, since they are instructions and not locks: on trash_cards, remove_inbox_items and update_inbox_items, items he has neither named nor approved go back to the Lead as a list, undone, and the Space Instructions card changes only on his order. Every other caller still gets the hook's ask on every Heptabase tool; with the exact-name asks gone that hook is their only mechanical ask, so if it fails to run their call goes on to the classifier. The Scout stays read-only: the 23 read tools the read-only connection listed that evening (21 that morning) pass for it and everything else asks. The 38 other tools the server had that morning each carry an exact-name deny on heptabase-read, since no one ever writes through that entry: the read-only sign-in hides them (observed that morning), so those denies match nothing, and they block the call outright, where the hook alone would only ask, if the hiding fails or the entry is ever signed in with write scope. The four writes of that evening (add_cards_to_inbox, remove_inbox_items, update_inbox_items, set_space_instructions) carry no deny: the connection does not list them, and should it ever, the hook's ask holds them. A tool upstream adds later is asked of the Scout until a curation pass names it. No allow rules. The Scout's list and these denies re-verify against a live tool list at every re-enumeration. On a host where the entries are not registered (any home but one wired by the PowerShell script with the switch) these rules match nothing.",
   "_provenance_model_and_remote_control": "Two settings pairs control the model default and Remote Control's startup behavior. 'model' is set to the 'opus' alias, so it always tracks whatever build the alias currently resolves to. 'modelSettings' sets effortLevel to 'medium' under two keys: 'opus' and 'claude-opus-5'. The alias key is what the harness's alias resolver actually applies, since modelSettings keys are normalized through that resolver; the full-model-ID key stays declared so a later deploy never prunes the value from a host that still carries it. If an effort level is later saved through '/effort' for a specific model, the harness stores it under that model's own canonical ID, and a canonical-ID key always takes precedence over an alias key, so a saved choice is never overridden by this file. 'remoteControlAtStartup' is false, so the Remote Control bridge does not start itself each session, while the in-session toggle, the claude.ai/code route, and the --remote-control flag all stay available. 'disableRemoteControl' is deliberately not set, since that key would remove those manual routes too. These are user-level settings: repo-scoped (project or local) settings cannot enable Remote Control, and both keys are read from the merged settings across all tiers, so this file's values take effect once deployed.",
   "model": "opus",
   "modelSettings": {
@@ -124,7 +125,45 @@
       "mcp__claude_ai_Google_Drive__share*",
       "mcp__claude_ai_Google_Drive__delete*",
       "mcp__playwright__browser_run_code*",
-      "mcp__playwright__browser_run_code_unsafe"
+      "mcp__playwright__browser_run_code_unsafe",
+      "mcp__heptabase-read__create_object",
+      "mcp__heptabase-read__append_to_journal",
+      "mcp__heptabase-read__edit_object_content",
+      "mcp__heptabase-read__edit_card_properties",
+      "mcp__heptabase-read__update_database_card_membership",
+      "mcp__heptabase-read__place_whiteboard_objects",
+      "mcp__heptabase-read__create_video_card_from_url",
+      "mcp__heptabase-read__create_web_card_from_url",
+      "mcp__heptabase-read__get_file_upload_url",
+      "mcp__heptabase-read__import_file_from_upload",
+      "mcp__heptabase-read__import_file_from_url",
+      "mcp__heptabase-read__create_pdf_card_from_file",
+      "mcp__heptabase-read__create_image_card_from_file",
+      "mcp__heptabase-read__create_audio_card_from_file",
+      "mcp__heptabase-read__create_video_card_from_file",
+      "mcp__heptabase-read__create_database",
+      "mcp__heptabase-read__edit_database",
+      "mcp__heptabase-read__trash_cards",
+      "mcp__heptabase-read__restore_cards",
+      "mcp__heptabase-read__create_whiteboard",
+      "mcp__heptabase-read__move_whiteboard",
+      "mcp__heptabase-read__create_whiteboard_shortcut",
+      "mcp__heptabase-read__move_whiteboard_objects",
+      "mcp__heptabase-read__move_whiteboard_objects_across_whiteboards",
+      "mcp__heptabase-read__arrange_whiteboard_objects",
+      "mcp__heptabase-read__align_whiteboard_objects",
+      "mcp__heptabase-read__resize_whiteboard_objects",
+      "mcp__heptabase-read__update_whiteboard_objects_color",
+      "mcp__heptabase-read__remove_whiteboard_objects",
+      "mcp__heptabase-read__create_section",
+      "mcp__heptabase-read__create_connections",
+      "mcp__heptabase-read__update_connection",
+      "mcp__heptabase-read__create_mind_map",
+      "mcp__heptabase-read__update_mind_map",
+      "mcp__heptabase-read__rename_object",
+      "mcp__heptabase-read__create_tag_group",
+      "mcp__heptabase-read__move_tags",
+      "mcp__heptabase-read__parse_pdf"
     ]
   },
   "hooks": {
@@ -193,8 +232,8 @@
         ]
       },
       {
-        "_provenance_live_reads_guard": "Wires the live-reads guard onto every Playwright and claude.ai connector tool, for every caller. A call passes silently to the ordinary permission flow only when the Operator makes it (top-level agent_type 'operator') and the tool is on the guard's read list of 24 read-shaped tools. Every other call gets an explicit ask: a write, an unlisted or future tool, an uncurated connector, a call from the main session or another agent, unparseable input. The silent pass adds no allow: in auto mode the classifier still decides the read. The exact-name write asks in permissions.ask are the second layer should this hook fail to run.",
-        "matcher": "mcp__playwright__.*|mcp__claude_ai_.*",
+        "_provenance_live_reads_guard": "Wires the live-reads guard onto every Playwright, claude.ai connector and Heptabase tool, for every caller, a plugin-provided Heptabase server included. A call passes silently to the ordinary permission flow only when the tool is on its caller's own list: the Operator (top-level agent_type 'operator') has 24 read-shaped browser and connector tools by exact name and every tool of the heptabase server by pattern, writes included, on the human's word; the Scout (top-level agent_type 'scout') has only the 23 Heptabase reads of the heptabase-read server, the read-only connection. Every other call gets an explicit ask: any other write, an unlisted or future tool outside the Operator's pattern, an uncurated connector, a call from the main session or another agent, unparseable input. The silent pass adds no allow: in auto mode the classifier still decides the call. The exact-name browser and connector write asks in permissions.ask are the second layer should this hook fail to run; Heptabase has no such layer. fixtures/live-reads-guard holds its cases.",
+        "matcher": "mcp__playwright__.*|mcp__claude_ai_.*|mcp__heptabase.*|mcp__plugin_heptabase_.*",
         "hooks": [
           {
             "type": "command",
@@ -246,7 +285,7 @@
         ]
       },
       {
-        "_provenance_session_cue": "Wires the session cue on matchers startup, resume, clear, compact and fork. A runbook whose moment is only observable in the work, joining a project above all, is easy to miss without a prompt at that moment, so the hook names the load right there. It walks up from the session's cwd: a project face (notebook/Constitution.md or a root Constitution.md) prints 'load onboard before working'; the shared external brain, recognized by its root manifesto note, prints no face line; anything else prints 'ask the human before working (wrap offer)'. Every run adds 'load decision-proposal-discipline before the first ask'. On compact it skips those lines. It also carries the main-session rules when the launcher did not: without the launcher's ENSEMBLE_LEAD_APPENDED marker it prints the home's LEAD.md after one header line, on every source compact included, since hook-added text does not survive a compaction; fixtures/session-cue keeps that print under the 10,000-character hook output cap. It prints nothing when the input carries an agent_id, so a member inside a subagent never reads the main session's cue. Bash builtins only; the 5-second timeout bounds a stat on an unreachable network path. It exits 0 on every path, and a failure before the output prints nothing.",
+        "_provenance_session_cue": "Wires the session cue on matchers startup, resume, clear, compact and fork. A runbook whose moment is only observable in the work, joining a project above all, is easy to miss without a prompt at that moment, so the hook names the load right there. It walks up from the session's cwd: a project face (notebook/Constitution.md or a root Constitution.md) prints 'load onboard before working'; the shared external brain, recognized by its root manifesto note, prints no face line; anything else prints 'search for the notebook that claims this folder (onboard); if none, ask the human before working (wrap offer)', the search being the session's, never the hook's. Every run adds 'load decision-proposal-discipline before the first ask'. On compact it skips those lines. It also carries the main-session rules when the launcher did not: without the launcher's ENSEMBLE_LEAD_APPENDED marker it prints the home's LEAD.md after one header line, on every source compact included, since hook-added text does not survive a compaction; fixtures/session-cue keeps that print under the 10,000-character hook output cap. It prints nothing when the input carries an agent_id, so a member inside a subagent never reads the main session's cue. Bash builtins only; the 5-second timeout bounds a stat on an unreachable network path. It exits 0 on every path, and a failure before the output prints nothing.",
         "matcher": "startup|resume|clear|compact|fork",
         "hooks": [
           {

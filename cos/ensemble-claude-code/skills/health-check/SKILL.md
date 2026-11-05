@@ -18,7 +18,7 @@ Two metrics are common to every project and deepen project-specifically. **Story
 - **Standard:** the two common kept-conditions — story-consistency and goal-alignment, as stated above — plus the project's own deeper ones, declared in the charter as the project's health comes to be understood.
 - **Trigger rule:** the human's order, and nothing else.
 - **Bounds:** a beat reads, judges, and records; it repairs nothing on its own — what it finds is flagged, and what exceeds the beat spawns a pursuit.
-- **Notebook:** the project's `notebook/tendings/health-check/`.
+- **Notebook:** the project notebook's `tendings/health-check/`.
 
 ## The beat
 

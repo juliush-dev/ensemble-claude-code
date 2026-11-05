@@ -1,6 +1,7 @@
-# Ensemble (ensemble-claude-code) - one-time MCP wiring for the two user-scope
+# Ensemble (ensemble-claude-code) - one-time MCP wiring for the user-scope
 # servers: playwright (the curated browser realization) and open-knowledge
-# (OpenKnowledge, a declared host requirement).
+# (OpenKnowledge, a declared host requirement), and with -Heptabase the
+# curated Heptabase pair (see THE HEPTABASE PAIR below).
 # Windows PowerShell 5.1 compatible. ASCII-ONLY FILE, deliberately (PS 5.1 reads
 # BOM-less files as ANSI; keep pure ASCII).
 #
@@ -61,6 +62,24 @@
 #      (command "cmd", args "/c","npx",...) instead of bare "npx". The doc examples
 #      use bare "npx -y"; the playwright entry does too. If "claude mcp list"
 #      shows playwright NOT connected, switch to the cmd /c form and record it.
+#
+# THE HEPTABASE PAIR, ONLY WITH -Heptabase:
+#   powershell -ExecutionPolicy Bypass -File .\wire-mcp.ps1 -Heptabase
+# (or: cos wire-mcp -Heptabase). It adds two user-scope HTTP entries for the
+# official Heptabase MCP server, https://api.heptabase.com/mcp, signed in by
+# browser OAuth: heptabase, pinned to the scopes space:read space:write, for
+# the Operator, and heptabase-read, pinned to space:read, for the Scout. A
+# read-only connection hides the write tools. Claude Code keys each stored
+# sign-in by entry name plus the entry's type, URL and headers, so the two
+# entries keep separate sign-ins. Without the switch the script leaves any
+# Heptabase entry alone. The bash twin, wire-mcp.sh, carries no Heptabase
+# entry by decision: the family is wired on a Windows home that opts in.
+# Removing a remote entry deletes its stored sign-in, so an HTTP entry that
+# already matches (type, URL and scopes) is left in place, never re-added; one
+# that differs is re-added and must be signed in again. Signing in is yours:
+# start a session, run /mcp, select each entry and finish the browser flow.
+
+param([switch]$Heptabase)
 
 $ErrorActionPreference = 'Stop'
 
@@ -98,9 +117,32 @@ $openKnowledgeJson = '{"type":"stdio","command":"powershell","args":["-NoProfile
 # harness-owned; the rationale for this wiring lives in this script's header,
 # never in-entry.
 $entries = @(
-    @{ Name = 'playwright';     Json = $playwrightJson;    Want = '@playwright/mcp@0.0.77';                  Label = 'pinned @playwright/mcp@0.0.77, --isolated' },
-    @{ Name = 'open-knowledge'; Json = $openKnowledgeJson; Want = ('@inkeep/open-knowledge@' + $OK_ENUMERATED); Label = ('ok on PATH, else npx fallback at the enumerated @inkeep/open-knowledge@' + $OK_ENUMERATED) }
+    @{ Name = 'playwright';     Kind = 'stdio'; Json = $playwrightJson;    Want = '@playwright/mcp@0.0.77';                  Label = 'pinned @playwright/mcp@0.0.77, --isolated' },
+    @{ Name = 'open-knowledge'; Kind = 'stdio'; Json = $openKnowledgeJson; Want = ('@inkeep/open-knowledge@' + $OK_ENUMERATED); Label = ('ok on PATH, else npx fallback at the enumerated @inkeep/open-knowledge@' + $OK_ENUMERATED) }
 )
+
+# heptabase and heptabase-read: one URL, two pinned scope sets, two sign-ins.
+$heptabaseUrl = 'https://api.heptabase.com/mcp'
+if ($Heptabase) {
+    foreach ($hb in @(
+        @{ Name = 'heptabase';      Scopes = 'space:read space:write'; Label = 'official Heptabase MCP, scopes space:read space:write, for the Operator' },
+        @{ Name = 'heptabase-read'; Scopes = 'space:read';             Label = 'official Heptabase MCP, scope space:read only, for the Scout' }
+    )) {
+        $entries += @{
+            Name = $hb.Name; Kind = 'http'; Url = $heptabaseUrl; Scopes = $hb.Scopes; Label = $hb.Label
+            Json = ('{"type":"http","url":"' + $heptabaseUrl + '","oauth":{"scopes":"' + $hb.Scopes + '"}}')
+        }
+    }
+}
+
+# True when an existing HTTP entry is already the one wanted: type, URL and
+# pinned scopes all equal.
+function Test-HttpEntry($entry, $e) {
+    if ($null -eq $entry) { return $false }
+    $scopes = $null
+    if ($null -ne $entry.oauth) { $scopes = $entry.oauth.scopes }
+    return (($entry.type -eq 'http') -and ($entry.url -eq $e.Url) -and ($scopes -eq $e.Scopes))
+}
 
 function Read-HomeConfig {
     if (-not (Test-Path $configFile)) { return $null }
@@ -122,10 +164,21 @@ try {
         $name = $e.Name
         Write-Host ""
 
+        # An HTTP entry that already matches stays: removing a remote entry
+        # deletes its stored sign-in.
+        $existing = Get-Entry (Read-HomeConfig) $name
+        if (($e.Kind -eq 'http') -and (Test-HttpEntry $existing $e)) {
+            Write-Host "OK: mcpServers.$name already wired as wanted ($($e.Label)); left in place, its sign-in kept."
+            continue
+        }
+
         # Idempotence: remove any existing user-scope entry of this name first,
         # so the re-add is clean. Scoped to user, so a project-scope .mcp.json of
         # the same name in the current folder is never the one removed.
-        if ($null -ne (Get-Entry (Read-HomeConfig) $name)) {
+        if ($null -ne $existing) {
+            if ($e.Kind -eq 'http') {
+                Write-Host "Existing $name entry differs from the wanted one; re-adding it deletes its stored sign-in, so sign in again afterwards." -ForegroundColor Yellow
+            }
             Write-Host "Existing $name entry found; removing it first (idempotent re-wire)."
             $eap = $ErrorActionPreference
             $ErrorActionPreference = 'Continue'
@@ -152,6 +205,15 @@ try {
             Write-Host "FOOTPRINT FAIL: no mcpServers.$name entry in $configFile (or the file could not be parsed)." -ForegroundColor Red
             Write-Host "The write did not land where expected (footgun 1 or 2)." -ForegroundColor Red
             exit 1
+        }
+        if ($e.Kind -eq 'http') {
+            if (-not (Test-HttpEntry $entry $e)) {
+                Write-Host "FOOTPRINT FAIL: $name entry present but not type http, url $($e.Url), oauth.scopes '$($e.Scopes)'." -ForegroundColor Red
+                Write-Host "  type: $($entry.type)  url: $($entry.url)  scopes: $($entry.oauth.scopes)" -ForegroundColor Red
+                exit 1
+            }
+            Write-Host "OK: mcpServers.$name present, type http, url $($e.Url), oauth.scopes '$($e.Scopes)'."
+            continue
         }
         $argsText = ($entry.args -join ' ')
         if (-not $argsText.Contains($e.Want)) {
@@ -183,6 +245,9 @@ try {
     Write-Host "If playwright shows NOT connected, see footgun 3 in this script's header (cmd /c)."
     Write-Host "If open-knowledge shows NOT connected, this host may carry neither the OpenKnowledge app's ok.cmd nor Node's npx.cmd: the members report the gap, and deploy-to-host.ps1's inventory names it."
     Write-Host "Then start a session and confirm the playwright tools appear and prompt (in the main session every playwright call asks, through the live-reads guard), and that the mcp__open-knowledge__* tools are listed."
+    if ($Heptabase) {
+        Write-Host "Heptabase: heptabase and heptabase-read show 'needs authentication' until signed in. In a session run /mcp, select heptabase and sign in through the browser, then the same for heptabase-read, granting it read access only."
+    }
 }
 finally {
     $env:CLAUDE_CONFIG_DIR = $prev

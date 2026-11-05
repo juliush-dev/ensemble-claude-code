@@ -72,3 +72,4 @@ claudeMdExcludes
 hooks.PreCompact
 autoCompactWindow
 _provenance_auto_compact_window
+_provenance_heptabase

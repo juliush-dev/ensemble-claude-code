@@ -52,7 +52,7 @@ HOOK="$HOME_DIR/hooks/session-start-cue.sh"
 NOFACE="/ensemble-fixture-no-such-dir/work"
 
 L_FACE='[session-cue] Wrapped project: load onboard before working.'
-L_NONE='[session-cue] No face here: ask the human before working (wrap offer).'
+L_NONE='[session-cue] No face here: search for the notebook that claims this folder (onboard); if none, ask the human before working (wrap offer).'
 L_DPD='[session-cue] Load decision-proposal-discipline before the first ask.'
 L_HEAD='[session-cue] This session was not launched with the main-session rules appended; they follow in full.'
 BODY="$(tr -d '\r' < "$RULES_SRC")"

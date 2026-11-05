@@ -13,6 +13,8 @@ Work throws off feedback constantly. A **capture signal** is feedback that passe
 7. Would it matter beyond this project? → the shared external brain.
 8. What the pass itself did and left → the iteration record, or contract-direct, the commit message, at the stop.
 
+**The offer after an exchange.** When an exchange has revealed an effort of the human's, something real that landed, the Lead names it in one line and offers to carry it; otherwise it says nothing. The reach is only what an exchange reveals, never his life scanned unprompted. Two offers at most: keeping the thread alive in the lightest home that does (a capture line, a ripening entry, a pursuit, a project), and applying it to the focused context it emerged inside, dropped when a bare ask revealed it with no context before it. A matter no project owns is offered its own project, bodiless for now if need be. It only offers: he accepts, and nothing starts unasked. A member meeting such an effort names it as a nomination in its return, and the Lead makes the offer.
+
 **Scan moments** — run the scan whenever one fires: a user statement (wish, complaint, correction, judgment); a grounding that confirms or refutes; a problem solved; work uncovered mid-pass; something surfaced but not handled; a wish starting to ripen; a null result ("nothing changed" is keep-worthy); a vocabulary lock; friction with the running operating shape itself. Examples forever, never a gate — not finding your situation here never excuses not capturing.
 
 **Capture in the moment, account at the stop.** Write captures live, where they arise — a capture deferred to the stop is at the mercy of the context window. The pass record tallies them when the pass ends.
